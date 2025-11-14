@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         if (savedInstanceState == null) {
+            switchTo(R.id.navigation_home);
             bottomNavigationView.setSelectedItemId(R.id.navigation_home);
         } else {
             currentItemId = savedInstanceState.getInt(KEY_SELECTED_ITEM, R.id.navigation_home);

@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +24,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.justyn.travelmap.R;
 import com.justyn.travelmap.model.FeedItem;
 import com.justyn.travelmap.ui.feed.FeedAdapter;
@@ -40,7 +42,9 @@ import java.util.concurrent.Executors;
  */
 public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.OnItemClickListener {
 
+    private View feedRoot;
     private View headerWrapper;
+    private TextInputLayout tilSearch;
     private TextInputEditText etSearch;
     private MaterialButton btnSearch;
     private ImageView ivBanner;
@@ -85,10 +89,14 @@ public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.O
         feedAdapter = null;
         recyclerView = null;
         headerWrapper = null;
+        tilSearch = null;
+        feedRoot = null;
     }
 
     private void bindViews(View root) {
+        feedRoot = root.findViewById(R.id.feedRoot);
         headerWrapper = root.findViewById(R.id.headerWrapper);
+        tilSearch = root.findViewById(R.id.tilSearch);
         etSearch = root.findViewById(R.id.etSearch);
         btnSearch = root.findViewById(R.id.btnSearch);
         ivBanner = root.findViewById(R.id.ivBanner);
@@ -97,7 +105,12 @@ public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.O
         tvEmpty = root.findViewById(R.id.tvEmpty);
         progressIndicator = root.findViewById(R.id.progressIndicator);
         swipeRefreshLayout = root.findViewById(R.id.swipeRefresh);
-        etSearch.setHint(getSearchHint());
+
+        if (tilSearch != null) {
+            tilSearch.setHint(getSearchHint());
+        } else {
+            etSearch.setHint(getSearchHint());
+        }
         tvEmpty.setText(getEmptyMessage());
     }
 
@@ -125,6 +138,20 @@ public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.O
         swipeRefreshLayout.setOnRefreshListener(() -> {
             latestKeyword = getQueryFromInput();
             fetchFeed(true);
+        });
+        if (feedRoot != null) {
+            feedRoot.setOnTouchListener((v, event) -> {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    clearSearchFocus();
+                }
+                return false;
+            });
+        }
+        recyclerView.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                clearSearchFocus();
+            }
+            return false;
         });
         headerWrapper.setOnClickListener(v -> {
             long current = System.currentTimeMillis();
@@ -185,6 +212,15 @@ public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.O
     private String getQueryFromInput() {
         CharSequence text = etSearch.getText();
         return text != null ? text.toString().trim() : "";
+    }
+
+    private void clearSearchFocus() {
+        if (etSearch != null && etSearch.hasFocus()) {
+            etSearch.clearFocus();
+        }
+        if (tilSearch != null && tilSearch.hasFocus()) {
+            tilSearch.clearFocus();
+        }
     }
 
     private void scrollToTop() {

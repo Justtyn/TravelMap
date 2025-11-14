@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/feedRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -13,38 +14,41 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="6dp"
-        android:paddingTop="4dp">
+        android:paddingStart="6dp"
+        android:paddingTop="4dp"
+        android:paddingEnd="6dp"
+        android:paddingBottom="8dp">
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilSearch"
+            style="@style/Widget.Material3.TextInputLayout.FilledBox.Dense"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="12dp"
-            android:layout_weight="1"
-            style="@style/Widget.Material3.TextInputLayout.FilledBox.Dense">
+            android:layout_weight="1">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etSearch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:imeOptions="actionSearch"
-                android:singleLine="true"
-                android:hint="@string/feed_search_hint_default" />
+                android:singleLine="true" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSearch"
-            style="@style/Widget.Material3.Button.Icon"
-            android:layout_width="48dp"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
             android:layout_height="48dp"
+            android:paddingHorizontal="20dp"
+            android:text="@string/feed_search_button_text"
+            android:textAllCaps="false"
+            android:textStyle="bold"
             android:contentDescription="@string/feed_search_button_desc"
-            android:background="@drawable/shape_circle"
-            android:insetLeft="0dp"
-            android:insetRight="0dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:icon="@drawable/ic_search"
-            android:iconTint="@android:color/white" />
+            app:icon="@drawable/ic_search"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:iconSize="18dp" />
     </LinearLayout>
 
     <com.google.android.material.card.MaterialCardView
@@ -52,7 +56,8 @@
         android:layout_width="match_parent"
         android:layout_height="120dp"
         app:cardCornerRadius="16dp"
-        app:cardUseCompatPadding="true">
+        app:cardUseCompatPadding="false"
+        app:strokeWidth="0dp">
 
         <ImageView
             android:id="@+id/ivBanner"
@@ -60,16 +65,16 @@
             android:layout_height="match_parent"
             android:adjustViewBounds="true"
             android:contentDescription="@string/feed_banner_desc"
+            android:padding="6dp"
             android:scaleType="centerCrop"
             android:src="@drawable/banner_placeholder" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#66000000"
             android:gravity="bottom"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="20dp">
 
             <TextView
                 android:id="@+id/tvBannerTitle"

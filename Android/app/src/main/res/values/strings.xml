@@ -56,6 +56,7 @@
     <string name="feed_search_hint_mall">搜索热门商品或体验</string>
     <string name="feed_search_hint_booking">搜索酒店或预订</string>
     <string name="feed_search_button_desc">搜索内容</string>
+    <string name="feed_search_button_text">搜索</string>
     <string name="feed_banner_desc">精选活动 Banner</string>
     <string name="feed_item_image_desc">内容配图</string>
     <string name="feed_empty_default">当前暂无内容，稍后再试</string>
