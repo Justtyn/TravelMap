@@ -63,6 +63,7 @@ public class UserInfoActivity extends AppCompatActivity {
     private void initViews() {
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setNavigationOnClickListener(v -> finish());
+        toolbar.setSubtitle(R.string.profile_breadcrumb);
         tvUsername = findViewById(R.id.tvUserInfoUsername);
         tvNickname = findViewById(R.id.tvUserInfoNickname);
         tilPhone = findViewById(R.id.tilUserPhone);
