@@ -2,6 +2,8 @@ package com.justyn.travelmap;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -14,6 +16,14 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.justyn.travelmap.data.remote.ApiResponse;
+import com.justyn.travelmap.data.remote.AuthRepository;
+
+import org.json.JSONException;
+
+import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -24,6 +34,9 @@ public class LoginActivity extends AppCompatActivity {
     private MaterialButton btnLogin;
     private MaterialButton btnWeChatLogin;
     private TextView tvRegisterEntry;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final AuthRepository authRepository = new AuthRepository();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,23 +64,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void bindEvents() {
-        // 普通登录点击：简单校验输入是否为空，实际项目中应调用后台接口
-        btnLogin.setOnClickListener(v -> {
-            String username = etUsername.getText() != null ? etUsername.getText().toString().trim() : "";
-            String password = etPassword.getText() != null ? etPassword.getText().toString().trim() : "";
-            if (TextUtils.isEmpty(username)) {
-                Toast.makeText(this, "请输入用户名", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            if (TextUtils.isEmpty(password)) {
-                Toast.makeText(this, "请输入密码", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            // TODO: 在这里加入实际的登录请求逻辑（例如调用后端 API）
-            Toast.makeText(this, "模拟登录成功", Toast.LENGTH_SHORT).show();
-            // 登录成功后跳转主页面
-            startActivity(new Intent(this, MainActivity.class));
-        });
+        btnLogin.setOnClickListener(v -> attemptLogin());
 
         // 微信登录按钮点击：占位逻辑，后续需集成微信开放平台 SDK
         btnWeChatLogin.setOnClickListener(v -> {
@@ -80,5 +77,62 @@ public class LoginActivity extends AppCompatActivity {
         tvRegisterEntry.setOnClickListener(v -> {
             startActivity(new Intent(this, RegisterActivity.class));
         });
+    }
+
+    private void attemptLogin() {
+        String username = etUsername.getText() != null ? etUsername.getText().toString().trim() : "";
+        String password = etPassword.getText() != null ? etPassword.getText().toString().trim() : "";
+        if (TextUtils.isEmpty(username)) {
+            Toast.makeText(this, getString(R.string.toast_input_username), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (TextUtils.isEmpty(password)) {
+            Toast.makeText(this, getString(R.string.toast_input_password), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        setLoginInProgress(true);
+        executor.execute(() -> {
+            try {
+                ApiResponse response = authRepository.login(username, password);
+                mainHandler.post(() -> handleLoginResponse(response));
+            } catch (IOException e) {
+                mainHandler.post(() -> {
+                    setLoginInProgress(false);
+                    showLoginError(getString(R.string.toast_network_error));
+                });
+            } catch (JSONException e) {
+                mainHandler.post(() -> {
+                    setLoginInProgress(false);
+                    showLoginError(e.getMessage());
+                });
+            }
+        });
+    }
+
+    private void handleLoginResponse(ApiResponse response) {
+        setLoginInProgress(false);
+        if (response.isSuccess()) {
+            Toast.makeText(this, getString(R.string.toast_login_success), Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+        } else {
+            showLoginError(response.getMessage());
+        }
+    }
+
+    private void showLoginError(String detail) {
+        Toast.makeText(this, getString(R.string.toast_login_failed, detail), Toast.LENGTH_SHORT).show();
+    }
+
+    private void setLoginInProgress(boolean inProgress) {
+        btnLogin.setEnabled(!inProgress);
+        btnWeChatLogin.setEnabled(!inProgress);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        executor.shutdownNow();
     }
 }

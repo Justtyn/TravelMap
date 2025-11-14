@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% set title = "TravelMap · 智慧文旅后端" %}
+{% set active = "home" %}
+{% block content %}
+<section class="hero">
+  <p class="tagline">Smart Travel Backend</p>
+  <h1>一站式旅游内容与交易引擎</h1>
+  <p>
+    TravelMap 是一个基于 Flask + SQLite 的文旅应用后端，实现用户认证、景点 / 商品管理、
+    收藏、行程计划、购物车与订单全链路能力，适合课程设计、原型验证和轻量部署。
+  </p>
+  <div class="cta-row">
+    <a class="btn btn-primary" href="{{ github_url }}" target="_blank" rel="noopener">
+      <span>查看 GitHub 仓库</span>
+      <span>↗</span>
+    </a>
+    <a class="btn btn-ghost" href="{{ url_for('docs_page') }}">阅读文档</a>
+  </div>
+</section>
+
+<section class="grid">
+  <article class="card">
+    <h3>技术栈亮点</h3>
+    <ul class="list">
+      <li>Flask 3 + 原生 sqlite3，零依赖即可部署。</li>
+      <li>RESTful JSON 接口，统一响应规范。</li>
+      <li>tests_smoke.py 自带多模块调用示例。</li>
+    </ul>
+  </article>
+  <article class="card">
+    <h3>项目能力</h3>
+    <ul class="list">
+      <li>用户体系：本地账号 + 微信占位登录。</li>
+      <li>内容侧：景点、商品、预订接口全量返回。</li>
+      <li>交易链路：收藏、去过、行程、购物车与订单。</li>
+    </ul>
+  </article>
+  <article class="card">
+    <h3>部署建议</h3>
+    <ul class="list">
+      <li>服务器执行 <code>python app.py</code> 即可启动 API + 前端。</li>
+      <li>数据库 <code>db/TravelMap.db</code> 已注入真实感样本。</li>
+      <li>可直接通过 Flask 提供的静态页面访问本站。</li>
+    </ul>
+  </article>
+</section>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% set title = "TravelMap · 功能总览" %}
+{% set active = "features" %}
+{% block content %}
+<section class="hero">
+  <p class="tagline">Capabilities</p>
+  <h1>APP 功能矩阵</h1>
+  <p>
+    TravelMap 将核心文旅场景拆分为多个模块：内容（景点 / 商品）、用户旅程（收藏、去过、行程）、
+    交易（购物车、订单）与接入能力（接口文档、种子数据）。以下为前端可直接消费的能力清单。
+  </p>
+</section>
+
+<section class="grid">
+  <article class="card">
+    <h3>用户与认证</h3>
+    <ul class="list">
+      <li>本地注册 / 登录：返回完整用户档案，免 Token 配置。</li>
+      <li>微信登录占位：提供 <code>code</code> → openid 的示例流程。</li>
+      <li>字段透出：昵称、头像、手机号、邮箱、微信标识等。</li>
+    </ul>
+  </article>
+
+  <article class="card">
+    <h3>内容与预订</h3>
+    <ul class="list">
+      <li>景点、商品接口默认全量返回，可通过 keyword / city / type 筛选。</li>
+      <li>预订接口同时返回商品与关联景点，方便展示城市 / 坐标。</li>
+      <li>数据库已注入真实感样本：北京、上海、厦门等热门区域。</li>
+    </ul>
+  </article>
+
+  <article class="card">
+    <h3>旅程互动</h3>
+    <ul class="list">
+      <li>收藏：支持景点 / 商品两类 target，并附带 target 详情。</li>
+      <li>去过：记录 <code>visit_date</code> + rating，可驱动“足迹”页面。</li>
+      <li>行程计划：<code>content</code> 保存 JSON，适合前端渲染每日路线。</li>
+    </ul>
+  </article>
+
+  <article class="card">
+    <h3>交易链路</h3>
+    <ul class="list">
+      <li>购物车：统一容纳各类商品；接口回传 product 快照。</li>
+      <li>订单：order + items + product 三段式结构，含联系人 / 入住日期等字段。</li>
+      <li>示例订单数据已写入 db，可直接展示列表与详情态。</li>
+    </ul>
+  </article>
+
+  <article class="card">
+    <h3>部署集成</h3>
+    <ul class="list">
+      <li>运行 <code>python app.py</code> 即可启动 API + 官网页面。</li>
+      <li>如需 https，可在服务器层做反向代理，后端无需改动。</li>
+      <li>tests_smoke.py 可模拟全链路调用，便于上线前回归。</li>
+    </ul>
+  </article>
+
+  <article class="card">
+    <h3>前端提示</h3>
+    <ul class="list">
+      <li>所有接口返回 JSON；错误场景同样给出 code/msg 描述。</li>
+      <li>列表接口已去分页，若需分页由前端自行切片或后端扩展参数。</li>
+      <li>需要最新字段请参考 <a href="{{ url_for('serve_doc_file', filename='API_DOC.md') }}" target="_blank" rel="noopener">API_DOC.md</a>。</li>
+    </ul>
+  </article>
+</section>
+{% endblock %}

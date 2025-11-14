@@ -27,7 +27,7 @@ import sqlite3
 import uuid
 from datetime import datetime
 
-from flask import Flask, jsonify, request, g
+from flask import Flask, jsonify, request, g, render_template, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # -------------------- 基础配置 --------------------
@@ -36,6 +36,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # 修改数据库文件名后缀为 .db（真实 SQLite 文件），避免把建表脚本 .sql 当数据库用
 DB_PATH = os.path.join(BASE_DIR, 'db', 'TravelMap.db')  # 已存在的 SQLite 数据库
+DOC_DIR = os.path.join(BASE_DIR, 'doc')
+GITHUB_URL = 'https://github.com/Justtyn/TravelMap'
 
 
 # 新增：启动前确保关键业务表存在（特别是 visited / cart_item，防止旧库缺表导致接口报错）
@@ -302,6 +304,27 @@ def fetch_visited_payload_by_id(visit_id):
 @app.route('/ping')
 def ping():
     return json_response(data={'msg': 'pong'})
+
+
+# -------------------- 官网页面 --------------------
+@app.route('/')
+def home_page():
+    return render_template('home.html', github_url=GITHUB_URL, active='home', title='TravelMap · 智慧文旅后端')
+
+
+@app.route('/docs')
+def docs_page():
+    return render_template('docs.html', github_url=GITHUB_URL, active='docs', title='TravelMap · 文档中心')
+
+
+@app.route('/features')
+def features_page():
+    return render_template('features.html', github_url=GITHUB_URL, active='features', title='TravelMap · 功能总览')
+
+
+@app.route('/docs/file/<path:filename>')
+def serve_doc_file(filename):
+    return send_from_directory(DOC_DIR, filename)
 
 
 # =====================================================

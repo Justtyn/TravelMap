@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% set title = "TravelMap · 文档中心" %}
+{% set active = "docs" %}
+{% block content %}
+<section class="hero">
+  <p class="tagline">Documentation</p>
+  <h1>API / 贡献指南一键查阅</h1>
+  <p>
+    接口、协作与部署说明全部集中在仓库 <code>doc/</code> 目录，
+    这里提供最常用的入口，方便前端或移动端快速查阅。
+  </p>
+  <div class="cta-row">
+    <a class="btn btn-primary" href="{{ url_for('serve_doc_file', filename='API_DOC.md') }}" target="_blank" rel="noopener">API_DOC.md</a>
+    <a class="btn btn-ghost" href="{{ url_for('serve_doc_file', filename='AGENTS.md') }}" target="_blank" rel="noopener">AGENTS.md</a>
+  </div>
+</section>
+
+<section class="grid">
+  <article class="card">
+    <h3>API 关键信息</h3>
+    <ul class="list">
+      <li>返回结构统一为 <code>{code,msg,data}</code>，错误时依旧保持格式。</li>
+      <li>景点 / 商品 / 预订接口已改为<strong>全量列表</strong>，无需分页参数。</li>
+      <li>订单接口会返回 order + items + product 快照，可直接渲染详情。</li>
+    </ul>
+    <a class="doc-link" href="{{ url_for('serve_doc_file', filename='API_DOC.md') }}" target="_blank" rel="noopener">
+      查看完整接口列表
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M7 17 17 7M7 7h10v10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+  </article>
+
+  <article class="card">
+    <h3>贡献指南（AGENTS）</h3>
+    <ul class="list">
+      <li>结构说明：<code>app.py</code> 单体后端、<code>db/</code> SQLite、<code>doc/</code> 文档。</li>
+      <li>开发流程：推荐虚拟环境 + <code>pip install -r requirements.txt</code>。</li>
+      <li>质量基线：PEP 8、统一 JSON 响应、tests_smoke.py 做全链路验证。</li>
+    </ul>
+    <a class="doc-link" href="{{ url_for('serve_doc_file', filename='AGENTS.md') }}" target="_blank" rel="noopener">
+      阅读贡献指南
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M7 17 17 7M7 7h10v10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+  </article>
+
+  <article class="card">
+    <h3>部署清单</h3>
+    <ul class="list">
+      <li>后端：<code>pip install -r requirements.txt && python app.py</code></li>
+      <li>数据库：默认 <code>db/TravelMap.db</code>，可直接使用或自行扩充。</li>
+      <li>前端：当前页面即由 Flask 提供，不再需要额外静态服务。</li>
+    </ul>
+  </article>
+</section>
+{% endblock %}

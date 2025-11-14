@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ title or 'TravelMap' }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="logo">TravelMap</div>
+      <nav>
+        <a href="{{ url_for('home_page') }}" class="{% if active == 'home' %}active{% endif %}">首页</a>
+        <a href="{{ url_for('docs_page') }}" class="{% if active == 'docs' %}active{% endif %}">文档</a>
+        <a href="{{ url_for('features_page') }}" class="{% if active == 'features' %}active{% endif %}">功能介绍</a>
+        <a href="{{ github_url }}" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+
+    {% block content %}{% endblock %}
+
+    <footer>
+      © 2025 TravelMap · 由 Flask + SQLite 驱动
+    </footer>
+  </div>
+</body>
+</html>
