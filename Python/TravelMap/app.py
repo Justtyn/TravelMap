@@ -435,6 +435,39 @@ def wechat_login():
     return json_response(200, '微信登录成功', {'user': sanitize_user_row(user_row)})
 
 
+@app.route('/api/users/<int:user_id>', methods=['PUT'])
+def update_user_contact(user_id):
+    """前端 UserInfo 编辑页：仅允许修改手机号与邮箱。"""
+    data = get_json()
+    phone = data.get('phone')
+    email = data.get('email')
+
+    if phone is None and email is None:
+        return json_response(400, '必须提供 phone 或 email', None, 400)
+
+    db = get_db()
+    row = db.execute('SELECT * FROM user WHERE id = ?', (user_id,)).fetchone()
+    if row is None:
+        return json_response(404, '用户不存在', None, 404)
+
+    fields = []
+    params = []
+    if phone is not None:
+        fields.append('phone = ?')
+        params.append(phone.strip() if isinstance(phone, str) else phone)
+    if email is not None:
+        fields.append('email = ?')
+        params.append(email.strip() if isinstance(email, str) else email)
+
+    params.append(user_id)
+    sql = f'UPDATE user SET {", ".join(fields)} WHERE id = ?'
+    db.execute(sql, params)
+    db.commit()
+
+    updated = db.execute('SELECT * FROM user WHERE id = ?', (user_id,)).fetchone()
+    return json_response(200, '联系方式已更新', {'user': sanitize_user_row(updated)})
+
+
 # =====================================================
 # 二、景点模块 scenic（列表 / 搜索 / 详情 / 地图）
 # =====================================================
