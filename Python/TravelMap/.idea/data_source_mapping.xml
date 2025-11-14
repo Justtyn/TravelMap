@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourcePerFileMappings">
+    <file url="file://$PROJECT_DIR$/.idea/queries/Query.sql" value="f3d2d631-af62-4dca-89e1-46a0b849ab33" />
+    <file url="file://$PROJECT_DIR$/app.py" value="f3d2d631-af62-4dca-89e1-46a0b849ab33" />
+  </component>
+</project>

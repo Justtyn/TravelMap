@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 基础黑白 -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- 应用品牌主色（浅色模式） -->
+    <color name="brand_primary">#2455F5</color>
+    <!-- 主色上的文字/图标颜色（高对比） -->
+    <color name="brand_on_primary">#FFFFFFFF</color>
+
+    <!-- 微信品牌色（浅色模式按钮背景） -->
+    <color name="wechat_green">#07C160</color>
+    <!-- 微信按钮文字颜色（保持对比） -->
+    <color name="wechat_on_green">#FFFFFFFF</color>
+
+    <!-- 输入框背景的轻微分隔色（浅色） -->
+    <color name="surface_variant_light">#FFEFF2F7</color>
+</resources>
