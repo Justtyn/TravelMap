@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 夜间模式下的颜色定义 -->
+    <!-- 品牌主色：夜间保持一致，Material3 常见做法是主色不变或稍微降低亮度，这里保持不变以减少突兀 -->
+    <color name="brand_primary">#2455F5</color>
+    <!-- 主色上的文字/Icon 高对比色：在深色模式依旧使用纯白 -->
+    <color name="brand_on_primary">#FFFFFFFF</color>
+
+    <!-- 微信品牌色与其前景色：保持官方绿色与白色 -->
+    <color name="wechat_green">#07C160</color>
+    <color name="wechat_on_green">#FFFFFFFF</color>
+
+    <!-- 输入框填充底色（深色模式下的 surface variant），选择较深灰蓝提升对比 -->
+    <color name="surface_variant_light">#FF2A3036</color>
+</resources>

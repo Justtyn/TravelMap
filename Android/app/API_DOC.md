@@ -318,22 +318,15 @@
 
 | 表 | 关键字段 | 说明 |
 |----|----------|------|
-| `user` | id, login_type, username, password, nickname, avatar_url, phone, email, wx_* | 用户实体，所有业务表均通过 `user_id` 关联。密码仅存哈希，接口不回传。 |
-| `scenic` | id, name, city, cover_image, description, address, latitude, longitude, audio_url | 景点基础资料，商品（门票/酒店）可通过 `scenic_id` 关联。 |
-| `product` | id, name, scenic_id, cover_image, price, stock, description, type, hotel_address | 商品/门票/酒店统一存储，`type` 用于业务区分，`scenic_id` 可为 null。 |
-| `favorite` | id, user_id, target_id, target_type, create_time | 收藏记录；`target_type` = `SCENIC` / `PRODUCT`。外键：`user_id → user.id`。 |
-| `visited` | id, user_id, scenic_id, visit_date, rating | “去过”记录；外键：`user_id → user.id`，`scenic_id → scenic.id`。 |
-| `trip_plan` | id, user_id, title, start_date, end_date, source, content, create_time | 行程计划，`content` 一般存 JSON 字符串；外键：`user_id → user.id`。 |
-| `cart_item` | id, user_id, product_id, quantity, create_time | 购物车条目；外键：`user_id → user.id`，`product_id → product.id`。 |
-| `order_main` | id, order_no, user_id, order_type, total_price, status, create_time, pay_time, contact_name, contact_phone, checkin_date, checkout_date | 订单主表；外键：`user_id → user.id`。 |
-| `order_item` | id, order_id, product_id, quantity, price | 订单明细，保存下单快照；外键：`order_id → order_main.id`，`product_id → product.id`。 |
-
-**关系速览**
-- `user` 是所有业务数据的根：收藏 (`favorite`)、购物车 (`cart_item`)、订单 (`order_main`)、去过 (`visited`)、行程 (`trip_plan`) 等均以 `user_id` 关联。
-- `product` 与 `scenic` 的关系：酒店/门票类商品通常带 `scenic_id`，方便 `/api/bookings` 直接 JOIN scenic 取城市等信息；旅行体验/文创 (`TRAVEL`) 可不关联景点。
-- `order_main` ↔ `order_item`：一对多；创建订单时会把购物车里的 `product_id + price + quantity` 快照到 `order_item`，同时清空该用户购物车。
-- `favorite`、`visited` 通过 `target_id` / `scenic_id` 跟景点或商品建立非强制关联，当前实现依赖应用层保证目标存在。
-- 若需要绘制 ER 图，可按以上关系连线：`user` → `favorite` (1:N)、`user` → `cart_item` (1:N)、`product` → `cart_item` (1:N)、`order_main` → `order_item` (1:N)、`product` → `order_item` (1:N)、`scenic` → `product` (1:N 可空)、`user` → `trip_plan` (1:N)、`user` → `visited` (1:N)、`scenic` → `visited` (1:N)。
+| `user` | id, login_type, username, password, nickname, avatar_url, wx_* | 用户信息（密码仅存哈希，接口不会回传）。 |
+| `scenic` | id, name, city, cover_image, description, address, latitude, longitude, audio_url | 景点基础资料。 |
+| `product` | id, name, scenic_id, cover_image, price, stock, description, type, hotel_address | 商品/门票/酒店统一表。 |
+| `favorite` | id, user_id, target_id, target_type, create_time | 收藏记录，接口会回传 `target` 明细。 |
+| `visited` | id, user_id, scenic_id, visit_date, rating | “去过”记录，JOIN scenic 后返回。 |
+| `trip_plan` | id, user_id, title, start_date, end_date, source, content, create_time | 行程计划存档，`content` 多为 JSON 字符串。 |
+| `cart_item` | id, user_id, product_id, quantity, create_time | 购物车条目，接口会附带 product 信息。 |
+| `order_main` | id, order_no, user_id, order_type, total_price, status, create_time, pay_time, contact_name, contact_phone, checkin_date, checkout_date | 订单主表。 |
+| `order_item` | id, order_id, product_id, quantity, price | 订单明细（下单时快照价格）。 |
 
 ---
 

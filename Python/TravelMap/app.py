@@ -396,7 +396,7 @@ def wechat_login():
 # =====================================================
 # 二、景点模块 scenic（列表 / 搜索 / 详情 / 地图）
 # =====================================================
-# 支持 keyword 模糊匹配 name + description，city 精确匹配；附带分页。
+# 支持 keyword 模糊匹配 name + description，city 精确匹配；默认返回全部匹配结果。
 # 地图接口返回精简字段用于前端标点。
 
 
@@ -404,8 +404,6 @@ def wechat_login():
 def scenic_list():
     keyword = request.args.get('keyword', '').strip()
     city = request.args.get('city', '').strip()
-    page = int(request.args.get('page', 1) or 1)
-    page_size = int(request.args.get('page_size', 10) or 10)
 
     db = get_db()
     sql = 'SELECT * FROM scenic WHERE 1=1'
@@ -419,24 +417,10 @@ def scenic_list():
         sql += ' AND city = ?'
         params.append(city)
 
-    # 统计总数（子查询包裹防止分页影响）
-    count_sql = 'SELECT COUNT(1) AS cnt FROM (' + sql + ') AS t'
-    cur = db.execute(count_sql, params)
-    total = cur.fetchone()['cnt']
-
-    offset = (page - 1) * page_size
-    sql += ' LIMIT ? OFFSET ?'
-    params_with_page = params + [page_size, offset]
-
-    cur = db.execute(sql, params_with_page)
+    sql += ' ORDER BY id ASC'
+    cur = db.execute(sql, params)
     rows = [dict(r) for r in cur.fetchall()]
-
-    return json_response(200, 'OK', {
-        'list': rows,
-        'page': page,
-        'page_size': page_size,
-        'total': total,
-    })
+    return json_response(200, 'OK', rows)
 
 
 @app.route('/api/scenics/<int:sid>', methods=['GET'])
@@ -468,8 +452,6 @@ def scenic_map():
 def product_list():
     keyword = request.args.get('keyword', '').strip()
     ptype = request.args.get('type', '').strip()
-    page = int(request.args.get('page', 1) or 1)
-    page_size = int(request.args.get('page_size', 10) or 10)
 
     db = get_db()
     sql = 'SELECT * FROM product WHERE 1=1'
@@ -483,23 +465,11 @@ def product_list():
         sql += ' AND type = ?'
         params.append(ptype)
 
-    count_sql = 'SELECT COUNT(1) AS cnt FROM (' + sql + ') AS t'
-    cur = db.execute(count_sql, params)
-    total = cur.fetchone()['cnt']
-
-    offset = (page - 1) * page_size
-    sql += ' LIMIT ? OFFSET ?'
-    params_with_page = params + [page_size, offset]
-
-    cur = db.execute(sql, params_with_page)
+    sql += ' ORDER BY id ASC'
+    cur = db.execute(sql, params)
     rows = [dict(r) for r in cur.fetchall()]
 
-    return json_response(200, 'OK', {
-        'list': rows,
-        'page': page,
-        'page_size': page_size,
-        'total': total,
-    })
+    return json_response(200, 'OK', rows)
 
 
 @app.route('/api/products/<int:pid>', methods=['GET'])
@@ -516,8 +486,6 @@ def product_detail(pid):
 def booking_list():
     btype = request.args.get('type', '').strip()  # HOTEL / TICKET
     city = request.args.get('city', '').strip()
-    page = int(request.args.get('page', 1) or 1)
-    page_size = int(request.args.get('page_size', 10) or 10)
 
     if not btype:
         return json_response(400, 'type 参数必填(HOTEL/TICKET)', None, 400)
@@ -529,31 +497,20 @@ def booking_list():
         base_sql += ' AND s.city = ?'
         params.append(city)
 
-    count_sql = 'SELECT COUNT(1) AS cnt ' + base_sql
-    cur = db.execute(count_sql, params)
-    total = cur.fetchone()['cnt']
-
-    offset = (page - 1) * page_size
     data_sql = f'''
         SELECT {PRODUCT_SELECT_COLUMNS},
                {SCENIC_SELECT_COLUMNS}
         {base_sql}
-        LIMIT ? OFFSET ?
+        ORDER BY p.id ASC
     '''
-    params_with_page = params + [page_size, offset]
-    cur = db.execute(data_sql, params_with_page)
+    cur = db.execute(data_sql, params)
     results = []
     for row in cur.fetchall():
         product = extract_prefixed_fields(row, 'product_')
         scenic = extract_prefixed_fields(row, 'scenic_')
         results.append({'product': product, 'scenic': scenic or None})
 
-    return json_response(200, 'OK', {
-        'list': results,
-        'page': page,
-        'page_size': page_size,
-        'total': total,
-    })
+    return json_response(200, 'OK', results)
 
 
 # =====================================================

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">TravelMap</string>
     <!-- 登录注册相关字符串 -->
@@ -8,11 +9,16 @@
     <string name="login_register_entry">还没有账号？注册</string>
     <string name="register_title">注册账号</string>
     <string name="register_button_text">注册</string>
+    <string name="register_confirm_password_hint">确认密码</string>
+    <string name="register_back_to_login">已有账号？返回登录</string>
 
     <!-- 提示语 -->
     <string name="toast_input_username">请输入用户名</string>
     <string name="toast_input_password">请输入密码</string>
+    <string name="toast_input_confirm_password">请再次输入确认密码</string>
+    <string name="toast_password_not_match">两次输入的密码不一致</string>
     <string name="toast_login_success">模拟登录成功</string>
+    <string name="toast_register_success">模拟注册成功</string>
     <string name="toast_wechat_not_ready">暂未集成微信登录，后续请接入微信 SDK</string>
 
     <!-- 保留原有示例字符串 -->
