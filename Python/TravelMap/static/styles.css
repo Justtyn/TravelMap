@@ -246,6 +246,17 @@ nav a.active {
   color: var(--primary);
 }
 
+.btn-download {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(56, 189, 248, 0.15);
+  box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.15);
+}
+
+.btn-download:hover {
+  background: rgba(56, 189, 248, 0.25);
+}
+
 .grid {
   max-width: var(--max-width);
   margin: 0 auto;
