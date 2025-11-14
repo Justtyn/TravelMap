@@ -8,17 +8,17 @@
       <img src="{{ url_for('static', filename='logo.png') }}" alt="旅图 TravelMap Logo" loading="lazy" />
       <span>旅图 · TravelMap</span>
     </div>
-    <p class="tagline">Android 旅行助手</p>
-    <h1>把世界、路线与灵感都放进口袋</h1>
+    <p class="tagline">Android 文旅助手</p>
+    <h1>景点、商品、预订与订单一站打通</h1>
     <p>
-      旅图是为独立旅行者打造的安卓 App：集合城市攻略、实时行程、行前清单与旅途中记录，
-      通过轻量 AI 推荐与离线缓存，让你在信号不稳定的地方也能安心探索。
+      旅图 App 将首页灵感流、商城、预订与个人中心四大模块整合在同一底部导航，
+      从浏览景点到收藏/去过、加入购物车再到订单回查，全链路复现真实文旅业务。
     </p>
     <div class="capabilities">
-      <span class="chip">离线导览</span>
-      <span class="chip">AI 行程助手</span>
-      <span class="chip">多人共享</span>
-      <span class="chip">原生地图组件</span>
+      <span class="chip">首页灵感流</span>
+      <span class="chip">商城/预订联动</span>
+      <span class="chip">收藏与去过</span>
+      <span class="chip">购物车 + 订单</span>
     </div>
     <div class="cta-row">
       <a class="btn btn-primary" href="{{ github_url }}" target="_blank" rel="noopener">
@@ -30,19 +30,19 @@
     <p class="note">测试版正在封闭内测中，欢迎通过 GitHub Issue 申请体验与反馈。</p>
   </div>
   <div class="hero-media">
-    <img src="{{ url_for('static', filename='page-01.jpg') }}" alt="旅图 App 首页界面" loading="lazy" />
+    <img src="{{ url_for('static', filename='首页景点列表.jpg') }}" alt="旅图 App 首页界面" loading="lazy" />
     <div class="hero-stats">
       <div>
-        <strong>200+</strong>
-        <span>精选景点与路线</span>
+        <strong>180+</strong>
+        <span>景点与商品样本</span>
       </div>
       <div>
-        <strong>60s</strong>
-        <span>生成个性行程</span>
+        <strong>4</strong>
+        <span>核心底部 Tab</span>
       </div>
       <div>
-        <strong>全天候</strong>
-        <span>离线语音讲解</span>
+        <strong>10+</strong>
+        <span>骨架屏状态</span>
       </div>
     </div>
   </div>
@@ -51,49 +51,56 @@
 <section class="section">
   <div class="section-header">
     <p class="eyebrow">产品定位</p>
-    <h2>围绕真实旅行需求设计的安卓体验</h2>
-    <p>旅图帮助你Before / During / After 三个阶段都保持掌控，所有数据可同步至 TravelMap 云端。</p>
+    <h2>真实文旅业务的轻量级安卓实现</h2>
+    <p>App 已串联内容浏览、互动、交易与个人资产四条链路，可直接对接 TravelMap 开源后端。</p>
   </div>
   <div class="grid feature-grid">
     <article class="card feature-card">
-      <h3>行前准备</h3>
-      <p>自动整理目的地tips、签证材料、天气与行李清单，生成可分享的出行 Brief。</p>
+      <h3>首页灵感流</h3>
+      <p>统一的 Feed Adapter + Banner 模块，支持搜索、分页前置处理及骨架屏加载。</p>
       <ul class="list">
-        <li>一键导入收藏的城市与景点。</li>
-        <li>支持自定义打包清单并跨行程复用。</li>
+        <li>卡片展示经纬度、库存、评分等核心字段。</li>
+        <li>点击跳转景点详情并带副标题面包屑。</li>
       </ul>
     </article>
     <article class="card feature-card">
-      <h3>旅途随身</h3>
-      <p>时间轴 + 地图双视图，按天管理路线、票务与备注，弱网环境同样可浏览。</p>
+      <h3>商城 / 预订</h3>
+      <p>商品列表、详情页与购物车打通，支持收藏、加入购物车、下单成功页等链路。</p>
       <ul class="list">
-        <li>离线语音讲解与 AR 指路。</li>
-        <li>多人协作，支持实时同步最新计划。</li>
+        <li>区分 Mall 与 Booking 场景，Toolbar 文案自动切换。</li>
+        <li>订单列表接入数据库样例，便于演示。</li>
       </ul>
     </article>
     <article class="card feature-card">
-      <h3>记录分享</h3>
-      <p>旅途中拍摄的照片、音频与小记将同步回后台，自动生成旅程故事页。</p>
+      <h3>我的 & 互动</h3>
+      <p>个人中心聚合收藏、去过、订单、购物车、资料等页面，均带骨架屏与安全区适配。</p>
       <ul class="list">
-        <li>Markdown / 富文本双模式编辑。</li>
-        <li>导出长图或分享链接，随时回顾。</li>
+        <li>收藏/去过与详情页状态实时同步。</li>
+        <li>支持退出登录与 UserPreferences 会话管理。</li>
       </ul>
     </article>
   </div>
 </section>
 
 {% set screens = [
-  ('page-01.jpg', '首页灵感流'),
-  ('page-02.jpg', '智能行程表'),
-  ('page-03.jpg', '旅途打卡'),
-  ('page-04.jpg', '收藏与清单'),
-  ('page-05.jpg', '故事与分享')
+  ('首页景点列表.jpg', '首页景点列表'),
+  ('景点详情页.jpg', '景点详情'),
+  ('商城页面.jpg', '商城 Tab'),
+  ('预定页面.jpg', '预订页'),
+  ('我的页.jpg', '我的主页'),
+  ('我的收藏页.jpg', '收藏列表'),
+  ('我的去过页.jpg', '去过记录'),
+  ('我的购物车页.jpg', '购物车'),
+  ('我的订单页面.jpg', '订单列表'),
+  ('登录页.jpg', '登录页'),
+  ('注册页.jpg', '注册页'),
+  ('深色模式适配.jpg', '暗色模式')
 ] %}
 <section class="section gallery">
   <div class="section-header">
     <p class="eyebrow">界面预览</p>
     <h2>旅图 App 主要页面速览</h2>
-    <p>所有界面均以单手操作与户外可读性为核心设计，暗色 / 浅色模式自动切换。</p>
+    <p>从首页 Feed 到交易链路再到暗色模式，全流程界面素材均已准备好。</p>
   </div>
   <div class="screen-grid">
     {% for screen in screens %}
