@@ -20,6 +20,7 @@ import com.justyn.travelmap.data.local.UserProfile;
 import com.justyn.travelmap.data.remote.UserCenterRepository;
 import com.justyn.travelmap.model.CartItem;
 import com.justyn.travelmap.profile.adapter.CartAdapter;
+import com.facebook.shimmer.ShimmerFrameLayout;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -35,6 +36,8 @@ public class CartActivity extends AppCompatActivity {
     private TextView tvEmpty;
     private CircularProgressIndicator progressIndicator;
     private MaterialButton btnSubmit;
+    private View contentContainer;
+    private ShimmerFrameLayout skeletonLayout;
     private CartAdapter adapter;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -62,6 +65,8 @@ public class CartActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.rvCart);
         tvEmpty = findViewById(R.id.tvCartEmpty);
         progressIndicator = findViewById(R.id.cartProgress);
+        contentContainer = findViewById(R.id.cartContent);
+        skeletonLayout = findViewById(R.id.cartSkeleton);
         btnSubmit = findViewById(R.id.btnSubmitOrder);
         adapter = new CartAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -150,13 +155,32 @@ public class CartActivity extends AppCompatActivity {
     }
 
     private void setLoading(boolean loading) {
-        progressIndicator.setVisibility(loading ? View.VISIBLE : View.GONE);
-        btnSubmit.setEnabled(!loading);
+        showSkeleton(loading);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (skeletonLayout != null) {
+            skeletonLayout.stopShimmer();
+        }
         executor.shutdownNow();
+    }
+
+    private void showSkeleton(boolean show) {
+        if (skeletonLayout == null || contentContainer == null) {
+            return;
+        }
+        if (show) {
+            skeletonLayout.setVisibility(View.VISIBLE);
+            skeletonLayout.startShimmer();
+            contentContainer.setVisibility(View.INVISIBLE);
+            tvEmpty.setVisibility(View.GONE);
+            btnSubmit.setEnabled(false);
+        } else {
+            skeletonLayout.stopShimmer();
+            skeletonLayout.setVisibility(View.GONE);
+            contentContainer.setVisibility(View.VISIBLE);
+        }
     }
 }

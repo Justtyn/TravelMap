@@ -16,7 +16,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButtonToggleGroup;
-import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.justyn.travelmap.R;
 import com.justyn.travelmap.data.local.UserPreferences;
 import com.justyn.travelmap.data.local.UserProfile;
@@ -25,6 +24,7 @@ import com.justyn.travelmap.detail.ProductDetailActivity;
 import com.justyn.travelmap.detail.ScenicDetailActivity;
 import com.justyn.travelmap.model.FeedItem;
 import com.justyn.travelmap.ui.feed.FeedAdapter;
+import com.facebook.shimmer.ShimmerFrameLayout;
 
 import org.json.JSONException;
 
@@ -40,8 +40,9 @@ public class FavoritesActivity extends AppCompatActivity implements FeedAdapter.
     private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView recyclerView;
     private TextView tvEmpty;
-    private CircularProgressIndicator progressIndicator;
     private MaterialButtonToggleGroup toggleGroup;
+    private View contentContainer;
+    private ShimmerFrameLayout skeletonLayout;
     private FeedAdapter adapter;
     private FavoriteTab currentTab = FavoriteTab.PRODUCT;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -71,8 +72,9 @@ public class FavoritesActivity extends AppCompatActivity implements FeedAdapter.
         swipeRefreshLayout = findViewById(R.id.favoritesSwipeRefresh);
         recyclerView = findViewById(R.id.rvFavorites);
         tvEmpty = findViewById(R.id.tvFavoritesEmpty);
-        progressIndicator = findViewById(R.id.favoritesProgress);
         toggleGroup = findViewById(R.id.favoriteToggleGroup);
+        contentContainer = findViewById(R.id.favoritesContent);
+        skeletonLayout = findViewById(R.id.favoritesSkeleton);
         adapter = new FeedAdapter(this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
@@ -121,7 +123,7 @@ public class FavoritesActivity extends AppCompatActivity implements FeedAdapter.
         if (fromSwipe) {
             swipeRefreshLayout.setRefreshing(loading);
         } else {
-            progressIndicator.setVisibility(loading ? View.VISIBLE : View.GONE);
+            showSkeleton(loading);
         }
     }
 
@@ -138,6 +140,9 @@ public class FavoritesActivity extends AppCompatActivity implements FeedAdapter.
     protected void onDestroy() {
         super.onDestroy();
         executor.shutdownNow();
+        if (skeletonLayout != null) {
+            skeletonLayout.stopShimmer();
+        }
     }
 
     private void openScenicDetail(long scenicId) {
@@ -156,5 +161,21 @@ public class FavoritesActivity extends AppCompatActivity implements FeedAdapter.
         Intent intent = new Intent(this, ProductDetailActivity.class);
         intent.putExtra(ProductDetailActivity.EXTRA_PRODUCT_ID, productId);
         startActivity(intent);
+    }
+
+    private void showSkeleton(boolean show) {
+        if (skeletonLayout == null || contentContainer == null) {
+            return;
+        }
+        if (show) {
+            skeletonLayout.setVisibility(View.VISIBLE);
+            skeletonLayout.startShimmer();
+            contentContainer.setVisibility(View.INVISIBLE);
+            tvEmpty.setVisibility(View.GONE);
+        } else {
+            skeletonLayout.stopShimmer();
+            skeletonLayout.setVisibility(View.GONE);
+            contentContainer.setVisibility(View.VISIBLE);
+        }
     }
 }

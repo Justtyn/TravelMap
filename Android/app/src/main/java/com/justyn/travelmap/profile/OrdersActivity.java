@@ -14,13 +14,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.justyn.travelmap.R;
 import com.justyn.travelmap.data.local.UserPreferences;
 import com.justyn.travelmap.data.local.UserProfile;
 import com.justyn.travelmap.data.remote.UserCenterRepository;
 import com.justyn.travelmap.model.FeedItem;
 import com.justyn.travelmap.ui.feed.FeedAdapter;
+import com.facebook.shimmer.ShimmerFrameLayout;
 
 import org.json.JSONException;
 
@@ -34,7 +34,8 @@ public class OrdersActivity extends AppCompatActivity implements FeedAdapter.OnI
     private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView recyclerView;
     private TextView tvEmpty;
-    private CircularProgressIndicator progressIndicator;
+    private View contentContainer;
+    private ShimmerFrameLayout skeletonLayout;
     private FeedAdapter adapter;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -62,7 +63,8 @@ public class OrdersActivity extends AppCompatActivity implements FeedAdapter.OnI
         swipeRefreshLayout = findViewById(R.id.ordersSwipeRefresh);
         recyclerView = findViewById(R.id.rvOrders);
         tvEmpty = findViewById(R.id.tvOrdersEmpty);
-        progressIndicator = findViewById(R.id.ordersProgress);
+        contentContainer = findViewById(R.id.ordersContent);
+        skeletonLayout = findViewById(R.id.ordersSkeleton);
         adapter = new FeedAdapter(this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
@@ -95,7 +97,7 @@ public class OrdersActivity extends AppCompatActivity implements FeedAdapter.OnI
         if (fromSwipe) {
             swipeRefreshLayout.setRefreshing(loading);
         } else {
-            progressIndicator.setVisibility(loading ? View.VISIBLE : View.GONE);
+            showSkeleton(loading);
         }
     }
 
@@ -108,5 +110,24 @@ public class OrdersActivity extends AppCompatActivity implements FeedAdapter.OnI
     protected void onDestroy() {
         super.onDestroy();
         executor.shutdownNow();
+        if (skeletonLayout != null) {
+            skeletonLayout.stopShimmer();
+        }
+    }
+
+    private void showSkeleton(boolean show) {
+        if (skeletonLayout == null || contentContainer == null) {
+            return;
+        }
+        if (show) {
+            skeletonLayout.setVisibility(View.VISIBLE);
+            skeletonLayout.startShimmer();
+            contentContainer.setVisibility(View.INVISIBLE);
+            tvEmpty.setVisibility(View.GONE);
+        } else {
+            skeletonLayout.stopShimmer();
+            skeletonLayout.setVisibility(View.GONE);
+            contentContainer.setVisibility(View.VISIBLE);
+        }
     }
 }

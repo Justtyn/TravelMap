@@ -16,7 +16,7 @@
    - “我的”页支持圆角头像、邮箱展示以及快捷菜单，跳转到个人资料编辑、收藏、去过、订单、购物车等页面。
    - `UserInfoActivity`、`FavoritesActivity`、`VisitedActivity`、`OrdersActivity`、`CartActivity` 等已完成基础 UI 与数据加载（收藏/去过/购物车列表、下单、个人信息修改等），并与 `UserCenterRepository` 统一管理接口调用。
 6. **详情页与交互完善**
-   - 新增 `ScenicDetailActivity`、`ProductDetailActivity` 及其布局，展示图文、地址、经纬度、价格、库存等字段，并通过骨架屏 + Material3 UI 提升加载体验。
+   - 新增 `ScenicDetailActivity`、`ProductDetailActivity` 及其布局，展示图文、地址、经纬度、价格、库存等字段，并通过骨架屏 + Material3 UI 提升加载体验；首页/商城/预订/我的入口及收藏、去过、订单、购物车等二级页面同样接入骨架屏。
    - 收藏/取消收藏、去过记录（含评分弹窗）、加入购物车等操作均接入真实接口，按钮在请求中展示局部 `CircularProgressIndicator`，收藏/去过/加购后的状态即时刷新。
    - 下单成功页 `OrderSuccessActivity`、购物车空态/按钮可用性、收藏/去过/购物车页面均已串联详情页跳转。
 
