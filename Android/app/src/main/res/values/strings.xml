@@ -49,4 +49,25 @@
     <string name="my_menu_favorites">我的收藏</string>
     <string name="my_menu_orders">我的订单</string>
     <string name="my_menu_coming_soon">功能开发中，敬请期待</string>
+
+    <!-- 首页/商城/预订通用 -->
+    <string name="feed_search_hint_default">搜索旅行灵感</string>
+    <string name="feed_search_hint_home">搜索景点或城市</string>
+    <string name="feed_search_hint_mall">搜索热门商品或体验</string>
+    <string name="feed_search_hint_booking">搜索酒店或预订</string>
+    <string name="feed_search_button_desc">搜索内容</string>
+    <string name="feed_banner_desc">精选活动 Banner</string>
+    <string name="feed_item_image_desc">内容配图</string>
+    <string name="feed_empty_default">当前暂无内容，稍后再试</string>
+    <string name="feed_empty_home">还没有匹配的景点，换个关键词试试</string>
+    <string name="feed_empty_mall">暂未找到商品，请稍后再来</string>
+    <string name="feed_empty_booking">暂无可预订的酒店，尝试调整关键词</string>
+    <string name="feed_loading_error">加载失败：%1$s</string>
+    <string name="feed_toast_feature_pending">功能开发中，敬请期待</string>
+    <string name="feed_banner_title_home">探索旅程</string>
+    <string name="feed_banner_title_mall">旅行好物</string>
+    <string name="feed_banner_title_booking">轻松预订</string>
+    <string name="feed_banner_subtitle_home">发现热门景点与城市故事</string>
+    <string name="feed_banner_subtitle_mall">挑选门票、文创与特色体验</string>
+    <string name="feed_banner_subtitle_booking">酒店与住宿一站式安排</string>
 </resources>

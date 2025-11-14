@@ -9,6 +9,9 @@
 ## Coding Style & Naming Conventions
 Java 代码遵循 AOSP 规范：4 空格缩进、花括号同行、类名使用 `UpperCamelCase`（如 `HomeFragment`），方法与字段为 `lowerCamelCase`。按照既有包结构（`fragment/`、`data/remote/` 等）放置文件，防止交叉依赖。资源文件统一使用 `lowercase_with_underscores`，如 `activity_login.xml`、`color_primary`，字符串常量抽取到 `res/values/strings.xml`。新增或修改接口时先更新 `app/API_DOC.md`，然后在 `ApiClient` 保持一致。提交前在 Android Studio 执行 “Reformat Code” 并应用项目级别的检查。考虑到这是本科安卓课程设计，请在关键逻辑附近写出简洁易懂的中文注释，并优先使用直观的语法与结构（避免过度使用反射、协程黑魔法或复杂 DSL），让评审和答辩时更易讲解。
 
+## 登录态与本地存储
+登录成功后务必调用 `data/local/UserPreferences` 将 `app/API_DOC.md` 中返回的完整 `user` JSON 写入 SharedPreferences（目前存储键为 `travelmap_user_pref`）；进入 `MainActivity` 时需通过同一工具类校验是否存在用户信息，无数据则立即跳回 `LoginActivity`。使用缓存数据时优先通过 `UserProfile` 对象获取 `username/nickname/phone/email/avatar_url`，避免直接解析 JSON；登出时必须调用 `UserPreferences.clear()` 清空本地登录态再跳转登录页。后续扩展本地缓存逻辑（如 token、收藏）也应集中在 `data/local` 包中，方便统一管理。
+
 ## UI 与主题一致性
 所有页面遵循统一的配色、排版与组件样式，优先复用既有布局、`styles.xml` 与 `theme.xml` 中的样式，并确保图标、按钮、间距在不同 Fragment/Activity 间一致。新增 UI 时同步提供浅色与深色模式的资源（如 `values-night` 目录下的颜色或图片），避免在代码中硬编码颜色。测试时在系统浅色与深色主题下各运行一次，确保文字对比度、图标透明度和背景层级都符合设计预期，保持整体观感美观稳定。
 
