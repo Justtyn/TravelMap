@@ -19,6 +19,7 @@ import com.justyn.travelmap.data.local.UserPreferences;
 import com.justyn.travelmap.data.local.UserProfile;
 import com.justyn.travelmap.data.remote.UserCenterRepository;
 import com.justyn.travelmap.model.CartItem;
+import com.justyn.travelmap.profile.adapter.CartAdapter;
 
 import org.json.JSONException;
 import org.json.JSONObject;

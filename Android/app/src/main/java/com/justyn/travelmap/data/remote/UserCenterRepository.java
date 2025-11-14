@@ -4,6 +4,7 @@ import android.text.TextUtils;
 
 import com.justyn.travelmap.model.CartItem;
 import com.justyn.travelmap.model.FeedItem;
+import com.justyn.travelmap.model.VisitedRecord;
 
 import org.json.JSONArray;
 import org.json.JSONException;
