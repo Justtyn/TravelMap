@@ -84,37 +84,133 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <com.google.android.material.progressindicator.CircularProgressIndicator
-        android:id="@+id/progressIndicator"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="8dp"
-        android:visibility="gone" />
-
-    <TextView
-        android:id="@+id/tvEmpty"
-        style="@style/TextAppearance.Material3.BodyLarge"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:padding="16dp"
-        android:text="@string/feed_empty_default"
-        android:visibility="gone"
-        tools:visibility="visible" />
-
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/swipeRefresh"
+    <FrameLayout
+        android:id="@+id/feedContent"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:layout_marginTop="8dp">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvFeed"
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefresh"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvFeed"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                tools:listitem="@layout/item_feed_card" />
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+        <TextView
+            android:id="@+id/tvEmpty"
+            style="@style/TextAppearance.Material3.BodyLarge"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:clipToPadding="false"
-            tools:listitem="@layout/item_feed_card" />
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+            android:gravity="center"
+            android:padding="16dp"
+            android:text="@string/feed_empty_default"
+            android:visibility="gone" />
+
+        <com.facebook.shimmer.ShimmerFrameLayout
+            android:id="@+id/feedSkeleton"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="10dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:background="@drawable/bg_skeleton_rect"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="140dp"
+                        android:background="@drawable/bg_skeleton_rect" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="20dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginEnd="60dp"
+                        android:background="@drawable/bg_skeleton_rect" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="16dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginEnd="120dp"
+                        android:background="@drawable/bg_skeleton_rect" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:background="@drawable/bg_skeleton_rect"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="140dp"
+                        android:background="@drawable/bg_skeleton_rect" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="20dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginEnd="80dp"
+                        android:background="@drawable/bg_skeleton_rect" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="16dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginEnd="140dp"
+                        android:background="@drawable/bg_skeleton_rect" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_skeleton_rect"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="140dp"
+                        android:background="@drawable/bg_skeleton_rect" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="20dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginEnd="100dp"
+                        android:background="@drawable/bg_skeleton_rect" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="16dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginEnd="80dp"
+                        android:background="@drawable/bg_skeleton_rect" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </com.facebook.shimmer.ShimmerFrameLayout>
+    </FrameLayout>
 
 </LinearLayout>

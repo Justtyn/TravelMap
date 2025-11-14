@@ -1,290 +1,347 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/myRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:paddingStart="24dp"
-    android:paddingTop="32dp"
-    android:paddingEnd="24dp"
-    android:paddingBottom="32dp"
     tools:context=".fragment.MyFragment">
 
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/myScroll"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
-        android:showDividers="none">
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:paddingStart="24dp"
+        android:paddingTop="32dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="32dp">
 
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardProfile"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            app:cardBackgroundColor="?attr/colorSurfaceVariant"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="2dp">
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:showDividers="none">
 
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardProfile"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="20dp">
-
-                <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/ivAvatar"
-                    android:layout_width="72dp"
-                    android:layout_height="72dp"
-                    android:contentDescription="@string/my_avatar_content_desc"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_nav_my"
-                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="?attr/colorSurfaceVariant"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="2dp">
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="20dp">
+
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/ivAvatar"
+                        android:layout_width="72dp"
+                        android:layout_height="72dp"
+                        android:contentDescription="@string/my_avatar_content_desc"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_nav_my"
+                        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvUsername"
+                            style="@style/TextAppearance.Material3.TitleLarge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textStyle="bold"
+                            tools:text="Alice" />
+
+                        <TextView
+                            android:id="@+id/tvEmail"
+                            style="@style/TextAppearance.Material3.BodyMedium"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            tools:text="alice@example.com" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/tvUsername"
-                        style="@style/TextAppearance.Material3.TitleLarge"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:id="@+id/rowProfile"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textStyle="bold"
-                        tools:text="Alice" />
+                        android:background="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="56dp"
+                        android:paddingHorizontal="20dp"
+                        android:paddingVertical="12dp">
 
-                    <TextView
-                        android:id="@+id/tvEmail"
-                        style="@style/TextAppearance.Material3.BodyMedium"
-                        android:layout_width="wrap_content"
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="@string/my_menu_profile"
+                            android:src="@drawable/ic_nav_my"
+                            android:tint="?attr/colorOnSurfaceVariant" />
+
+                        <TextView
+                            style="@style/TextAppearance.Material3.BodyLarge"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:text="@string/my_menu_profile" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:contentDescription="@string/my_menu_profile"
+                            android:src="@drawable/ic_chevron_right"
+                            android:tint="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.2"
+                        android:background="?attr/colorOutline" />
+
+                    <LinearLayout
+                        android:id="@+id/rowFavorites"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        tools:text="alice@example.com" />
+                        android:background="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="56dp"
+                        android:paddingHorizontal="20dp"
+                        android:paddingVertical="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="@string/my_menu_favorites"
+                            android:src="@drawable/ic_nav_mall"
+                            android:tint="?attr/colorOnSurfaceVariant" />
+
+                        <TextView
+                            style="@style/TextAppearance.Material3.BodyLarge"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:text="@string/my_menu_favorites" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:contentDescription="@string/my_menu_favorites"
+                            android:src="@drawable/ic_chevron_right"
+                            android:tint="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.2"
+                        android:background="?attr/colorOutline" />
+
+                    <LinearLayout
+                        android:id="@+id/rowVisited"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="56dp"
+                        android:paddingHorizontal="20dp"
+                        android:paddingVertical="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="@string/my_menu_visited"
+                            android:src="@drawable/ic_nav_plan"
+                            android:tint="?attr/colorOnSurfaceVariant" />
+
+                        <TextView
+                            style="@style/TextAppearance.Material3.BodyLarge"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:text="@string/my_menu_visited" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:contentDescription="@string/my_menu_visited"
+                            android:src="@drawable/ic_chevron_right"
+                            android:tint="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.2"
+                        android:background="?attr/colorOutline" />
+
+                    <LinearLayout
+                        android:id="@+id/rowOrders"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="56dp"
+                        android:paddingHorizontal="20dp"
+                        android:paddingVertical="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="@string/my_menu_orders"
+                            android:src="@drawable/ic_nav_booking"
+                            android:tint="?attr/colorOnSurfaceVariant" />
+
+                        <TextView
+                            style="@style/TextAppearance.Material3.BodyLarge"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:text="@string/my_menu_orders" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:contentDescription="@string/my_menu_orders"
+                            android:src="@drawable/ic_chevron_right"
+                            android:tint="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:alpha="0.2"
+                        android:background="?attr/colorOutline" />
+
+                    <LinearLayout
+                        android:id="@+id/rowCart"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:minHeight="56dp"
+                        android:paddingHorizontal="20dp"
+                        android:paddingVertical="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="@string/my_menu_cart"
+                            android:src="@drawable/ic_nav_mall"
+                            android:tint="?attr/colorOnSurfaceVariant" />
+
+                        <TextView
+                            style="@style/TextAppearance.Material3.BodyLarge"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:text="@string/my_menu_cart" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:contentDescription="@string/my_menu_cart"
+                            android:src="@drawable/ic_chevron_right"
+                            android:tint="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
                 </LinearLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+            </com.google.android.material.card.MaterialCardView>
 
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardMenu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="1dp">
-
-            <LinearLayout
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnLogout"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_marginTop="24dp"
+                android:text="@string/my_logout_button" />
 
-                <LinearLayout
-                    android:id="@+id/rowProfile"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackground"
-                    android:gravity="center_vertical"
-                    android:minHeight="56dp"
-                    android:paddingHorizontal="20dp"
-                    android:paddingVertical="12dp">
+        </LinearLayout>
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:contentDescription="@string/my_menu_profile"
-                        android:tint="?attr/colorOnSurfaceVariant"
-                        android:src="@drawable/ic_nav_my" />
+    </androidx.core.widget.NestedScrollView>
 
-                    <TextView
-                        style="@style/TextAppearance.Material3.BodyLarge"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:text="@string/my_menu_profile" />
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/mySkeleton"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingStart="24dp"
+        android:paddingTop="32dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="32dp"
+        android:visibility="gone">
 
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:contentDescription="@string/my_menu_profile"
-                        android:src="@drawable/ic_chevron_right"
-                        android:tint="?attr/colorOnSurfaceVariant" />
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:alpha="0.2"
-                    android:background="?attr/colorOutline" />
-
-                <LinearLayout
-                    android:id="@+id/rowFavorites"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackground"
-                    android:gravity="center_vertical"
-                    android:minHeight="56dp"
-                    android:paddingHorizontal="20dp"
-                    android:paddingVertical="12dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:contentDescription="@string/my_menu_favorites"
-                        android:src="@drawable/ic_nav_mall"
-                        android:tint="?attr/colorOnSurfaceVariant" />
-
-                    <TextView
-                        style="@style/TextAppearance.Material3.BodyLarge"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:text="@string/my_menu_favorites" />
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:contentDescription="@string/my_menu_favorites"
-                        android:src="@drawable/ic_chevron_right"
-                        android:tint="?attr/colorOnSurfaceVariant" />
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:alpha="0.2"
-                    android:background="?attr/colorOutline" />
-
-                <LinearLayout
-                    android:id="@+id/rowVisited"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackground"
-                    android:gravity="center_vertical"
-                    android:minHeight="56dp"
-                    android:paddingHorizontal="20dp"
-                    android:paddingVertical="12dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:contentDescription="@string/my_menu_visited"
-                        android:src="@drawable/ic_nav_plan"
-                        android:tint="?attr/colorOnSurfaceVariant" />
-
-                    <TextView
-                        style="@style/TextAppearance.Material3.BodyLarge"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:text="@string/my_menu_visited" />
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:contentDescription="@string/my_menu_visited"
-                        android:src="@drawable/ic_chevron_right"
-                        android:tint="?attr/colorOnSurfaceVariant" />
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:alpha="0.2"
-                    android:background="?attr/colorOutline" />
-
-                <LinearLayout
-                    android:id="@+id/rowOrders"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackground"
-                    android:gravity="center_vertical"
-                    android:minHeight="56dp"
-                    android:paddingHorizontal="20dp"
-                    android:paddingVertical="12dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:contentDescription="@string/my_menu_orders"
-                        android:src="@drawable/ic_nav_booking"
-                        android:tint="?attr/colorOnSurfaceVariant" />
-
-                    <TextView
-                        style="@style/TextAppearance.Material3.BodyLarge"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:text="@string/my_menu_orders" />
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:contentDescription="@string/my_menu_orders"
-                        android:src="@drawable/ic_chevron_right"
-                        android:tint="?attr/colorOnSurfaceVariant" />
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:alpha="0.2"
-                    android:background="?attr/colorOutline" />
-
-                <LinearLayout
-                    android:id="@+id/rowCart"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackground"
-                    android:gravity="center_vertical"
-                    android:minHeight="56dp"
-                    android:paddingHorizontal="20dp"
-                    android:paddingVertical="12dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:contentDescription="@string/my_menu_cart"
-                        android:src="@drawable/ic_cart"
-                        android:tint="?attr/colorOnSurfaceVariant" />
-
-                    <TextView
-                        style="@style/TextAppearance.Material3.BodyLarge"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:text="@string/my_menu_cart" />
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:contentDescription="@string/my_menu_cart"
-                        android:src="@drawable/ic_chevron_right"
-                        android:tint="?attr/colorOnSurfaceVariant" />
-                </LinearLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnLogout"
-            style="?attr/materialButtonStyle"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/my_logout_button"
-            android:textAllCaps="false"
-            android:textStyle="bold" />
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
 
-    </LinearLayout>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="130dp"
+                android:layout_marginBottom="24dp"
+                android:background="@drawable/bg_skeleton_rect" />
 
-</androidx.core.widget.NestedScrollView>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/bg_skeleton_rect" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/bg_skeleton_rect" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/bg_skeleton_rect" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/bg_skeleton_rect" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_skeleton_rect" />
+        </LinearLayout>
+    </com.facebook.shimmer.ShimmerFrameLayout>
+
+</FrameLayout>

@@ -24,7 +24,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.justyn.travelmap.R;
@@ -32,6 +31,7 @@ import com.justyn.travelmap.model.FeedItem;
 import com.justyn.travelmap.ui.feed.FeedAdapter;
 import com.justyn.travelmap.detail.ProductDetailActivity;
 import com.justyn.travelmap.detail.ScenicDetailActivity;
+import com.facebook.shimmer.ShimmerFrameLayout;
 
 import org.json.JSONException;
 
@@ -54,8 +54,8 @@ public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.O
     private TextView tvBannerTitle;
     private TextView tvBannerSubtitle;
     private TextView tvEmpty;
-    private CircularProgressIndicator progressIndicator;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private ShimmerFrameLayout skeletonLayout;
     private FeedAdapter feedAdapter;
     private RecyclerView recyclerView;
     private ExecutorService executorService;
@@ -63,6 +63,7 @@ public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.O
     private String latestKeyword = "";
     private long lastTapTimestamp = 0L;
     private static final long DOUBLE_TAP_INTERVAL_MS = 350L;
+    private boolean skeletonVisible = false;
 
     @Nullable
     @Override
@@ -85,6 +86,11 @@ public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.O
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (skeletonLayout != null) {
+            skeletonLayout.stopShimmer();
+        }
+        skeletonLayout = null;
+        skeletonVisible = false;
         if (executorService != null && !executorService.isShutdown()) {
             executorService.shutdownNow();
         }
@@ -105,8 +111,8 @@ public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.O
         tvBannerTitle = root.findViewById(R.id.tvBannerTitle);
         tvBannerSubtitle = root.findViewById(R.id.tvBannerSubtitle);
         tvEmpty = root.findViewById(R.id.tvEmpty);
-        progressIndicator = root.findViewById(R.id.progressIndicator);
         swipeRefreshLayout = root.findViewById(R.id.swipeRefresh);
+        skeletonLayout = root.findViewById(R.id.feedSkeleton);
 
         if (tilSearch != null) {
             tilSearch.setHint(getSearchHint());
@@ -173,7 +179,11 @@ public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.O
     }
 
     private void fetchFeed(boolean fromSwipeRefresh) {
-        showLoading(fromSwipeRefresh, true);
+        if (fromSwipeRefresh) {
+            swipeRefreshLayout.setRefreshing(true);
+        } else {
+            showSkeleton(true);
+        }
         ExecutorService executor = executorService;
         if (executor == null) {
             return;
@@ -183,12 +193,12 @@ public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.O
                 List<FeedItem> items = loadFeedItems(latestKeyword);
                 mainHandler.post(() -> {
                     updateList(items);
-                    showLoading(fromSwipeRefresh, false);
+                    finishLoading(fromSwipeRefresh);
                 });
             } catch (IOException | JSONException e) {
                 mainHandler.post(() -> {
                     updateList(new ArrayList<>());
-                    showLoading(fromSwipeRefresh, false);
+                    finishLoading(fromSwipeRefresh);
                     Toast.makeText(requireContext(),
                             getString(R.string.feed_loading_error, e.getMessage()),
                             Toast.LENGTH_SHORT).show();
@@ -202,14 +212,10 @@ public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.O
             feedAdapter.submitList(items);
         }
         boolean isEmpty = items == null || items.isEmpty();
-        tvEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
-    }
-
-    private void showLoading(boolean fromSwipeRefresh, boolean visible) {
-        if (fromSwipeRefresh) {
-            swipeRefreshLayout.setRefreshing(visible);
+        if (skeletonVisible) {
+            tvEmpty.setVisibility(View.GONE);
         } else {
-            progressIndicator.setVisibility(visible ? View.VISIBLE : View.GONE);
+            tvEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -285,4 +291,30 @@ public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.O
     public void onFeedItemClicked(@NonNull FeedItem item) {
         Toast.makeText(requireContext(), R.string.feed_toast_feature_pending, Toast.LENGTH_SHORT).show();
     }
+
+    private void showSkeleton(boolean show) {
+        skeletonVisible = show;
+        if (skeletonLayout == null || swipeRefreshLayout == null) {
+            return;
+        }
+        if (show) {
+            skeletonLayout.setVisibility(View.VISIBLE);
+            skeletonLayout.startShimmer();
+            swipeRefreshLayout.setVisibility(View.INVISIBLE);
+            tvEmpty.setVisibility(View.GONE);
+        } else {
+            skeletonLayout.stopShimmer();
+            skeletonLayout.setVisibility(View.GONE);
+            swipeRefreshLayout.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void finishLoading(boolean fromSwipeRefresh) {
+        if (fromSwipeRefresh) {
+            swipeRefreshLayout.setRefreshing(false);
+        } else {
+            showSkeleton(false);
+        }
+    }
+
 }

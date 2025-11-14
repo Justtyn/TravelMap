@@ -18,6 +18,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.core.widget.NestedScrollView;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.imageview.ShapeableImageView;
@@ -30,6 +31,7 @@ import com.justyn.travelmap.profile.FavoritesActivity;
 import com.justyn.travelmap.profile.OrdersActivity;
 import com.justyn.travelmap.profile.UserInfoActivity;
 import com.justyn.travelmap.profile.VisitedActivity;
+import com.facebook.shimmer.ShimmerFrameLayout;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,6 +55,8 @@ public class MyFragment extends Fragment {
     private LinearLayout rowVisited;
     private LinearLayout rowOrders;
     private LinearLayout rowCart;
+    private NestedScrollView myScroll;
+    private ShimmerFrameLayout skeletonLayout;
     private ExecutorService avatarExecutor;
     private Handler mainHandler;
 
@@ -75,6 +79,7 @@ public class MyFragment extends Fragment {
         avatarExecutor = Executors.newSingleThreadExecutor();
         bindViews(view);
         bindEvents();
+        showSkeleton(true);
         renderUserInfo();
     }
 
@@ -91,9 +96,15 @@ public class MyFragment extends Fragment {
             avatarExecutor.shutdownNow();
             avatarExecutor = null;
         }
+        if (skeletonLayout != null) {
+            skeletonLayout.stopShimmer();
+            skeletonLayout = null;
+        }
+        myScroll = null;
     }
 
     private void bindViews(View root) {
+        myScroll = root.findViewById(R.id.myScroll);
         ivAvatar = root.findViewById(R.id.ivAvatar);
         tvUsername = root.findViewById(R.id.tvUsername);
         tvEmail = root.findViewById(R.id.tvEmail);
@@ -103,6 +114,7 @@ public class MyFragment extends Fragment {
         rowVisited = root.findViewById(R.id.rowVisited);
         rowOrders = root.findViewById(R.id.rowOrders);
         rowCart = root.findViewById(R.id.rowCart);
+        skeletonLayout = root.findViewById(R.id.mySkeleton);
     }
 
     private void bindEvents() {
@@ -118,11 +130,13 @@ public class MyFragment extends Fragment {
         UserProfile profile = userPreferences.getUserProfile();
         if (profile == null) {
             Toast.makeText(requireContext(), R.string.toast_need_login, Toast.LENGTH_SHORT).show();
+            showSkeleton(false);
             redirectToLogin();
             return;
         }
         tvUsername.setText(formatField(profile.getUsername()));
         tvEmail.setText(formatField(profile.getEmail()));
+        showSkeleton(false);
         loadAvatar(profile.getAvatarUrl());
     }
 
@@ -192,5 +206,20 @@ public class MyFragment extends Fragment {
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
         requireActivity().finish();
+    }
+
+    private void showSkeleton(boolean show) {
+        if (skeletonLayout == null || myScroll == null) {
+            return;
+        }
+        if (show) {
+            skeletonLayout.setVisibility(View.VISIBLE);
+            skeletonLayout.startShimmer();
+            myScroll.setVisibility(View.INVISIBLE);
+        } else {
+            skeletonLayout.stopShimmer();
+            skeletonLayout.setVisibility(View.GONE);
+            myScroll.setVisibility(View.VISIBLE);
+        }
     }
 }
