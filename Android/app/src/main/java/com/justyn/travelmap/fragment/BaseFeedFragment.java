@@ -21,7 +21,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -46,7 +45,6 @@ public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.O
     private View headerWrapper;
     private TextInputLayout tilSearch;
     private TextInputEditText etSearch;
-    private MaterialButton btnSearch;
     private ImageView ivBanner;
     private TextView tvBannerTitle;
     private TextView tvBannerSubtitle;
@@ -98,7 +96,6 @@ public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.O
         headerWrapper = root.findViewById(R.id.headerWrapper);
         tilSearch = root.findViewById(R.id.tilSearch);
         etSearch = root.findViewById(R.id.etSearch);
-        btnSearch = root.findViewById(R.id.btnSearch);
         ivBanner = root.findViewById(R.id.ivBanner);
         tvBannerTitle = root.findViewById(R.id.tvBannerTitle);
         tvBannerSubtitle = root.findViewById(R.id.tvBannerSubtitle);
@@ -122,10 +119,12 @@ public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.O
     }
 
     private void bindActions() {
-        btnSearch.setOnClickListener(v -> {
-            latestKeyword = getQueryFromInput();
-            fetchFeed(false);
-        });
+        if (tilSearch != null) {
+            tilSearch.setEndIconOnClickListener(v -> {
+                latestKeyword = getQueryFromInput();
+                fetchFeed(false);
+            });
+        }
         etSearch.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH ||
                     (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN)) {

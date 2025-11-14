@@ -14,14 +14,15 @@
         android:orientation="horizontal"
         android:padding="10dp">
 
-        <ImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/ivCover"
-            android:layout_width="110dp"
-            android:layout_height="60dp"
+            android:layout_width="120dp"
+            android:layout_height="72dp"
             android:contentDescription="@string/feed_item_image_desc"
             android:scaleType="centerCrop"
             android:src="@drawable/ic_image_placeholder"
-            android:layout_gravity="center_vertical" />
+            android:layout_gravity="center_vertical"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.SmallComponent" />
 
         <LinearLayout
             android:layout_width="0dp"

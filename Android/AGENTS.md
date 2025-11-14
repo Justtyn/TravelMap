@@ -13,7 +13,7 @@ Java 代码遵循 AOSP 规范：4 空格缩进、花括号同行、类名使用 
 登录成功后务必调用 `data/local/UserPreferences` 将 `app/API_DOC.md` 中返回的完整 `user` JSON 写入 SharedPreferences（目前存储键为 `travelmap_user_pref`）；进入 `MainActivity` 时需通过同一工具类校验是否存在用户信息，无数据则立即跳回 `LoginActivity`。使用缓存数据时优先通过 `UserProfile` 对象获取 `username/nickname/phone/email/avatar_url`，避免直接解析 JSON；登出时必须调用 `UserPreferences.clear()` 清空本地登录态再跳转登录页。后续扩展本地缓存逻辑（如 token、收藏）也应集中在 `data/local` 包中，方便统一管理。
 
 ## UI 与主题一致性
-所有页面遵循统一的配色、排版与组件样式，优先复用既有布局、`styles.xml` 与 `theme.xml` 中的样式，并确保图标、按钮、间距在不同 Fragment/Activity 间一致。新增 UI 时同步提供浅色与深色模式的资源（如 `values-night` 目录下的颜色或图片），避免在代码中硬编码颜色。测试时在系统浅色与深色主题下各运行一次，确保文字对比度、图标透明度和背景层级都符合设计预期，保持整体观感美观稳定。
+所有页面遵循统一的配色、排版与组件样式，优先复用既有布局、`styles.xml` 与 `theme.xml` 中的样式，并确保图标、按钮、间距在不同 Fragment/Activity 间一致。全局 UI 统一采用 Material 3 设计规范：输入框使用 `TextInputLayout`、按钮/卡片用 Material 组件并保持圆角/阴影一致，任何自定义控件都要与系统主题（含浅色/深色）适配。新增 UI 时同步提供 `values-night` 资源，避免硬编码颜色或尺寸。测试时在浅色与深色主题下各运行一次，确保文字对比度、图标透明度和背景层级都符合设计预期，保持整体观感美观稳定。
 
 ## Testing Guidelines
 单元测试位于 `app/src/test/java`，使用 JUnit4，命名为 `<Feature>Test`（示例：`AuthRepositoryTest`），重点覆盖仓库与服务逻辑。需要真实设备环境的流程放在 `app/src/androidTest/java`，并以 `<Feature>InstrumentedTest` 结尾，结合 Espresso 或 UI Automator。网络或数据库改动必须提供 mock 响应测试，涉及导航的功能至少补一条仪器测试。严禁在 `testDebugUnitTest`、`connectedDebugAndroidTest` 或 `lint` 失败的情况下合并。

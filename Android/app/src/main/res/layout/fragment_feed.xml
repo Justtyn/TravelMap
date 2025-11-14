@@ -22,10 +22,12 @@
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilSearch"
             style="@style/Widget.Material3.TextInputLayout.FilledBox.Dense"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="12dp"
-            android:layout_weight="1">
+            app:endIconMode="custom"
+            app:endIconDrawable="@drawable/ic_search"
+            app:endIconTint="?attr/colorOnSurfaceVariant"
+            app:endIconContentDescription="@string/feed_search_button_desc">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etSearch"
@@ -34,21 +36,6 @@
                 android:imeOptions="actionSearch"
                 android:singleLine="true" />
         </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSearch"
-            style="@style/Widget.Material3.Button.TonalButton"
-            android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:paddingHorizontal="20dp"
-            android:text="@string/feed_search_button_text"
-            android:textAllCaps="false"
-            android:textStyle="bold"
-            android:contentDescription="@string/feed_search_button_desc"
-            app:icon="@drawable/ic_search"
-            app:iconGravity="textStart"
-            app:iconPadding="8dp"
-            app:iconSize="18dp" />
     </LinearLayout>
 
     <com.google.android.material.card.MaterialCardView
@@ -59,15 +46,16 @@
         app:cardUseCompatPadding="false"
         app:strokeWidth="0dp">
 
-        <ImageView
+        <com.google.android.material.imageview.ShapeableImageView
+            android:layout_margin="6dp"
             android:id="@+id/ivBanner"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:adjustViewBounds="true"
             android:contentDescription="@string/feed_banner_desc"
-            android:padding="6dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/banner_placeholder" />
+            android:src="@drawable/banner_placeholder"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.MediumComponent" />
 
         <LinearLayout
             android:layout_width="match_parent"
