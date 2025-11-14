@@ -70,4 +70,21 @@
     <string name="feed_banner_subtitle_home">发现热门景点与城市故事</string>
     <string name="feed_banner_subtitle_mall">挑选门票、文创与特色体验</string>
     <string name="feed_banner_subtitle_booking">酒店与住宿一站式安排</string>
+    <string name="title_user_info">个人资料</string>
+    <string name="user_info_username">账号</string>
+    <string name="user_info_nickname">昵称</string>
+    <string name="user_info_username_format">账号：%1$s</string>
+    <string name="user_info_nickname_format">昵称：%1$s</string>
+    <string name="user_info_phone">手机号</string>
+    <string name="user_info_email">邮箱</string>
+    <string name="user_info_save">保存信息</string>
+    <string name="user_info_empty_fields">请至少填写手机号或邮箱</string>
+    <string name="user_info_update_success">资料已更新</string>
+    <string name="title_favorites">我的收藏</string>
+    <string name="favorites_tab_products">商品</string>
+    <string name="favorites_tab_scenics">景点</string>
+    <string name="favorites_empty_products">还没有收藏商品~</string>
+    <string name="favorites_empty_scenics">还没有收藏景点~</string>
+    <string name="title_orders">我的订单</string>
+    <string name="orders_empty">暂无订单记录</string>
 </resources>

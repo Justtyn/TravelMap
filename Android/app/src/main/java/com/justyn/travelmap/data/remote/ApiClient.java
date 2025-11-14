@@ -94,6 +94,43 @@ public class ApiClient {
         }
     }
 
+    public ApiResponse put(String path, JSONObject payload) throws IOException, JSONException {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(resolveUrl(path));
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("PUT");
+            connection.setConnectTimeout(TIMEOUT_MS);
+            connection.setReadTimeout(TIMEOUT_MS);
+            connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+            connection.setDoOutput(true);
+
+            if (payload != null) {
+                byte[] body = payload.toString().getBytes(StandardCharsets.UTF_8);
+                connection.setRequestProperty("Content-Length", String.valueOf(body.length));
+                try (OutputStream os = connection.getOutputStream()) {
+                    os.write(body);
+                }
+            }
+
+            int responseCode = connection.getResponseCode();
+            InputStream stream = responseCode >= HttpURLConnection.HTTP_BAD_REQUEST
+                    ? connection.getErrorStream()
+                    : connection.getInputStream();
+
+            if (stream == null) {
+                throw new IOException("服务器未返回数据");
+            }
+
+            String responseBody = readStream(stream);
+            return ApiResponse.fromJson(responseBody);
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
     private static String resolveUrl(String path) {
         return resolveUrl(path, null);
     }

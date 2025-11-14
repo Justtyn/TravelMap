@@ -8,12 +8,20 @@ public class FeedItem {
     private final String title;
     private final String description;
     private final String imageUrl;
+    private final String priceLabel;
+    private final String extraInfo;
 
     public FeedItem(long id, String title, String description, String imageUrl) {
+        this(id, title, description, imageUrl, null, null);
+    }
+
+    public FeedItem(long id, String title, String description, String imageUrl, String priceLabel, String extraInfo) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.imageUrl = imageUrl;
+        this.priceLabel = priceLabel;
+        this.extraInfo = extraInfo;
     }
 
     public long getId() {
@@ -30,5 +38,13 @@ public class FeedItem {
 
     public String getImageUrl() {
         return imageUrl;
+    }
+
+    public String getPriceLabel() {
+        return priceLabel;
+    }
+
+    public String getExtraInfo() {
+        return extraInfo;
     }
 }

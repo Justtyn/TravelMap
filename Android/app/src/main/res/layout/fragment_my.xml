@@ -41,7 +41,8 @@
                     android:layout_height="72dp"
                     android:contentDescription="@string/my_avatar_content_desc"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/ic_nav_my" />
+                    android:src="@drawable/ic_nav_my"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -60,13 +61,13 @@
                         tools:text="Alice" />
 
                     <TextView
-                        android:id="@+id/tvNickname"
+                        android:id="@+id/tvEmail"
                         style="@style/TextAppearance.Material3.BodyMedium"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:textColor="?attr/colorOnSurfaceVariant"
-                        tools:text="小艾 / Travel Lover" />
+                        tools:text="alice@example.com" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

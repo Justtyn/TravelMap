@@ -61,17 +61,27 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
         private final ImageView ivCover;
         private final TextView tvTitle;
         private final TextView tvDesc;
+        private final TextView tvPrice;
 
         FeedViewHolder(@NonNull View itemView) {
             super(itemView);
             ivCover = itemView.findViewById(R.id.ivCover);
             tvTitle = itemView.findViewById(R.id.tvTitle);
             tvDesc = itemView.findViewById(R.id.tvDesc);
+            tvPrice = itemView.findViewById(R.id.tvPrice);
         }
 
         void bind(FeedItem item) {
             tvTitle.setText(item.getTitle());
-            tvDesc.setText(item.getDescription());
+            String description = item.getDescription();
+            tvDesc.setText(description != null ? description : "");
+            String priceLabel = item.getPriceLabel();
+            if (priceLabel == null || priceLabel.isEmpty()) {
+                tvPrice.setVisibility(View.GONE);
+            } else {
+                tvPrice.setVisibility(View.VISIBLE);
+                tvPrice.setText(priceLabel);
+            }
             Glide.with(ivCover.getContext())
                     .load(item.getImageUrl())
                     .placeholder(R.drawable.ic_image_placeholder)

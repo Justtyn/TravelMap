@@ -25,6 +25,9 @@ import com.justyn.travelmap.LoginActivity;
 import com.justyn.travelmap.R;
 import com.justyn.travelmap.data.local.UserPreferences;
 import com.justyn.travelmap.data.local.UserProfile;
+import com.justyn.travelmap.profile.FavoritesActivity;
+import com.justyn.travelmap.profile.OrdersActivity;
+import com.justyn.travelmap.profile.UserInfoActivity;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,7 +44,7 @@ public class MyFragment extends Fragment {
     private UserPreferences userPreferences;
     private ShapeableImageView ivAvatar;
     private TextView tvUsername;
-    private TextView tvNickname;
+    private TextView tvEmail;
     private MaterialButton btnLogout;
     private LinearLayout rowProfile;
     private LinearLayout rowFavorites;
@@ -72,6 +75,12 @@ public class MyFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        renderUserInfo();
+    }
+
+    @Override
     public void onDestroyView() {
         super.onDestroyView();
         if (avatarExecutor != null && !avatarExecutor.isShutdown()) {
@@ -83,7 +92,7 @@ public class MyFragment extends Fragment {
     private void bindViews(View root) {
         ivAvatar = root.findViewById(R.id.ivAvatar);
         tvUsername = root.findViewById(R.id.tvUsername);
-        tvNickname = root.findViewById(R.id.tvNickname);
+        tvEmail = root.findViewById(R.id.tvEmail);
         btnLogout = root.findViewById(R.id.btnLogout);
         rowProfile = root.findViewById(R.id.rowProfile);
         rowFavorites = root.findViewById(R.id.rowFavorites);
@@ -92,11 +101,9 @@ public class MyFragment extends Fragment {
 
     private void bindEvents() {
         btnLogout.setOnClickListener(v -> performLogout());
-        View.OnClickListener comingSoonListener =
-                v -> Toast.makeText(requireContext(), R.string.my_menu_coming_soon, Toast.LENGTH_SHORT).show();
-        rowProfile.setOnClickListener(comingSoonListener);
-        rowFavorites.setOnClickListener(comingSoonListener);
-        rowOrders.setOnClickListener(comingSoonListener);
+        rowProfile.setOnClickListener(v -> startActivity(new Intent(requireContext(), UserInfoActivity.class)));
+        rowFavorites.setOnClickListener(v -> startActivity(new Intent(requireContext(), FavoritesActivity.class)));
+        rowOrders.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrdersActivity.class)));
     }
 
     private void renderUserInfo() {
@@ -107,9 +114,7 @@ public class MyFragment extends Fragment {
             return;
         }
         tvUsername.setText(formatField(profile.getUsername()));
-        tvNickname.setText(TextUtils.isEmpty(profile.getNickname())
-                ? getString(R.string.my_item_empty_placeholder)
-                : profile.getNickname());
+        tvEmail.setText(formatField(profile.getEmail()));
         loadAvatar(profile.getAvatarUrl());
     }
 

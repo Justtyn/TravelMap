@@ -21,6 +21,15 @@
             android:name=".MainActivity"
             android:exported="false" />
         <activity
+            android:name=".profile.UserInfoActivity"
+            android:exported="false" />
+        <activity
+            android:name=".profile.FavoritesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".profile.OrdersActivity"
+            android:exported="false" />
+        <activity
             android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>

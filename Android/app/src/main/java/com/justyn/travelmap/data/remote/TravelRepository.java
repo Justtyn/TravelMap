@@ -52,7 +52,7 @@ public class TravelRepository {
             String title = scenic.optString("name", "未知景点");
             String description = scenic.optString("description", scenic.optString("city", "精彩旅程等你探索"));
             String imageUrl = scenic.optString("cover_image");
-            result.add(new FeedItem(id, title, description, imageUrl));
+            result.add(new FeedItem(id, title, description, imageUrl, null, scenic.optString("city")));
         }
         return result;
     }
@@ -90,10 +90,18 @@ public class TravelRepository {
                 String description = product.optString("description",
                         String.format(Locale.getDefault(), "类型：%s", actualType));
                 String imageUrl = product.optString("cover_image");
-                merged.add(new FeedItem(id, title, description, imageUrl));
+                String priceLabel = formatPrice(product.optDouble("price", Double.NaN));
+                merged.add(new FeedItem(id, title, description, imageUrl, priceLabel, actualType));
             }
         }
         return merged;
+    }
+
+    private String formatPrice(double price) {
+        if (Double.isNaN(price)) {
+            return null;
+        }
+        return String.format(Locale.getDefault(), "¥%s", price % 1 == 0 ? String.format(Locale.getDefault(), "%.0f", price) : String.format(Locale.getDefault(), "%.2f", price));
     }
 
     private boolean typeMatches(String actualType, String expectedType) {
