@@ -16,10 +16,12 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.justyn.travelmap.data.local.UserPreferences;
 import com.justyn.travelmap.data.remote.ApiResponse;
 import com.justyn.travelmap.data.remote.AuthRepository;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
@@ -37,10 +39,16 @@ public class LoginActivity extends AppCompatActivity {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final AuthRepository authRepository = new AuthRepository();
+    private UserPreferences userPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        userPreferences = new UserPreferences(this);
+        if (userPreferences.hasLoggedInUser()) {
+            navigateToMain();
+            return;
+        }
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_login);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -113,12 +121,26 @@ public class LoginActivity extends AppCompatActivity {
     private void handleLoginResponse(ApiResponse response) {
         setLoginInProgress(false);
         if (response.isSuccess()) {
+            JSONObject userJson = extractUserJson(response);
+            if (userJson == null) {
+                showLoginError(getString(R.string.toast_missing_user_info));
+                return;
+            }
+            userPreferences.saveUser(userJson);
             Toast.makeText(this, getString(R.string.toast_login_success), Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(this, MainActivity.class));
-            finish();
+            navigateToMain();
         } else {
             showLoginError(response.getMessage());
         }
+    }
+
+    private JSONObject extractUserJson(ApiResponse response) {
+        Object data = response.getData();
+        if (data instanceof JSONObject) {
+            JSONObject dataJson = (JSONObject) data;
+            return dataJson.optJSONObject("user");
+        }
+        return null;
     }
 
     private void showLoginError(String detail) {
@@ -128,6 +150,13 @@ public class LoginActivity extends AppCompatActivity {
     private void setLoginInProgress(boolean inProgress) {
         btnLogin.setEnabled(!inProgress);
         btnWeChatLogin.setEnabled(!inProgress);
+    }
+
+    private void navigateToMain() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish();
     }
 
     @Override
