@@ -1,5 +1,6 @@
 package com.justyn.travelmap.fragment;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -9,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -219,6 +221,13 @@ public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.O
         }
         if (tilSearch != null && tilSearch.hasFocus()) {
             tilSearch.clearFocus();
+        }
+        View current = requireActivity().getCurrentFocus();
+        if (current != null) {
+            InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(current.getWindowToken(), 0);
+            }
         }
     }
 
