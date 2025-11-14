@@ -30,6 +30,12 @@
             android:name=".profile.OrdersActivity"
             android:exported="false" />
         <activity
+            android:name=".profile.VisitedActivity"
+            android:exported="false" />
+        <activity
+            android:name=".profile.CartActivity"
+            android:exported="false" />
+        <activity
             android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>

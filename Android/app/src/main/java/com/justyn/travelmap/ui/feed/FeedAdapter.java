@@ -65,6 +65,8 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
         private final TextView tvAddress;
         private final TextView tvLatLng;
         private final TextView tvStock;
+        private final TextView tvVisitTime;
+        private final TextView tvRating;
         private final TextView tvPrice;
 
         FeedViewHolder(@NonNull View itemView) {
@@ -75,6 +77,8 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
             tvAddress = itemView.findViewById(R.id.tvAddress);
             tvLatLng = itemView.findViewById(R.id.tvLatLng);
             tvStock = itemView.findViewById(R.id.tvStock);
+            tvVisitTime = itemView.findViewById(R.id.tvVisitTime);
+            tvRating = itemView.findViewById(R.id.tvRating);
             tvPrice = itemView.findViewById(R.id.tvPrice);
         }
 
@@ -106,6 +110,19 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
                 tvStock.setText(itemView.getContext().getString(R.string.feed_stock_label, stock));
             } else {
                 tvStock.setVisibility(View.GONE);
+            }
+            if (item.getVisitTime() != null && !item.getVisitTime().isEmpty()) {
+                tvVisitTime.setVisibility(View.VISIBLE);
+                tvVisitTime.setText(
+                        itemView.getContext().getString(R.string.feed_visit_time_label, item.getVisitTime()));
+            } else {
+                tvVisitTime.setVisibility(View.GONE);
+            }
+            if (item.getRatingLabel() != null && !item.getRatingLabel().isEmpty()) {
+                tvRating.setVisibility(View.VISIBLE);
+                tvRating.setText(item.getRatingLabel());
+            } else {
+                tvRating.setVisibility(View.GONE);
             }
             String priceLabel = item.getPriceLabel();
             if (priceLabel == null || priceLabel.isEmpty()) {

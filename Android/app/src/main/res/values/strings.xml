@@ -49,6 +49,8 @@
     <string name="my_menu_favorites">我的收藏</string>
     <string name="my_menu_orders">我的订单</string>
     <string name="my_menu_coming_soon">功能开发中，敬请期待</string>
+    <string name="my_menu_visited">我的去过</string>
+    <string name="my_menu_cart">我的购物车</string>
 
     <!-- 首页/商城/预订通用 -->
     <string name="feed_search_hint_default">搜索旅行灵感</string>
@@ -71,6 +73,7 @@
     <string name="feed_banner_subtitle_mall">挑选门票、文创与特色体验</string>
     <string name="feed_banner_subtitle_booking">酒店与住宿一站式安排</string>
     <string name="feed_stock_label">库存：%1$d</string>
+    <string name="feed_visit_time_label">拜访时间：%1$s</string>
     <string name="title_user_info">个人资料</string>
     <string name="user_info_username">账号</string>
     <string name="user_info_nickname">昵称</string>
@@ -88,4 +91,12 @@
     <string name="favorites_empty_scenics">还没有收藏景点~</string>
     <string name="title_orders">我的订单</string>
     <string name="orders_empty">暂无订单记录</string>
+    <string name="title_visited">我的去过</string>
+    <string name="visited_empty">还没有拜访记录</string>
+    <string name="title_cart">我的购物车</string>
+    <string name="cart_empty">购物车为空</string>
+    <string name="cart_submit">立即下单</string>
+    <string name="cart_submit_success">下单成功</string>
+    <string name="cart_submit_failed">下单失败：%1$s</string>
+    <string name="cart_quantity_label">数量：%1$d</string>
 </resources>

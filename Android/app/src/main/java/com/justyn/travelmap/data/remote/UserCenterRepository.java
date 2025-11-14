@@ -2,6 +2,7 @@ package com.justyn.travelmap.data.remote;
 
 import android.text.TextUtils;
 
+import com.justyn.travelmap.model.CartItem;
 import com.justyn.travelmap.model.FeedItem;
 
 import org.json.JSONArray;
@@ -90,9 +91,105 @@ public class UserCenterRepository {
             double totalPrice = order.optDouble("total_price", Double.NaN);
             String priceLabel = Double.isNaN(totalPrice) ? null : String.format(Locale.getDefault(), "¥%.2f", totalPrice);
             items.add(new FeedItem(orderId, title, description, imageUrl, priceLabel,
-                    order.optString("create_time"), null, null, null, null));
+                    order.optString("create_time"), null, null, null, null, null, null));
         }
         return items;
+    }
+
+    public List<CartItem> fetchCart(long userId) throws IOException, JSONException {
+        Map<String, String> params = new HashMap<>();
+        params.put("user_id", String.valueOf(userId));
+        ApiResponse response = apiClient.get("/api/cart", params);
+        ensureSuccess(response);
+        Object data = response.getData();
+        List<CartItem> result = new ArrayList<>();
+        if (!(data instanceof JSONArray)) {
+            return result;
+        }
+        JSONArray array = (JSONArray) data;
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject cartJson = array.optJSONObject(i);
+            if (cartJson == null) {
+                continue;
+            }
+            JSONObject productJson = cartJson.optJSONObject("product");
+            FeedItem product = productJson == null ? null : buildProductItem(productJson);
+            result.add(new CartItem(
+                    cartJson.optLong("cart_id", i),
+                    cartJson.optInt("quantity", 1),
+                    product
+            ));
+        }
+        return result;
+    }
+
+    public List<FeedItem> fetchVisited(long userId) throws IOException, JSONException {
+        Map<String, String> params = new HashMap<>();
+        params.put("user_id", String.valueOf(userId));
+        ApiResponse response = apiClient.get("/api/visited", params);
+        ensureSuccess(response);
+        Object data = response.getData();
+        List<FeedItem> result = new ArrayList<>();
+        if (!(data instanceof JSONArray)) {
+            return result;
+        }
+        JSONArray array = (JSONArray) data;
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject visited = array.optJSONObject(i);
+            if (visited == null) {
+                continue;
+            }
+            JSONObject scenic = visited.optJSONObject("scenic");
+            if (scenic == null) {
+                continue;
+            }
+            long scenicId = scenic.optLong("id", i);
+            String title = scenic.optString("name", "景点");
+            String description = scenic.optString("description", scenic.optString("city", ""));
+            String imageUrl = scenic.optString("cover_image");
+            String address = scenic.optString("address");
+            Double lat = (scenic.has("latitude") && !scenic.isNull("latitude"))
+                    ? scenic.optDouble("latitude") : null;
+            Double lng = (scenic.has("longitude") && !scenic.isNull("longitude"))
+                    ? scenic.optDouble("longitude") : null;
+            String visitTime = visited.optString("visit_date");
+            int ratingValue = visited.optInt("rating", -1);
+            String ratingLabel = ratingValue >= 0
+                    ? String.format(Locale.getDefault(), "评分：%d/5", ratingValue)
+                    : null;
+            result.add(new FeedItem(scenicId, title, description, imageUrl, null,
+                    scenic.optString("city"), address, lat, lng, null, visitTime, ratingLabel));
+        }
+        return result;
+    }
+
+    public JSONObject createOrder(long userId,
+                                  String contactName,
+                                  String contactPhone,
+                                  String orderType,
+                                  String checkinDate,
+                                  String checkoutDate) throws IOException, JSONException {
+        JSONObject payload = new JSONObject();
+        payload.put("user_id", userId);
+        if (!TextUtils.isEmpty(contactName)) {
+            payload.put("contact_name", contactName);
+        }
+        if (!TextUtils.isEmpty(contactPhone)) {
+            payload.put("contact_phone", contactPhone);
+        }
+        if (!TextUtils.isEmpty(orderType)) {
+            payload.put("order_type", orderType);
+        }
+        if (!TextUtils.isEmpty(checkinDate)) {
+            payload.put("checkin_date", checkinDate);
+        }
+        if (!TextUtils.isEmpty(checkoutDate)) {
+            payload.put("checkout_date", checkoutDate);
+        }
+        ApiResponse response = apiClient.post("/api/orders", payload);
+        ensureSuccess(response);
+        Object data = response.getData();
+        return data instanceof JSONObject ? (JSONObject) data : null;
     }
 
     private List<FeedItem> parseFavoriteList(Object data, boolean isProduct) {
@@ -130,9 +227,33 @@ public class UserCenterRepository {
                     ? target.optInt("stock") : null;
             items.add(new FeedItem(id, title, description, imageUrl, priceLabel, extra,
                     TextUtils.isEmpty(address) ? null : address,
-                    lat, lng, stock));
+                    lat, lng, stock, null, null));
         }
         return items;
+    }
+
+    private FeedItem buildProductItem(JSONObject productJson) {
+        if (productJson == null) {
+            return null;
+        }
+        long id = productJson.optLong("id", 0);
+        String title = productJson.optString("name", "商品");
+        String description = productJson.optString("description", "");
+        String imageUrl = productJson.optString("cover_image");
+        String priceLabel = formatPrice(productJson.optDouble("price", Double.NaN));
+        String address = productJson.optString("hotel_address", null);
+        if (TextUtils.isEmpty(address)) {
+            address = productJson.optString("address");
+        }
+        Double lat = (productJson.has("latitude") && !productJson.isNull("latitude"))
+                ? productJson.optDouble("latitude") : null;
+        Double lng = (productJson.has("longitude") && !productJson.isNull("longitude"))
+                ? productJson.optDouble("longitude") : null;
+        Integer stock = (productJson.has("stock") && !productJson.isNull("stock"))
+                ? productJson.optInt("stock") : null;
+        return new FeedItem(id, title, description, imageUrl, priceLabel,
+                productJson.optString("type"), TextUtils.isEmpty(address) ? null : address,
+                lat, lng, stock, null, null);
     }
 
     private String formatPrice(double price) {

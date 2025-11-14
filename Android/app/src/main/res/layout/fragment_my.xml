@@ -163,6 +163,45 @@
                     android:background="?attr/colorOutline" />
 
                 <LinearLayout
+                    android:id="@+id/rowVisited"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:minHeight="56dp"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="12dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="@string/my_menu_visited"
+                        android:src="@drawable/ic_nav_plan"
+                        android:tint="?attr/colorOnSurfaceVariant" />
+
+                    <TextView
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:text="@string/my_menu_visited" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:contentDescription="@string/my_menu_visited"
+                        android:src="@drawable/ic_chevron_right"
+                        android:tint="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:alpha="0.2"
+                    android:background="?attr/colorOutline" />
+
+                <LinearLayout
                     android:id="@+id/rowOrders"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -191,6 +230,45 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:contentDescription="@string/my_menu_orders"
+                        android:src="@drawable/ic_chevron_right"
+                        android:tint="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:alpha="0.2"
+                    android:background="?attr/colorOutline" />
+
+                <LinearLayout
+                    android:id="@+id/rowCart"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:minHeight="56dp"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="12dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="@string/my_menu_cart"
+                        android:src="@drawable/ic_cart"
+                        android:tint="?attr/colorOnSurfaceVariant" />
+
+                    <TextView
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:text="@string/my_menu_cart" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:contentDescription="@string/my_menu_cart"
                         android:src="@drawable/ic_chevron_right"
                         android:tint="?attr/colorOnSurfaceVariant" />
                 </LinearLayout>

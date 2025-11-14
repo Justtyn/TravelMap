@@ -63,7 +63,7 @@ public class TravelRepository {
                     ? scenic.optDouble("longitude") : null;
             result.add(new FeedItem(id, title, description, imageUrl, null,
                     scenic.optString("city"), address,
-                    lat, lng, null));
+                    lat, lng, null, null, null));
         }
         return result;
     }
@@ -111,7 +111,7 @@ public class TravelRepository {
                 merged.add(new FeedItem(id, title, description, imageUrl, priceLabel, actualType,
                         TextUtils.isEmpty(address) ? null : address,
                         null, null,
-                        stock));
+                        stock, null, null));
             }
         }
         return merged;

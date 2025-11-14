@@ -25,9 +25,11 @@ import com.justyn.travelmap.LoginActivity;
 import com.justyn.travelmap.R;
 import com.justyn.travelmap.data.local.UserPreferences;
 import com.justyn.travelmap.data.local.UserProfile;
+import com.justyn.travelmap.profile.CartActivity;
 import com.justyn.travelmap.profile.FavoritesActivity;
 import com.justyn.travelmap.profile.OrdersActivity;
 import com.justyn.travelmap.profile.UserInfoActivity;
+import com.justyn.travelmap.profile.VisitedActivity;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,7 +50,9 @@ public class MyFragment extends Fragment {
     private MaterialButton btnLogout;
     private LinearLayout rowProfile;
     private LinearLayout rowFavorites;
+    private LinearLayout rowVisited;
     private LinearLayout rowOrders;
+    private LinearLayout rowCart;
     private ExecutorService avatarExecutor;
     private Handler mainHandler;
 
@@ -96,14 +100,18 @@ public class MyFragment extends Fragment {
         btnLogout = root.findViewById(R.id.btnLogout);
         rowProfile = root.findViewById(R.id.rowProfile);
         rowFavorites = root.findViewById(R.id.rowFavorites);
+        rowVisited = root.findViewById(R.id.rowVisited);
         rowOrders = root.findViewById(R.id.rowOrders);
+        rowCart = root.findViewById(R.id.rowCart);
     }
 
     private void bindEvents() {
         btnLogout.setOnClickListener(v -> performLogout());
         rowProfile.setOnClickListener(v -> startActivity(new Intent(requireContext(), UserInfoActivity.class)));
         rowFavorites.setOnClickListener(v -> startActivity(new Intent(requireContext(), FavoritesActivity.class)));
+        rowVisited.setOnClickListener(v -> startActivity(new Intent(requireContext(), VisitedActivity.class)));
         rowOrders.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrdersActivity.class)));
+        rowCart.setOnClickListener(v -> startActivity(new Intent(requireContext(), CartActivity.class)));
     }
 
     private void renderUserInfo() {
