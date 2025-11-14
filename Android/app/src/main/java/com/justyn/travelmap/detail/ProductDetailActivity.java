@@ -31,6 +31,7 @@ public class ProductDetailActivity extends AppCompatActivity {
 
     public static final String EXTRA_PRODUCT_ID = "extra_product_id";
 
+    private MaterialToolbar toolbar;
     private ShapeableImageView ivCover;
     private TextView tvTitle;
     private TextView tvType;
@@ -74,8 +75,10 @@ public class ProductDetailActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        toolbar = findViewById(R.id.toolbar);
         toolbar.setNavigationOnClickListener(v -> finish());
+        toolbar.setSubtitle(R.string.detail_breadcrumb_product);
+        toolbar.setSubtitle(R.string.detail_breadcrumb_product);
         ivCover = findViewById(R.id.ivCover);
         tvTitle = findViewById(R.id.tvProductTitle);
         tvType = findViewById(R.id.tvProductType);
@@ -122,6 +125,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         if (detail == null) {
             return;
         }
+        updateToolbarSubtitle(detail);
         tvTitle.setText(detail.getTitle());
         tvType.setText(detail.getExtraInfo());
         tvPrice.setText(detail.getPriceLabel());
@@ -145,6 +149,18 @@ public class ProductDetailActivity extends AppCompatActivity {
                 .error(R.drawable.banner_placeholder)
                 .transition(DrawableTransitionOptions.withCrossFade())
                 .into(ivCover);
+    }
+
+    private void updateToolbarSubtitle(FeedItem detail) {
+        if (toolbar == null || detail == null) {
+            return;
+        }
+        String type = detail.getExtraInfo();
+        if (type != null && type.equalsIgnoreCase("HOTEL")) {
+            toolbar.setSubtitle(R.string.detail_breadcrumb_booking);
+        } else {
+            toolbar.setSubtitle(R.string.detail_breadcrumb_product);
+        }
     }
 
     private void updateFavoriteButton() {

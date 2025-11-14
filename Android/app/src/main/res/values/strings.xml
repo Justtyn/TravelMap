@@ -113,6 +113,13 @@
     <string name="detail_added_cart">已加入购物车</string>
     <string name="detail_cart_success">已加入购物车</string>
     <string name="detail_cart_failed">加入购物车失败：%1$s</string>
+    <string name="detail_breadcrumb_scenic">首页 / 景点详情</string>
+    <string name="detail_breadcrumb_product">商城 / 商品详情</string>
+    <string name="detail_breadcrumb_booking">预订 / 商品详情</string>
+    <string name="favorites_breadcrumb">我的 / 收藏</string>
+    <string name="visited_breadcrumb">我的 / 去过</string>
+    <string name="orders_breadcrumb">我的 / 订单</string>
+    <string name="cart_breadcrumb">我的 / 购物车</string>
     <string name="detail_favorite_failed">收藏操作失败：%1$s</string>
     <string name="detail_visit_failed">操作失败：%1$s</string>
     <string name="title_product_detail">商品详情</string>

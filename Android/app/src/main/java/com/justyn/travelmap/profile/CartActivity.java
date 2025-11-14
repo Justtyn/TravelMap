@@ -62,6 +62,7 @@ public class CartActivity extends AppCompatActivity {
     private void initViews() {
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setNavigationOnClickListener(v -> finish());
+        toolbar.setSubtitle(R.string.cart_breadcrumb);
         recyclerView = findViewById(R.id.rvCart);
         tvEmpty = findViewById(R.id.tvCartEmpty);
         progressIndicator = findViewById(R.id.cartProgress);

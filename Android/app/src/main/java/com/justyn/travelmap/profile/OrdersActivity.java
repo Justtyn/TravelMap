@@ -60,6 +60,7 @@ public class OrdersActivity extends AppCompatActivity implements FeedAdapter.OnI
     private void initViews() {
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setNavigationOnClickListener(v -> finish());
+        toolbar.setSubtitle(R.string.orders_breadcrumb);
         swipeRefreshLayout = findViewById(R.id.ordersSwipeRefresh);
         recyclerView = findViewById(R.id.rvOrders);
         tvEmpty = findViewById(R.id.tvOrdersEmpty);

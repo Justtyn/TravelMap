@@ -81,6 +81,7 @@ public class ScenicDetailActivity extends AppCompatActivity {
     private void initViews() {
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setNavigationOnClickListener(v -> finish());
+        toolbar.setSubtitle(R.string.detail_breadcrumb_scenic);
         ivBanner = findViewById(R.id.ivBanner);
         tvTitle = findViewById(R.id.tvTitle);
         tvCity = findViewById(R.id.tvCity);

@@ -62,6 +62,7 @@ public class VisitedActivity extends AppCompatActivity implements FeedAdapter.On
     private void initViews() {
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setNavigationOnClickListener(v -> finish());
+        toolbar.setSubtitle(R.string.visited_breadcrumb);
         swipeRefreshLayout = findViewById(R.id.visitedSwipeRefresh);
         recyclerView = findViewById(R.id.rvVisited);
         tvEmpty = findViewById(R.id.tvVisitedEmpty);

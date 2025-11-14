@@ -69,6 +69,7 @@ public class FavoritesActivity extends AppCompatActivity implements FeedAdapter.
     private void initViews() {
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setNavigationOnClickListener(v -> finish());
+        toolbar.setSubtitle(R.string.favorites_breadcrumb);
         swipeRefreshLayout = findViewById(R.id.favoritesSwipeRefresh);
         recyclerView = findViewById(R.id.rvFavorites);
         tvEmpty = findViewById(R.id.tvFavoritesEmpty);
