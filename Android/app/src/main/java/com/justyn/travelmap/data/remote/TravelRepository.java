@@ -1,5 +1,7 @@
 package com.justyn.travelmap.data.remote;
 
+import android.text.TextUtils;
+
 import androidx.annotation.Nullable;
 
 import com.justyn.travelmap.model.FeedItem;
@@ -14,6 +16,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import android.text.TextUtils;
 
 /**
  * 聚合首页/商城/预订需要的远程数据访问。
@@ -52,7 +56,14 @@ public class TravelRepository {
             String title = scenic.optString("name", "未知景点");
             String description = scenic.optString("description", scenic.optString("city", "精彩旅程等你探索"));
             String imageUrl = scenic.optString("cover_image");
-            result.add(new FeedItem(id, title, description, imageUrl, null, scenic.optString("city")));
+            String address = scenic.optString("address");
+            Double lat = (scenic.has("latitude") && !scenic.isNull("latitude"))
+                    ? scenic.optDouble("latitude") : null;
+            Double lng = (scenic.has("longitude") && !scenic.isNull("longitude"))
+                    ? scenic.optDouble("longitude") : null;
+            result.add(new FeedItem(id, title, description, imageUrl, null,
+                    scenic.optString("city"), address,
+                    lat, lng, null));
         }
         return result;
     }
@@ -91,7 +102,16 @@ public class TravelRepository {
                         String.format(Locale.getDefault(), "类型：%s", actualType));
                 String imageUrl = product.optString("cover_image");
                 String priceLabel = formatPrice(product.optDouble("price", Double.NaN));
-                merged.add(new FeedItem(id, title, description, imageUrl, priceLabel, actualType));
+                String address = product.optString("hotel_address", "");
+                if (address.isEmpty()) {
+                    address = product.optString("address");
+                }
+                Integer stock = (product.has("stock") && !product.isNull("stock"))
+                        ? product.optInt("stock") : null;
+                merged.add(new FeedItem(id, title, description, imageUrl, priceLabel, actualType,
+                        TextUtils.isEmpty(address) ? null : address,
+                        null, null,
+                        stock));
             }
         }
         return merged;

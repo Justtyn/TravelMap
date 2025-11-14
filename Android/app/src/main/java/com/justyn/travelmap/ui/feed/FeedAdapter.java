@@ -16,6 +16,7 @@ import com.justyn.travelmap.model.FeedItem;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder> {
 
@@ -61,6 +62,8 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
         private final ImageView ivCover;
         private final TextView tvTitle;
         private final TextView tvDesc;
+        private final TextView tvMeta;
+        private final TextView tvStock;
         private final TextView tvPrice;
 
         FeedViewHolder(@NonNull View itemView) {
@@ -68,6 +71,8 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
             ivCover = itemView.findViewById(R.id.ivCover);
             tvTitle = itemView.findViewById(R.id.tvTitle);
             tvDesc = itemView.findViewById(R.id.tvDesc);
+            tvMeta = itemView.findViewById(R.id.tvMeta);
+            tvStock = itemView.findViewById(R.id.tvStock);
             tvPrice = itemView.findViewById(R.id.tvPrice);
         }
 
@@ -75,6 +80,20 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
             tvTitle.setText(item.getTitle());
             String description = item.getDescription();
             tvDesc.setText(description != null ? description : "");
+            String metaText = buildMetaText(item);
+            if (metaText == null || metaText.isEmpty()) {
+                tvMeta.setVisibility(View.GONE);
+            } else {
+                tvMeta.setVisibility(View.VISIBLE);
+                tvMeta.setText(metaText);
+            }
+            Integer stock = item.getStock();
+            if (stock != null && stock >= 0) {
+                tvStock.setVisibility(View.VISIBLE);
+                tvStock.setText(itemView.getContext().getString(R.string.feed_stock_label, stock));
+            } else {
+                tvStock.setVisibility(View.GONE);
+            }
             String priceLabel = item.getPriceLabel();
             if (priceLabel == null || priceLabel.isEmpty()) {
                 tvPrice.setVisibility(View.GONE);
@@ -94,6 +113,24 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
                     listener.onFeedItemClicked(item);
                 }
             });
+        }
+
+        private String buildMetaText(FeedItem item) {
+            StringBuilder builder = new StringBuilder();
+            if (item.getAddress() != null && !item.getAddress().isEmpty()) {
+                builder.append(item.getAddress());
+            } else if (item.getExtraInfo() != null && !item.getExtraInfo().isEmpty()) {
+                builder.append(item.getExtraInfo());
+            }
+            Double lat = item.getLatitude();
+            Double lng = item.getLongitude();
+            if (lat != null && lng != null) {
+                if (builder.length() > 0) {
+                    builder.append(" · ");
+                }
+                builder.append(String.format(Locale.getDefault(), "%.4f, %.4f", lat, lng));
+            }
+            return builder.toString();
         }
     }
 }

@@ -1,5 +1,7 @@
 package com.justyn.travelmap.data.remote;
 
+import android.text.TextUtils;
+
 import com.justyn.travelmap.model.FeedItem;
 
 import org.json.JSONArray;
@@ -87,7 +89,8 @@ public class UserCenterRepository {
             String imageUrl = product != null ? product.optString("cover_image") : null;
             double totalPrice = order.optDouble("total_price", Double.NaN);
             String priceLabel = Double.isNaN(totalPrice) ? null : String.format(Locale.getDefault(), "¥%.2f", totalPrice);
-            items.add(new FeedItem(orderId, title, description, imageUrl, priceLabel, order.optString("create_time")));
+            items.add(new FeedItem(orderId, title, description, imageUrl, priceLabel,
+                    order.optString("create_time"), null, null, null, null));
         }
         return items;
     }
@@ -115,7 +118,19 @@ public class UserCenterRepository {
             String imageUrl = target.optString("cover_image");
             String extra = isProduct ? target.optString("type") : target.optString("city");
             String priceLabel = isProduct ? formatPrice(target.optDouble("price", Double.NaN)) : null;
-            items.add(new FeedItem(id, title, description, imageUrl, priceLabel, extra));
+            String address = target.optString("address", null);
+            if (TextUtils.isEmpty(address) && isProduct) {
+                address = target.optString("hotel_address", null);
+            }
+            Double lat = (target.has("latitude") && !target.isNull("latitude"))
+                    ? target.optDouble("latitude") : null;
+            Double lng = (target.has("longitude") && !target.isNull("longitude"))
+                    ? target.optDouble("longitude") : null;
+            Integer stock = (target.has("stock") && !target.isNull("stock"))
+                    ? target.optInt("stock") : null;
+            items.add(new FeedItem(id, title, description, imageUrl, priceLabel, extra,
+                    TextUtils.isEmpty(address) ? null : address,
+                    lat, lng, stock));
         }
         return items;
     }

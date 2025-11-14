@@ -10,18 +10,35 @@ public class FeedItem {
     private final String imageUrl;
     private final String priceLabel;
     private final String extraInfo;
+    private final String address;
+    private final Double latitude;
+    private final Double longitude;
+    private final Integer stock;
 
     public FeedItem(long id, String title, String description, String imageUrl) {
-        this(id, title, description, imageUrl, null, null);
+        this(id, title, description, imageUrl, null, null, null, null, null, null);
     }
 
-    public FeedItem(long id, String title, String description, String imageUrl, String priceLabel, String extraInfo) {
+    public FeedItem(long id,
+                    String title,
+                    String description,
+                    String imageUrl,
+                    String priceLabel,
+                    String extraInfo,
+                    String address,
+                    Double latitude,
+                    Double longitude,
+                    Integer stock) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.imageUrl = imageUrl;
         this.priceLabel = priceLabel;
         this.extraInfo = extraInfo;
+        this.address = address;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.stock = stock;
     }
 
     public long getId() {
@@ -46,5 +63,21 @@ public class FeedItem {
 
     public String getExtraInfo() {
         return extraInfo;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public Integer getStock() {
+        return stock;
     }
 }

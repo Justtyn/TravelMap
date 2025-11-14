@@ -70,6 +70,7 @@
     <string name="feed_banner_subtitle_home">发现热门景点与城市故事</string>
     <string name="feed_banner_subtitle_mall">挑选门票、文创与特色体验</string>
     <string name="feed_banner_subtitle_booking">酒店与住宿一站式安排</string>
+    <string name="feed_stock_label">库存：%1$d</string>
     <string name="title_user_info">个人资料</string>
     <string name="user_info_username">账号</string>
     <string name="user_info_nickname">昵称</string>
