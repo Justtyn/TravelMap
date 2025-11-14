@@ -144,6 +144,16 @@ def get_json():
     return request.get_json() or {}
 
 
+def normalize_optional_str(value):
+    """Trim optional string fields; empty string becomes None."""
+    if value is None:
+        return None
+    if isinstance(value, str):
+        trimmed = value.strip()
+        return trimmed or None
+    return value
+
+
 PRODUCT_COLUMNS = ['id', 'name', 'scenic_id', 'cover_image', 'price', 'stock', 'description', 'type', 'hotel_address']
 SCENIC_COLUMNS = ['id', 'name', 'city', 'cover_image', 'description', 'address', 'latitude', 'longitude', 'audio_url']
 PRODUCT_SELECT_COLUMNS = ', '.join([f'p.{col} AS product_{col}' for col in PRODUCT_COLUMNS])
@@ -439,11 +449,11 @@ def wechat_login():
 def update_user_contact(user_id):
     """前端 UserInfo 编辑页：仅允许修改手机号与邮箱。"""
     data = get_json()
-    phone = data.get('phone')
-    email = data.get('email')
+    phone = normalize_optional_str(data.get('phone'))
+    email = normalize_optional_str(data.get('email'))
 
     if phone is None and email is None:
-        return json_response(400, '必须提供 phone 或 email', None, 400)
+        return json_response(400, '必须提供有效的 phone 或 email', None, 400)
 
     db = get_db()
     row = db.execute('SELECT * FROM user WHERE id = ?', (user_id,)).fetchone()
@@ -676,7 +686,7 @@ def remove_favorite():
     data = get_json()
     user_id = data.get('user_id')
     target_id = data.get('target_id')
-    target_type = data.get('target_type')
+    target_type = (data.get('target_type') or '').upper()
 
     if not all([user_id, target_id, target_type]):
         return json_response(400, 'user_id/target_id/target_type 必填', None, 400)
@@ -686,10 +696,27 @@ def remove_favorite():
                      (user_id, target_id, target_type))
     row = cur.fetchone()
     if row is None:
-        return json_response(404, '收藏记录不存在', None, 404)
+        return json_response(200, '收藏记录不存在，视为已取消', {'favorite': None, 'deleted': False})
     db.execute('DELETE FROM favorite WHERE id = ?', (row['id'],))
     db.commit()
     return json_response(200, '已取消收藏', {'favorite': build_favorite_payload(db, row), 'deleted': True})
+
+
+@app.route('/api/favorites/status', methods=['GET'])
+def favorite_status():
+    user_id = request.args.get('user_id')
+    target_id = request.args.get('target_id')
+    target_type = (request.args.get('target_type') or '').upper()
+
+    if not all([user_id, target_id, target_type]):
+        return json_response(400, 'user_id/target_id/target_type 必填', None, 400)
+
+    db = get_db()
+    cur = db.execute('SELECT * FROM favorite WHERE user_id = ? AND target_id = ? AND target_type = ?',
+                     (user_id, target_id, target_type))
+    row = cur.fetchone()
+    payload = build_favorite_payload(db, row)
+    return json_response(200, 'OK', {'favorited': payload is not None, 'favorite': payload})
 
 
 @app.route('/api/favorites/scenics', methods=['GET'])
@@ -760,6 +787,51 @@ def list_visited():
     cur = db.execute(sql, (user_id,))
     rows = [build_visited_payload(row) for row in cur.fetchall()]
     return json_response(200, 'OK', rows)
+
+
+@app.route('/api/visited/<int:visit_id>', methods=['DELETE'])
+def delete_visited(visit_id):
+    user_id = request.args.get('user_id')
+    if not user_id:
+        data = get_json()
+        user_id = data.get('user_id')
+    if not user_id:
+        return json_response(400, 'user_id 必填', None, 400)
+
+    db = get_db()
+    row = db.execute('SELECT user_id FROM visited WHERE id = ?', (visit_id,)).fetchone()
+    if row is None:
+        return json_response(404, '去过记录不存在', None, 404)
+    if str(row['user_id']) != str(user_id):
+        return json_response(403, '无权删除该记录', None, 403)
+
+    payload = fetch_visited_payload_by_id(visit_id)
+    db.execute('DELETE FROM visited WHERE id = ?', (visit_id,))
+    db.commit()
+    return json_response(200, '去过记录已删除', {'visited': payload, 'deleted': True})
+
+
+@app.route('/api/visited', methods=['DELETE'])
+def delete_visited_by_scenic():
+    user_id = request.args.get('user_id')
+    scenic_id = request.args.get('scenic_id')
+    if not user_id or not scenic_id:
+        data = get_json()
+        user_id = user_id or data.get('user_id')
+        scenic_id = scenic_id or data.get('scenic_id')
+    if not all([user_id, scenic_id]):
+        return json_response(400, 'user_id/scenic_id 必填', None, 400)
+
+    db = get_db()
+    cur = db.execute('SELECT id FROM visited WHERE user_id = ? AND scenic_id = ?', (user_id, scenic_id))
+    row = cur.fetchone()
+    if row is None:
+        return json_response(200, '记录不存在，视为已取消', {'visited': None, 'deleted': False})
+
+    payload = fetch_visited_payload_by_id(row['id'])
+    db.execute('DELETE FROM visited WHERE id = ?', (row['id'],))
+    db.commit()
+    return json_response(200, '去过记录已删除', {'visited': payload, 'deleted': True})
 
 
 # =====================================================

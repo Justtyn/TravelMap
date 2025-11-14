@@ -4,6 +4,7 @@ import android.text.TextUtils;
 
 import com.justyn.travelmap.model.CartItem;
 import com.justyn.travelmap.model.FeedItem;
+import com.justyn.travelmap.model.VisitedRecord;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -190,6 +191,89 @@ public class UserCenterRepository {
         ensureSuccess(response);
         Object data = response.getData();
         return data instanceof JSONObject ? (JSONObject) data : null;
+    }
+
+    public void addToCart(long userId, long productId, int quantity) throws IOException, JSONException {
+        JSONObject payload = new JSONObject();
+        payload.put("user_id", userId);
+        payload.put("product_id", productId);
+        payload.put("quantity", quantity);
+        ApiResponse response = apiClient.post("/api/cart", payload);
+        ensureSuccess(response);
+    }
+
+    public boolean isFavorite(long userId, long targetId, String targetType) throws IOException, JSONException {
+        Map<String, String> params = new HashMap<>();
+        params.put("user_id", String.valueOf(userId));
+        params.put("target_id", String.valueOf(targetId));
+        params.put("target_type", targetType);
+        ApiResponse response = apiClient.get("/api/favorites/status", params);
+        ensureSuccess(response);
+        Object data = response.getData();
+        if (data instanceof JSONObject) {
+            JSONObject json = (JSONObject) data;
+            return json.optBoolean("favorited", false);
+        }
+        return false;
+    }
+
+    public void addFavorite(long userId, long targetId, String targetType) throws IOException, JSONException {
+        JSONObject payload = new JSONObject();
+        payload.put("user_id", userId);
+        payload.put("target_id", targetId);
+        payload.put("target_type", targetType);
+        ApiResponse response = apiClient.post("/api/favorites", payload);
+        ensureSuccess(response);
+    }
+
+    public void removeFavorite(long userId, long targetId, String targetType) throws IOException, JSONException {
+        JSONObject payload = new JSONObject();
+        payload.put("user_id", userId);
+        payload.put("target_id", targetId);
+        payload.put("target_type", targetType);
+        ApiResponse response = apiClient.delete("/api/favorites", payload);
+        ensureSuccess(response);
+    }
+
+    public void addVisited(long userId, long scenicId, int rating) throws IOException, JSONException {
+        JSONObject payload = new JSONObject();
+        payload.put("user_id", userId);
+        payload.put("scenic_id", scenicId);
+        payload.put("rating", rating);
+        ApiResponse response = apiClient.post("/api/visited", payload);
+        ensureSuccess(response);
+    }
+
+    public void removeVisited(long userId, long scenicId) throws IOException, JSONException {
+        Map<String, String> params = new HashMap<>();
+        params.put("user_id", String.valueOf(userId));
+        params.put("scenic_id", String.valueOf(scenicId));
+        ApiResponse response = apiClient.delete("/api/visited", params);
+        ensureSuccess(response);
+    }
+
+    public VisitedRecord getVisitedRecord(long userId, long scenicId) throws IOException, JSONException {
+        Map<String, String> params = new HashMap<>();
+        params.put("user_id", String.valueOf(userId));
+        ApiResponse response = apiClient.get("/api/visited", params);
+        ensureSuccess(response);
+        Object data = response.getData();
+        if (!(data instanceof JSONArray)) {
+            return null;
+        }
+        JSONArray array = (JSONArray) data;
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject visited = array.optJSONObject(i);
+            if (visited == null) continue;
+            if (visited.optLong("scenic_id") == scenicId) {
+                return new VisitedRecord(
+                        visited.optLong("visited_id"),
+                        visited.optInt("rating", -1),
+                        visited.optString("visit_date")
+                );
+            }
+        }
+        return null;
     }
 
     private List<FeedItem> parseFavoriteList(Object data, boolean isProduct) {

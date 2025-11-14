@@ -19,8 +19,10 @@ import com.justyn.travelmap.data.local.UserPreferences;
 import com.justyn.travelmap.data.local.UserProfile;
 import com.justyn.travelmap.data.remote.UserCenterRepository;
 import com.justyn.travelmap.model.CartItem;
+import com.justyn.travelmap.profile.adapter.CartAdapter;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.List;
@@ -105,7 +107,7 @@ public class CartActivity extends AppCompatActivity {
         progressIndicator.setVisibility(View.VISIBLE);
         executor.execute(() -> {
             try {
-                repository.createOrder(profile.getId(),
+                org.json.JSONObject data = repository.createOrder(profile.getId(),
                         profile.getNickname() != null ? profile.getNickname() : profile.getUsername(),
                         contactPhone,
                         "GENERAL",
@@ -114,7 +116,7 @@ public class CartActivity extends AppCompatActivity {
                 handler.post(() -> {
                     progressIndicator.setVisibility(View.GONE);
                     btnSubmit.setEnabled(true);
-                    Toast.makeText(this, R.string.cart_submit_success, Toast.LENGTH_SHORT).show();
+                    launchSuccessPage(data);
                     loadCart();
                 });
             } catch (IOException | JSONException e) {
@@ -125,6 +127,26 @@ public class CartActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    private void launchSuccessPage(org.json.JSONObject data) {
+        if (data == null) {
+            Toast.makeText(this, R.string.cart_submit_success, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        org.json.JSONObject order = data.optJSONObject("order");
+        String orderNo = order != null ? order.optString("order_no") : "";
+        String price = "";
+        if (order != null) {
+            double total = order.optDouble("total_price", Double.NaN);
+            if (!Double.isNaN(total)) {
+                price = String.format("¥%.2f", total);
+            }
+        }
+        android.content.Intent intent = new android.content.Intent(this, OrderSuccessActivity.class);
+        intent.putExtra(OrderSuccessActivity.EXTRA_ORDER_NO, orderNo);
+        intent.putExtra(OrderSuccessActivity.EXTRA_ORDER_PRICE, price);
+        startActivity(intent);
     }
 
     private void setLoading(boolean loading) {

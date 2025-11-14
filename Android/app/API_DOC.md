@@ -97,6 +97,39 @@
 - **成功响应**：与登录一致。
 - **备注**：缺 `code` → `400 / "code 不能为空"`。
 
+### PUT /api/users/{id}
+- **说明**：用户在 App “个人资料”里修改联系方式，仅允许更新 `phone` / `email` 两个字段。
+- **路径参数**：`id` 为用户主键 ID。
+- **请求体示例**
+  ```json
+  {
+    "phone": "13800009999",
+    "email": "new@example.com"
+  }
+  ```
+  > 两个字段均为可选，但至少传其中之一；若字段为空字符串或全是空白，将被忽略视为“未更新”。
+- **成功响应**
+  ```json
+  {
+    "code": 200,
+    "msg": "联系方式已更新",
+    "data": {
+      "user": {
+        "id": 1,
+        "username": "alice",
+        "phone": "13800009999",
+        "email": "new@example.com",
+        "...": "..."
+      }
+    }
+  }
+  ```
+- **错误情况**
+  | 场景 | 返回 |
+  |------|------|
+  | 未传 `phone`/`email` | `400 / "必须提供 phone 或 email"` |
+  | 用户不存在 | `404 / "用户不存在"` |
+
 ### GET /ping
 - **说明**：健康检查，用于 Heartbeat/部署探针。
 - **响应**：`{"code":200,"msg":"OK","data":{"msg":"pong"}}`
@@ -232,7 +265,27 @@
 ### DELETE /api/favorites
 - **说明**：取消收藏。
 - **请求体**：同 POST。
-- **成功响应**：`{"data":{"favorite":{...被删记录...},"deleted":true}}`；未找到 → `404 / "收藏记录不存在"`。
+- **成功响应**：`{"data":{"favorite":{...被删记录...},"deleted":true}}`；若记录不存在则返回 `{"deleted":false}`，整体保持幂等。
+
+### GET /api/favorites/status
+- **说明**：详情页快速判断是否已收藏。
+- **查询参数**：`user_id`、`target_id`、`target_type`（`SCENIC` / `PRODUCT`），均必填。
+- **响应**
+  ```json
+  {
+    "code": 200,
+    "msg": "OK",
+    "data": {
+      "favorited": true,
+      "favorite": {
+        "favorite_id": 9,
+        "user_id": 1,
+        "target_type": "SCENIC",
+        "target": { ... }
+      }
+    }
+  }
+  ```
 
 ### GET /api/favorites/scenics?user_id=1
 ### GET /api/favorites/products?user_id=1
@@ -265,6 +318,27 @@
 
 ### GET /api/visited?user_id=1
 - 返回 `visited` 数组（含嵌套 scenic）；缺 `user_id` → `400 / "user_id 必填"`。
+
+### DELETE /api/visited/{visited_id}?user_id=1
+- **说明**：根据 `visited_id` 删除指定记录，需校验是否属于当前用户。
+- **请求参数**：路径 `visited_id` + 查询参数 `user_id`（或在请求体 JSON 中传递）。
+- **响应**
+  ```json
+  {
+    "code": 200,
+    "msg": "去过记录已删除",
+    "data": {
+      "visited": { ... 被删记录（含 scenic） ... },
+      "deleted": true
+    }
+  }
+  ```
+- **备注**：不属于该用户 → `403 / "无权删除该记录"`，不存在 → 404。
+
+### DELETE /api/visited?user_id=1&scenic_id=101
+- **说明**：按 `user_id + scenic_id` 删除，方便前端实现幂等“再点一次取消”。
+- **请求**：支持查询参数或 JSON 传参，两个字段均必填。
+- **响应**：成功删除返回被删记录，若组合不存在则 `{"deleted":false,"visited":null}`。
 
 ---
 
@@ -378,4 +452,4 @@
 4. 建议在 PR 模板中添加“API 文档已更新”勾选项，避免出现实现与文档不一致。
 
 ---
-最后更新：2025-05-10。当前版本涵盖 `app.py` 中全部接口。
+最后更新：2025-11-14。当前版本涵盖 `app.py` 中全部接口。

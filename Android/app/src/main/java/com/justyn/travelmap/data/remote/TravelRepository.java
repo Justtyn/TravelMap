@@ -49,21 +49,10 @@ public class TravelRepository {
         List<FeedItem> result = new ArrayList<>();
         for (int i = 0; i < array.length(); i++) {
             JSONObject scenic = array.optJSONObject(i);
-            if (scenic == null) {
-                continue;
+            FeedItem item = buildScenicItem(scenic);
+            if (item != null) {
+                result.add(item);
             }
-            long id = scenic.optLong("id", i);
-            String title = scenic.optString("name", "未知景点");
-            String description = scenic.optString("description", scenic.optString("city", "精彩旅程等你探索"));
-            String imageUrl = scenic.optString("cover_image");
-            String address = scenic.optString("address");
-            Double lat = (scenic.has("latitude") && !scenic.isNull("latitude"))
-                    ? scenic.optDouble("latitude") : null;
-            Double lng = (scenic.has("longitude") && !scenic.isNull("longitude"))
-                    ? scenic.optDouble("longitude") : null;
-            result.add(new FeedItem(id, title, description, imageUrl, null,
-                    scenic.optString("city"), address,
-                    lat, lng, null, null, null));
         }
         return result;
     }
@@ -96,25 +85,33 @@ public class TravelRepository {
                 if (!typeMatches(actualType, type)) {
                     continue;
                 }
-                long id = product.optLong("id", i);
-                String title = product.optString("name", "商品");
-                String description = product.optString("description",
-                        String.format(Locale.getDefault(), "类型：%s", actualType));
-                String imageUrl = product.optString("cover_image");
-                String priceLabel = formatPrice(product.optDouble("price", Double.NaN));
-                String address = product.optString("hotel_address", "");
-                if (address.isEmpty()) {
-                    address = product.optString("address");
+                FeedItem item = buildProductItem(product);
+                if (item != null) {
+                    merged.add(item);
                 }
-                Integer stock = (product.has("stock") && !product.isNull("stock"))
-                        ? product.optInt("stock") : null;
-                merged.add(new FeedItem(id, title, description, imageUrl, priceLabel, actualType,
-                        TextUtils.isEmpty(address) ? null : address,
-                        null, null,
-                        stock, null, null));
             }
         }
         return merged;
+    }
+
+    public FeedItem fetchScenicDetail(long scenicId) throws IOException, JSONException {
+        ApiResponse response = apiClient.get("/api/scenics/" + scenicId);
+        ensureSuccess(response);
+        Object data = response.getData();
+        if (data instanceof JSONObject) {
+            return buildScenicItem((JSONObject) data);
+        }
+        return null;
+    }
+
+    public FeedItem fetchProductDetail(long productId) throws IOException, JSONException {
+        ApiResponse response = apiClient.get("/api/products/" + productId);
+        ensureSuccess(response);
+        Object data = response.getData();
+        if (data instanceof JSONObject) {
+            return buildProductItem((JSONObject) data);
+        }
+        return null;
     }
 
     private String formatPrice(double price) {
@@ -122,6 +119,48 @@ public class TravelRepository {
             return null;
         }
         return String.format(Locale.getDefault(), "¥%s", price % 1 == 0 ? String.format(Locale.getDefault(), "%.0f", price) : String.format(Locale.getDefault(), "%.2f", price));
+    }
+
+    private FeedItem buildScenicItem(JSONObject scenic) {
+        if (scenic == null) {
+            return null;
+        }
+        long id = scenic.optLong("id", 0);
+        String title = scenic.optString("name", "未知景点");
+        String description = scenic.optString("description", scenic.optString("city", "精彩旅程等你探索"));
+        String imageUrl = scenic.optString("cover_image");
+        String address = scenic.optString("address");
+        Double lat = (scenic.has("latitude") && !scenic.isNull("latitude"))
+                ? scenic.optDouble("latitude") : null;
+        Double lng = (scenic.has("longitude") && !scenic.isNull("longitude"))
+                ? scenic.optDouble("longitude") : null;
+        return new FeedItem(id, title, description, imageUrl, null,
+                scenic.optString("city"),
+                TextUtils.isEmpty(address) ? null : address,
+                lat, lng, null, null, null);
+    }
+
+    private FeedItem buildProductItem(JSONObject product) {
+        if (product == null) {
+            return null;
+        }
+        long id = product.optLong("id", 0);
+        String title = product.optString("name", "商品");
+        String actualType = product.optString("type");
+        String description = product.optString("description",
+                String.format(Locale.getDefault(), "类型：%s", actualType));
+        String imageUrl = product.optString("cover_image");
+        String priceLabel = formatPrice(product.optDouble("price", Double.NaN));
+        String address = product.optString("hotel_address", "");
+        if (TextUtils.isEmpty(address)) {
+            address = product.optString("address");
+        }
+        Integer stock = (product.has("stock") && !product.isNull("stock"))
+                ? product.optInt("stock") : null;
+        return new FeedItem(id, title, description, imageUrl, priceLabel, actualType,
+                TextUtils.isEmpty(address) ? null : address,
+                null, null,
+                stock, null, null);
     }
 
     private boolean typeMatches(String actualType, String expectedType) {

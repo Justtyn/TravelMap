@@ -99,4 +99,26 @@
     <string name="cart_submit_success">下单成功</string>
     <string name="cart_submit_failed">下单失败：%1$s</string>
     <string name="cart_quantity_label">数量：%1$d</string>
+    <string name="title_scenic_detail">景点详情</string>
+    <string name="detail_favorite">收藏</string>
+    <string name="detail_favorited">已收藏</string>
+    <string name="detail_mark_visited">标记去过</string>
+    <string name="detail_visited">已去过</string>
+    <string name="detail_rating_dialog_title">请选择评分</string>
+    <string name="detail_rating_positive">提交</string>
+    <string name="detail_rating_negative">取消</string>
+    <string name="detail_cancel_visited">是否取消“去过”标记？</string>
+    <string name="detail_remove_favorite_confirm">是否取消收藏？</string>
+    <string name="detail_add_cart">加入购物车</string>
+    <string name="detail_added_cart">已加入购物车</string>
+    <string name="detail_cart_success">已加入购物车</string>
+    <string name="detail_cart_failed">加入购物车失败：%1$s</string>
+    <string name="detail_favorite_failed">收藏操作失败：%1$s</string>
+    <string name="detail_visit_failed">操作失败：%1$s</string>
+    <string name="title_product_detail">商品详情</string>
+    <string name="order_success_title">下单成功</string>
+    <string name="order_success_message">订单已提交</string>
+    <string name="order_success_no">订单号：%1$s</string>
+    <string name="order_success_price">金额：%1$s</string>
+    <string name="order_success_back">完成</string>
 </resources>
