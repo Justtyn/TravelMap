@@ -37,57 +37,64 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # 修改数据库文件名后缀为 .db（真实 SQLite 文件），避免把建表脚本 .sql 当数据库用
 DB_PATH = os.path.join(BASE_DIR, 'db', 'TravelMap.db')  # 已存在的 SQLite 数据库
 
+
 # 新增：启动前确保关键业务表存在（特别是 visited / cart_item，防止旧库缺表导致接口报错）
 def ensure_schema():
     conn = sqlite3.connect(DB_PATH)
     conn.execute('PRAGMA foreign_keys = ON;')
     cur = conn.cursor()
     # visited 打卡记录
-    cur.execute('''CREATE TABLE IF NOT EXISTS visited (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        scenic_id INTEGER NOT NULL,
-        visit_date TEXT,
-        rating INTEGER,
-        FOREIGN KEY(user_id) REFERENCES user(id),
-        FOREIGN KEY(scenic_id) REFERENCES scenic(id)
-    );''')
+    cur.execute('''CREATE TABLE IF NOT EXISTS visited
+                   (
+                       id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                       user_id    INTEGER NOT NULL,
+                       scenic_id  INTEGER NOT NULL,
+                       visit_date TEXT,
+                       rating     INTEGER,
+                       FOREIGN KEY (user_id) REFERENCES user (id),
+                       FOREIGN KEY (scenic_id) REFERENCES scenic (id)
+                   );''')
     # cart_item 购物车
-    cur.execute('''CREATE TABLE IF NOT EXISTS cart_item (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        product_id INTEGER NOT NULL,
-        quantity INTEGER NOT NULL,
-        create_time TEXT,
-        FOREIGN KEY(user_id) REFERENCES user(id),
-        FOREIGN KEY(product_id) REFERENCES product(id)
-    );''')
+    cur.execute('''CREATE TABLE IF NOT EXISTS cart_item
+                   (
+                       id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                       user_id     INTEGER NOT NULL,
+                       product_id  INTEGER NOT NULL,
+                       quantity    INTEGER NOT NULL,
+                       create_time TEXT,
+                       FOREIGN KEY (user_id) REFERENCES user (id),
+                       FOREIGN KEY (product_id) REFERENCES product (id)
+                   );''')
     # favorite（已有时跳过）
-    cur.execute('''CREATE TABLE IF NOT EXISTS favorite (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        target_id INTEGER NOT NULL,
-        target_type TEXT NOT NULL,
-        create_time TEXT,
-        FOREIGN KEY(user_id) REFERENCES user(id)
-    );''')
+    cur.execute('''CREATE TABLE IF NOT EXISTS favorite
+                   (
+                       id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                       user_id     INTEGER NOT NULL,
+                       target_id   INTEGER NOT NULL,
+                       target_type TEXT    NOT NULL,
+                       create_time TEXT,
+                       FOREIGN KEY (user_id) REFERENCES user (id)
+                   );''')
     # trip_plan（已有时跳过）
-    cur.execute('''CREATE TABLE IF NOT EXISTS trip_plan (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        title TEXT,
-        start_date TEXT,
-        end_date TEXT,
-        source TEXT,
-        content TEXT,
-        create_time TEXT,
-        FOREIGN KEY(user_id) REFERENCES user(id)
-    );''')
+    cur.execute('''CREATE TABLE IF NOT EXISTS trip_plan
+                   (
+                       id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                       user_id     INTEGER NOT NULL,
+                       title       TEXT,
+                       start_date  TEXT,
+                       end_date    TEXT,
+                       source      TEXT,
+                       content     TEXT,
+                       create_time TEXT,
+                       FOREIGN KEY (user_id) REFERENCES user (id)
+                   );''')
     conn.commit()
     conn.close()
 
+
 # 保证启动前执行
 ensure_schema()
+
 
 # -------------------- 数据库工具函数 --------------------
 # 说明：通过 Flask 的 g 对象为每个请求创建/缓存一个连接，结束时自动关闭；开启外键约束。
