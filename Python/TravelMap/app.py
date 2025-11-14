@@ -7,11 +7,11 @@ TravelMap 后端单文件实现 (Flask + SQLite)
 1. 技术栈：Flask + sqlite3 原生；不使用 ORM，便于理解 SQL 与业务映射。
 2. 数据来源：直接使用既有 SQLite 文件 `db/TravelMap.sql`（已包含所有表结构与索引）。
 3. 接口风格：RESTful，统一 JSON 返回结构：{"code":200,"msg":"OK","data":...}；错误时返回非 200 code 并附带提示。
-4. 认证：本示例仅做简单 login（返回一个临时 UUID 作为 token，未做持久化），微信登录接口为占位演示 OAuth 流程。
+4. 认证：本示例仅做简单 login，返回完整用户资料，不发放 token；微信登录接口为占位演示 OAuth 流程。
 5. 事务与并发：sqlite 在单用户本地开发场景足够；高并发需迁移至 MySQL/PostgreSQL 并加连接池。
 6. 安全增强（后续可做）：
    - 密码哈希已有（Werkzeug），可加 salt 轮次配置。
-   - 接口应校验 token（这里简化省略）。
+   - 接口如需鉴权可扩展 session/JWT 模块（当前示例未启用 token）。
    - 输入校验可引入 Marshmallow / Pydantic。
 7. 目录当前为单文件，后续可拆分为 blueprint 模块：auth.py / scenic.py / product.py / order.py 等。
 
@@ -142,6 +142,160 @@ def get_json():
     return request.get_json() or {}
 
 
+PRODUCT_COLUMNS = ['id', 'name', 'scenic_id', 'cover_image', 'price', 'stock', 'description', 'type', 'hotel_address']
+SCENIC_COLUMNS = ['id', 'name', 'city', 'cover_image', 'description', 'address', 'latitude', 'longitude', 'audio_url']
+PRODUCT_SELECT_COLUMNS = ', '.join([f'p.{col} AS product_{col}' for col in PRODUCT_COLUMNS])
+SCENIC_SELECT_COLUMNS = ', '.join([f's.{col} AS scenic_{col}' for col in SCENIC_COLUMNS])
+
+
+def row_to_dict(row):
+    return dict(row) if row is not None else None
+
+
+def sanitize_user_row(row):
+    data = row_to_dict(row)
+    if not data:
+        return None
+    data.pop('password', None)
+    return data
+
+
+def extract_prefixed_fields(row, prefix):
+    data = {}
+    if row is None:
+        return data
+    for key in row.keys():
+        if key.startswith(prefix):
+            data[key[len(prefix):]] = row[key]
+    if data and all(value is None for value in data.values()):
+        return {}
+    return data
+
+
+def build_cart_payload(row):
+    if row is None:
+        return None
+    product = extract_prefixed_fields(row, 'product_')
+    return {
+        'cart_id': row['cart_id'],
+        'user_id': row['user_id'],
+        'quantity': row['quantity'],
+        'create_time': row['create_time'],
+        'product': product
+    }
+
+
+def build_visited_payload(row):
+    if row is None:
+        return None
+    scenic = extract_prefixed_fields(row, 'scenic_')
+    return {
+        'visited_id': row['id'],
+        'user_id': row['user_id'],
+        'scenic_id': row['scenic_id'],
+        'visit_date': row['visit_date'],
+        'rating': row['rating'],
+        'scenic': scenic or None,
+    }
+
+
+def build_order_item_payload(row):
+    if row is None:
+        return None
+    product = extract_prefixed_fields(row, 'product_')
+    return {
+        'order_item_id': row['order_item_id'],
+        'order_id': row['order_id'],
+        'product_id': row['product_id'],
+        'quantity': row['quantity'],
+        'price': row['price'],
+        'product': product or None,
+    }
+
+
+def fetch_order_items_map(order_ids):
+    if not order_ids:
+        return {}
+    placeholders = ','.join(['?'] * len(order_ids))
+    db = get_db()
+    sql = f'''
+        SELECT oi.id AS order_item_id,
+               oi.order_id,
+               oi.product_id,
+               oi.quantity,
+               oi.price,
+               {PRODUCT_SELECT_COLUMNS}
+        FROM order_item oi
+        JOIN product p ON oi.product_id = p.id
+        WHERE oi.order_id IN ({placeholders})
+    '''
+    cur = db.execute(sql, order_ids)
+    items_map = {}
+    for row in cur.fetchall():
+        payload = build_order_item_payload(row)
+        items_map.setdefault(row['order_id'], []).append(payload)
+    return items_map
+
+
+def attach_items_to_orders(order_rows):
+    db_rows = [dict(r) for r in order_rows]
+    order_ids = [row['id'] for row in db_rows]
+    items_map = fetch_order_items_map(order_ids)
+    for row in db_rows:
+        row['items'] = items_map.get(row['id'], [])
+    return db_rows
+
+
+def load_favorite_target(db, target_type, target_id):
+    if target_type not in ('SCENIC', 'PRODUCT'):
+        return None
+    table = 'scenic' if target_type == 'SCENIC' else 'product'
+    cur = db.execute(f'SELECT * FROM {table} WHERE id = ?', (target_id,))
+    return row_to_dict(cur.fetchone())
+
+
+def build_favorite_payload(db, fav_row):
+    if fav_row is None:
+        return None
+    return {
+        'favorite_id': fav_row['id'],
+        'user_id': fav_row['user_id'],
+        'target_id': fav_row['target_id'],
+        'target_type': fav_row['target_type'],
+        'create_time': fav_row['create_time'],
+        'target': load_favorite_target(db, fav_row['target_type'], fav_row['target_id']),
+    }
+
+
+def fetch_cart_item_payload(cart_id):
+    db = get_db()
+    sql = f'''
+        SELECT c.id AS cart_id,
+               c.user_id,
+               c.quantity,
+               c.create_time,
+               {PRODUCT_SELECT_COLUMNS}
+        FROM cart_item c
+        JOIN product p ON c.product_id = p.id
+        WHERE c.id = ?
+    '''
+    cur = db.execute(sql, (cart_id,))
+    return build_cart_payload(cur.fetchone())
+
+
+def fetch_visited_payload_by_id(visit_id):
+    db = get_db()
+    sql = f'''
+        SELECT v.*,
+               {SCENIC_SELECT_COLUMNS}
+        FROM visited v
+        JOIN scenic s ON v.scenic_id = s.id
+        WHERE v.id = ?
+    '''
+    cur = db.execute(sql, (visit_id,))
+    return build_visited_payload(cur.fetchone())
+
+
 # -------------------- 健康检查 --------------------
 # 用于确认服务是否启动。可在部署后用于负载均衡健康探测。
 # /ping -> {"code":200, "msg":"OK", "data":{"msg":"pong"}}
@@ -185,7 +339,8 @@ def register():
     )
     db.commit()
     user_id = cur.lastrowid
-    return json_response(200, '注册成功', {'user_id': user_id})
+    user_row = db.execute('SELECT * FROM user WHERE id = ?', (user_id,)).fetchone()
+    return json_response(200, '注册成功', {'user': sanitize_user_row(user_row)})
 
 
 @app.route('/api/auth/login', methods=['POST'])
@@ -198,23 +353,12 @@ def login():
         return json_response(400, '用户名和密码不能为空', None, 400)
 
     db = get_db()
-    cur = db.execute(
-        'SELECT id, password, nickname, avatar_url FROM user WHERE username = ?',
-        (username,)
-    )
+    cur = db.execute('SELECT * FROM user WHERE username = ?', (username,))
     row = cur.fetchone()
     if row is None or not check_password_hash(row['password'], password):
         return json_response(401, '用户名或密码错误', None, 401)
 
-    # 生成临时 token（可扩展为 JWT 或数据库持久化 session）
-    token = uuid.uuid4().hex
-    data = {
-        'user_id': row['id'],
-        'nickname': row['nickname'],
-        'avatar_url': row['avatar_url'],
-        'token': token,
-    }
-    return json_response(200, '登录成功', data)
+    return json_response(200, '登录成功', {'user': sanitize_user_row(row)})
 
 
 @app.route('/api/auth/wechat', methods=['POST'])
@@ -245,13 +389,8 @@ def wechat_login():
         nickname = row['nickname']
         avatar_url = row['avatar_url']
 
-    token = uuid.uuid4().hex
-    return json_response(200, '微信登录成功', {
-        'user_id': user_id,
-        'nickname': nickname,
-        'avatar_url': avatar_url,
-        'token': token,
-    })
+    user_row = db.execute('SELECT * FROM user WHERE id = ?', (user_id,)).fetchone()
+    return json_response(200, '微信登录成功', {'user': sanitize_user_row(user_row)})
 
 
 # =====================================================
@@ -313,7 +452,7 @@ def scenic_detail(sid):
 @app.route('/api/scenics/map', methods=['GET'])
 def scenic_map():
     db = get_db()
-    cur = db.execute('SELECT id, name, latitude, longitude, cover_image FROM scenic')
+    cur = db.execute('SELECT * FROM scenic')
     rows = [dict(r) for r in cur.fetchall()]
     return json_response(200, 'OK', rows)
 
@@ -384,28 +523,33 @@ def booking_list():
         return json_response(400, 'type 参数必填(HOTEL/TICKET)', None, 400)
 
     db = get_db()
-    sql = 'SELECT p.* FROM product p'
-    params = []
+    base_sql = 'FROM product p LEFT JOIN scenic s ON p.scenic_id = s.id WHERE p.type = ?'
+    params = [btype]
     if city:
-        sql += ' LEFT JOIN scenic s ON p.scenic_id = s.id'
-    sql += ' WHERE p.type = ?'
-    params.append(btype)
-    if city:
-        sql += ' AND s.city = ?'
+        base_sql += ' AND s.city = ?'
         params.append(city)
 
-    count_sql = 'SELECT COUNT(1) AS cnt FROM (' + sql + ') AS t'
+    count_sql = 'SELECT COUNT(1) AS cnt ' + base_sql
     cur = db.execute(count_sql, params)
     total = cur.fetchone()['cnt']
 
     offset = (page - 1) * page_size
-    sql += ' LIMIT ? OFFSET ?'
+    data_sql = f'''
+        SELECT {PRODUCT_SELECT_COLUMNS},
+               {SCENIC_SELECT_COLUMNS}
+        {base_sql}
+        LIMIT ? OFFSET ?
+    '''
     params_with_page = params + [page_size, offset]
-    cur = db.execute(sql, params_with_page)
-    rows = [dict(r) for r in cur.fetchall()]
+    cur = db.execute(data_sql, params_with_page)
+    results = []
+    for row in cur.fetchall():
+        product = extract_prefixed_fields(row, 'product_')
+        scenic = extract_prefixed_fields(row, 'scenic_')
+        results.append({'product': product, 'scenic': scenic or None})
 
     return json_response(200, 'OK', {
-        'list': rows,
+        'list': results,
         'page': page,
         'page_size': page_size,
         'total': total,
@@ -482,15 +626,17 @@ def add_favorite():
         return json_response(400, 'user_id/target_id/target_type 必填', None, 400)
 
     db = get_db()
-    cur = db.execute('SELECT id FROM favorite WHERE user_id = ? AND target_id = ? AND target_type = ?',
+    cur = db.execute('SELECT * FROM favorite WHERE user_id = ? AND target_id = ? AND target_type = ?',
                      (user_id, target_id, target_type))
-    if cur.fetchone():
-        return json_response(200, '已收藏', None, 200)
+    existing = cur.fetchone()
+    if existing:
+        return json_response(200, '已收藏', {'favorite': build_favorite_payload(db, existing)})
 
-    db.execute('INSERT INTO favorite (user_id, target_id, target_type, create_time) VALUES (?, ?, ?, ?)',
-               (user_id, target_id, target_type, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+    cur = db.execute('INSERT INTO favorite (user_id, target_id, target_type, create_time) VALUES (?, ?, ?, ?)',
+                     (user_id, target_id, target_type, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
     db.commit()
-    return json_response(200, '收藏成功', None)
+    fav_row = db.execute('SELECT * FROM favorite WHERE id = ?', (cur.lastrowid,)).fetchone()
+    return json_response(200, '收藏成功', {'favorite': build_favorite_payload(db, fav_row)})
 
 
 @app.route('/api/favorites', methods=['DELETE'])
@@ -504,10 +650,14 @@ def remove_favorite():
         return json_response(400, 'user_id/target_id/target_type 必填', None, 400)
 
     db = get_db()
-    db.execute('DELETE FROM favorite WHERE user_id = ? AND target_id = ? AND target_type = ?',
-               (user_id, target_id, target_type))
+    cur = db.execute('SELECT * FROM favorite WHERE user_id = ? AND target_id = ? AND target_type = ?',
+                     (user_id, target_id, target_type))
+    row = cur.fetchone()
+    if row is None:
+        return json_response(404, '收藏记录不存在', None, 404)
+    db.execute('DELETE FROM favorite WHERE id = ?', (row['id'],))
     db.commit()
-    return json_response(200, '已取消收藏', None)
+    return json_response(200, '已取消收藏', {'favorite': build_favorite_payload(db, row), 'deleted': True})
 
 
 @app.route('/api/favorites/scenics', methods=['GET'])
@@ -517,9 +667,9 @@ def my_fav_scenics():
         return json_response(400, 'user_id 必填', None, 400)
 
     db = get_db()
-    sql = 'SELECT s.* FROM favorite f JOIN scenic s ON f.target_id = s.id WHERE f.user_id = ? AND f.target_type = "SCENIC"'
-    cur = db.execute(sql, (user_id,))
-    rows = [dict(r) for r in cur.fetchall()]
+    cur = db.execute('SELECT * FROM favorite WHERE user_id = ? AND target_type = "SCENIC" ORDER BY create_time DESC',
+                     (user_id,))
+    rows = [build_favorite_payload(db, row) for row in cur.fetchall()]
     return json_response(200, 'OK', rows)
 
 
@@ -530,9 +680,9 @@ def my_fav_products():
         return json_response(400, 'user_id 必填', None, 400)
 
     db = get_db()
-    sql = 'SELECT p.* FROM favorite f JOIN product p ON f.target_id = p.id WHERE f.user_id = ? AND f.target_type = "PRODUCT"'
-    cur = db.execute(sql, (user_id,))
-    rows = [dict(r) for r in cur.fetchall()]
+    cur = db.execute('SELECT * FROM favorite WHERE user_id = ? AND target_type = "PRODUCT" ORDER BY create_time DESC',
+                     (user_id,))
+    rows = [build_favorite_payload(db, row) for row in cur.fetchall()]
     return json_response(200, 'OK', rows)
 
 
@@ -553,10 +703,11 @@ def add_visited():
         return json_response(400, 'user_id/scenic_id 必填', None, 400)
 
     db = get_db()
-    db.execute('INSERT INTO visited (user_id, scenic_id, visit_date, rating) VALUES (?, ?, ?, ?)',
-               (user_id, scenic_id, datetime.now().strftime('%Y-%m-%d'), rating))
+    cur = db.execute('INSERT INTO visited (user_id, scenic_id, visit_date, rating) VALUES (?, ?, ?, ?)',
+                     (user_id, scenic_id, datetime.now().strftime('%Y-%m-%d'), rating))
     db.commit()
-    return json_response(200, '已标记为去过', None)
+    payload = fetch_visited_payload_by_id(cur.lastrowid)
+    return json_response(200, '已标记为去过', {'visited': payload})
 
 
 @app.route('/api/visited', methods=['GET'])
@@ -566,9 +717,16 @@ def list_visited():
         return json_response(400, 'user_id 必填', None, 400)
 
     db = get_db()
-    sql = 'SELECT v.scenic_id, v.visit_date, v.rating, s.name, s.city, s.cover_image FROM visited v JOIN scenic s ON v.scenic_id = s.id WHERE v.user_id = ? ORDER BY v.visit_date DESC'
+    sql = f'''
+        SELECT v.*,
+               {SCENIC_SELECT_COLUMNS}
+        FROM visited v
+        JOIN scenic s ON v.scenic_id = s.id
+        WHERE v.user_id = ?
+        ORDER BY v.visit_date DESC
+    '''
     cur = db.execute(sql, (user_id,))
-    rows = [dict(r) for r in cur.fetchall()]
+    rows = [build_visited_payload(row) for row in cur.fetchall()]
     return json_response(200, 'OK', rows)
 
 
@@ -597,11 +755,14 @@ def add_cart_item():
     if row:
         new_q = row['quantity'] + quantity
         db.execute('UPDATE cart_item SET quantity = ? WHERE id = ?', (new_q, row['id']))
+        cart_id = row['id']
     else:
-        db.execute('INSERT INTO cart_item (user_id, product_id, quantity, create_time) VALUES (?, ?, ?, ?)',
-                   (user_id, product_id, quantity, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        cur = db.execute('INSERT INTO cart_item (user_id, product_id, quantity, create_time) VALUES (?, ?, ?, ?)',
+                         (user_id, product_id, quantity, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        cart_id = cur.lastrowid
     db.commit()
-    return json_response(200, '加入购物车成功', None)
+    payload = fetch_cart_item_payload(cart_id)
+    return json_response(200, '加入购物车成功', {'cart_item': payload})
 
 
 @app.route('/api/cart/<int:cart_id>', methods=['PUT'])
@@ -612,17 +773,24 @@ def update_cart_item(cart_id):
     if quantity <= 0:
         return json_response(400, 'quantity 必须大于 0', None, 400)
     db = get_db()
+    cur = db.execute('SELECT id FROM cart_item WHERE id = ?', (cart_id,))
+    if cur.fetchone() is None:
+        return json_response(404, '购物车条目不存在', None, 404)
     db.execute('UPDATE cart_item SET quantity = ? WHERE id = ?', (quantity, cart_id))
     db.commit()
-    return json_response(200, '修改成功', None)
+    payload = fetch_cart_item_payload(cart_id)
+    return json_response(200, '修改成功', {'cart_item': payload})
 
 
 @app.route('/api/cart/<int:cart_id>', methods=['DELETE'])
 def delete_cart_item(cart_id):
+    payload = fetch_cart_item_payload(cart_id)
+    if payload is None:
+        return json_response(404, '购物车条目不存在', None, 404)
     db = get_db()
     db.execute('DELETE FROM cart_item WHERE id = ?', (cart_id,))
     db.commit()
-    return json_response(200, '删除成功', None)
+    return json_response(200, '删除成功', {'cart_item': payload, 'deleted': True})
 
 
 @app.route('/api/cart', methods=['GET'])
@@ -632,14 +800,19 @@ def list_cart():
         return json_response(400, 'user_id 必填', None, 400)
 
     db = get_db()
-    sql = 'SELECT c.id AS cart_id, c.quantity, p.id AS product_id, p.name, p.cover_image, p.price, p.type, p.hotel_address FROM cart_item c JOIN product p ON c.product_id = p.id WHERE c.user_id = ?'
+    sql = f'''
+        SELECT c.id AS cart_id,
+               c.user_id,
+               c.quantity,
+               c.create_time,
+               {PRODUCT_SELECT_COLUMNS}
+        FROM cart_item c
+        JOIN product p ON c.product_id = p.id
+        WHERE c.user_id = ?
+        ORDER BY c.create_time DESC, c.id DESC
+    '''
     cur = db.execute(sql, (user_id,))
-    items = []
-    for row in cur.fetchall():
-        row = dict(row)
-        items.append({'cart_id': row['cart_id'], 'quantity': row['quantity'],
-                      'product': {'id': row['product_id'], 'name': row['name'], 'cover_image': row['cover_image'],
-                                  'price': row['price'], 'type': row['type'], 'hotel_address': row['hotel_address']}})
+    items = [build_cart_payload(row) for row in cur.fetchall()]
     return json_response(200, 'OK', items)
 
 
@@ -665,14 +838,19 @@ def create_order():
         return json_response(400, 'user_id 必填', None, 400)
 
     db = get_db()
-    cur = db.execute(
-        'SELECT c.product_id, c.quantity, p.price FROM cart_item c JOIN product p ON c.product_id = p.id WHERE c.user_id = ?',
-        (user_id,))
+    sql = f'''
+        SELECT c.quantity,
+               {PRODUCT_SELECT_COLUMNS}
+        FROM cart_item c
+        JOIN product p ON c.product_id = p.id
+        WHERE c.user_id = ?
+    '''
+    cur = db.execute(sql, (user_id,))
     items = cur.fetchall()
     if not items:
         return json_response(400, '购物车为空', None, 400)
 
-    total_price = sum(row['price'] * row['quantity'] for row in items)
+    total_price = sum(row['product_price'] * row['quantity'] for row in items)
     order_no = datetime.now().strftime('%Y%m%d%H%M%S') + uuid.uuid4().hex[:6]
 
     cur = db.execute(
@@ -683,12 +861,14 @@ def create_order():
 
     for row in items:
         db.execute('INSERT INTO order_item (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
-                   (order_id, row['product_id'], row['quantity'], row['price']))
+                   (order_id, row['product_id'], row['quantity'], row['product_price']))
 
     db.execute('DELETE FROM cart_item WHERE user_id = ?', (user_id,))
     db.commit()
 
-    return json_response(200, '下单成功', {'order_id': order_id, 'order_no': order_no})
+    order_row = db.execute('SELECT * FROM order_main WHERE id = ?', (order_id,)).fetchone()
+    order_payload = attach_items_to_orders([order_row])[0]
+    return json_response(200, '下单成功', {'order': order_payload})
 
 
 @app.route('/api/orders', methods=['GET'])
@@ -698,9 +878,9 @@ def list_orders():
         return json_response(400, 'user_id 必填', None, 400)
 
     db = get_db()
-    sql = 'SELECT id, order_no, order_type, total_price, status, create_time, checkin_date, checkout_date FROM order_main WHERE user_id = ? ORDER BY create_time DESC'
+    sql = 'SELECT * FROM order_main WHERE user_id = ? ORDER BY create_time DESC'
     cur = db.execute(sql, (user_id,))
-    rows = [dict(r) for r in cur.fetchall()]
+    rows = attach_items_to_orders(cur.fetchall())
     return json_response(200, 'OK', rows)
 
 
@@ -712,16 +892,8 @@ def order_detail(oid):
     if order is None:
         return json_response(404, '订单不存在', None, 404)
 
-    cur = db.execute(
-        'SELECT oi.product_id, oi.quantity, oi.price, p.name, p.cover_image, p.type FROM order_item oi JOIN product p ON oi.product_id = p.id WHERE oi.order_id = ?',
-        (oid,))
-    items = []
-    for row in cur.fetchall():
-        row = dict(row)
-        items.append({'product_id': row['product_id'], 'name': row['name'], 'cover_image': row['cover_image'],
-                      'quantity': row['quantity'], 'price': row['price'], 'type': row['type']})
-
-    return json_response(200, 'OK', {'order': dict(order), 'items': items})
+    payload = attach_items_to_orders([order])[0]
+    return json_response(200, 'OK', {'order': payload})
 
 
 # =====================================================
