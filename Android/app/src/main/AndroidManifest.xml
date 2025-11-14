@@ -36,6 +36,15 @@
             android:name=".profile.CartActivity"
             android:exported="false" />
         <activity
+            android:name=".detail.ScenicDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".detail.ProductDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".profile.OrderSuccessActivity"
+            android:exported="false" />
+        <activity
             android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>

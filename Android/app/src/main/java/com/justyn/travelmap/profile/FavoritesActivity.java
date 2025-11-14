@@ -1,5 +1,6 @@
 package com.justyn.travelmap.profile;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -20,6 +21,8 @@ import com.justyn.travelmap.R;
 import com.justyn.travelmap.data.local.UserPreferences;
 import com.justyn.travelmap.data.local.UserProfile;
 import com.justyn.travelmap.data.remote.UserCenterRepository;
+import com.justyn.travelmap.detail.ProductDetailActivity;
+import com.justyn.travelmap.detail.ScenicDetailActivity;
 import com.justyn.travelmap.model.FeedItem;
 import com.justyn.travelmap.ui.feed.FeedAdapter;
 
@@ -40,6 +43,7 @@ public class FavoritesActivity extends AppCompatActivity implements FeedAdapter.
     private CircularProgressIndicator progressIndicator;
     private MaterialButtonToggleGroup toggleGroup;
     private FeedAdapter adapter;
+    private FavoriteTab currentTab = FavoriteTab.PRODUCT;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final UserCenterRepository repository = new UserCenterRepository();
@@ -90,6 +94,7 @@ public class FavoritesActivity extends AppCompatActivity implements FeedAdapter.
 
     private void loadFavorites(FavoriteTab tab, boolean fromSwipe) {
         setLoading(fromSwipe, true);
+        currentTab = tab;
         executor.execute(() -> {
             try {
                 List<FeedItem> items = tab == FavoriteTab.PRODUCT
@@ -122,12 +127,34 @@ public class FavoritesActivity extends AppCompatActivity implements FeedAdapter.
 
     @Override
     public void onFeedItemClicked(@NonNull FeedItem item) {
-        Toast.makeText(this, R.string.feed_toast_feature_pending, Toast.LENGTH_SHORT).show();
+        if (currentTab == FavoriteTab.SCENIC) {
+            openScenicDetail(item.getId());
+        } else {
+            openProductDetail(item.getId());
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         executor.shutdownNow();
+    }
+
+    private void openScenicDetail(long scenicId) {
+        if (scenicId <= 0) {
+            return;
+        }
+        Intent intent = new Intent(this, ScenicDetailActivity.class);
+        intent.putExtra(ScenicDetailActivity.EXTRA_SCENIC_ID, scenicId);
+        startActivity(intent);
+    }
+
+    private void openProductDetail(long productId) {
+        if (productId <= 0) {
+            return;
+        }
+        Intent intent = new Intent(this, ProductDetailActivity.class);
+        intent.putExtra(ProductDetailActivity.EXTRA_PRODUCT_ID, productId);
+        startActivity(intent);
     }
 }

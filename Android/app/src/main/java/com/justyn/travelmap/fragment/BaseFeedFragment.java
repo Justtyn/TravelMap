@@ -1,6 +1,7 @@
 package com.justyn.travelmap.fragment;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -29,6 +30,8 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.justyn.travelmap.R;
 import com.justyn.travelmap.model.FeedItem;
 import com.justyn.travelmap.ui.feed.FeedAdapter;
+import com.justyn.travelmap.detail.ProductDetailActivity;
+import com.justyn.travelmap.detail.ScenicDetailActivity;
 
 import org.json.JSONException;
 
@@ -258,6 +261,24 @@ public abstract class BaseFeedFragment extends Fragment implements FeedAdapter.O
 
     protected String getSearchHint() {
         return getString(R.string.feed_search_hint_default);
+    }
+
+    protected void navigateToScenicDetail(long scenicId) {
+        if (!isAdded() || scenicId <= 0) {
+            return;
+        }
+        Intent intent = new Intent(requireContext(), ScenicDetailActivity.class);
+        intent.putExtra(ScenicDetailActivity.EXTRA_SCENIC_ID, scenicId);
+        startActivity(intent);
+    }
+
+    protected void navigateToProductDetail(long productId) {
+        if (!isAdded() || productId <= 0) {
+            return;
+        }
+        Intent intent = new Intent(requireContext(), ProductDetailActivity.class);
+        intent.putExtra(ProductDetailActivity.EXTRA_PRODUCT_ID, productId);
+        startActivity(intent);
     }
 
     @Override

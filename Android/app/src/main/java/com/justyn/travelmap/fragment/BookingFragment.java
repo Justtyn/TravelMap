@@ -1,5 +1,6 @@
 package com.justyn.travelmap.fragment;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.justyn.travelmap.R;
@@ -17,6 +18,11 @@ import java.util.List;
 public class BookingFragment extends BaseFeedFragment {
 
     private final TravelRepository travelRepository = new TravelRepository();
+
+    @Override
+    public void onFeedItemClicked(@NonNull FeedItem item) {
+        navigateToProductDetail(item.getId());
+    }
 
     @Override
     protected List<FeedItem> loadFeedItems(@Nullable String keyword) throws IOException, JSONException {

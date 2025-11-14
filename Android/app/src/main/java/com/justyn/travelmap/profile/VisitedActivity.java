@@ -1,5 +1,6 @@
 package com.justyn.travelmap.profile;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -19,6 +20,7 @@ import com.justyn.travelmap.R;
 import com.justyn.travelmap.data.local.UserPreferences;
 import com.justyn.travelmap.data.local.UserProfile;
 import com.justyn.travelmap.data.remote.UserCenterRepository;
+import com.justyn.travelmap.detail.ScenicDetailActivity;
 import com.justyn.travelmap.model.FeedItem;
 import com.justyn.travelmap.ui.feed.FeedAdapter;
 
@@ -101,7 +103,13 @@ public class VisitedActivity extends AppCompatActivity implements FeedAdapter.On
 
     @Override
     public void onFeedItemClicked(@NonNull FeedItem item) {
-        Toast.makeText(this, R.string.feed_toast_feature_pending, Toast.LENGTH_SHORT).show();
+        long scenicId = item.getId();
+        if (scenicId <= 0) {
+            return;
+        }
+        Intent intent = new Intent(this, ScenicDetailActivity.class);
+        intent.putExtra(ScenicDetailActivity.EXTRA_SCENIC_ID, scenicId);
+        startActivity(intent);
     }
 
     @Override
