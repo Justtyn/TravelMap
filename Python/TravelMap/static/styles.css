@@ -1,13 +1,26 @@
 :root {
-  --bg: #0f172a;
-  --bg-card: #1e293b;
-  --fg: #f1f5f9;
-  --muted: #94a3b8;
+  --bg: #050816;
+  --bg-card: rgba(15, 23, 42, 0.65);
+  --fg: #f8fafc;
+  --muted: #a5b4fc;
   --primary: #38bdf8;
   --accent: #f472b6;
-  --radius: 18px;
+  --radius: 20px;
   --max-width: 1100px;
   --font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --border: rgba(148, 163, 184, 0.25);
+  --shadow: 0 25px 80px rgba(8, 47, 73, 0.55);
+}
+
+body.theme-light {
+  --bg: #f8fafc;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --fg: #0f172a;
+  --muted: #475569;
+  --primary: #2563eb;
+  --accent: #db2777;
+  --border: rgba(148, 163, 184, 0.35);
+  --shadow: 0 25px 60px rgba(15, 23, 42, 0.12);
 }
 
 * {
@@ -17,11 +30,13 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at top, rgba(56, 189, 248, 0.12), transparent 45%),
-              radial-gradient(circle at 20% 20%, rgba(244, 114, 182, 0.1), transparent 30%),
+  background: radial-gradient(circle at 15% 20%, rgba(56, 189, 248, 0.18), transparent 35%),
+              radial-gradient(circle at 85% 10%, rgba(244, 114, 182, 0.18), transparent 45%),
+              radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.12), transparent 40%),
               var(--bg);
   color: var(--fg);
   font-family: var(--font-family);
+  transition: background 0.4s ease, color 0.2s ease;
 }
 
 .page {
@@ -34,6 +49,7 @@ header {
   align-items: center;
   margin-bottom: 48px;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .logo {
@@ -65,9 +81,10 @@ nav a.active {
   margin: 0 auto 48px;
   padding: 40px clamp(24px, 4vw, 72px);
   border-radius: var(--radius);
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  box-shadow: 0 20px 60px rgba(8, 47, 73, 0.35);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
 }
 
 .hero h1 {
@@ -106,8 +123,13 @@ nav a.active {
 }
 
 .btn-ghost {
-  border-color: rgba(148,163,184,0.4);
+  border-color: var(--border);
   color: var(--fg);
+}
+
+.btn-ghost:hover {
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .grid {
@@ -119,12 +141,13 @@ nav a.active {
 }
 
 .card {
-  background: rgba(15, 23, 42, 0.55);
+  background: var(--bg-card);
   border-radius: var(--radius);
   padding: 24px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(8px);
   min-height: 240px;
+  box-shadow: var(--shadow);
 }
 
 .card h3 {
@@ -169,6 +192,60 @@ footer {
   text-align: center;
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.doc-container {
+  max-width: var(--max-width);
+  margin: 0 auto 32px;
+}
+
+.doc-content {
+  color: var(--fg);
+  line-height: 1.8;
+}
+
+.doc-content h1,
+.doc-content h2,
+.doc-content h3,
+.doc-content h4 {
+  margin-top: 1.6em;
+  margin-bottom: 0.6em;
+}
+
+.doc-content pre {
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.8);
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+body.theme-light .doc-content pre {
+  background: rgba(15, 23, 42, 0.1);
+}
+
+.doc-content code {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  background: rgba(148, 163, 184, 0.2);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.doc-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 0.95rem;
+}
+
+.doc-content th,
+.doc-content td {
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.doc-content a {
+  color: var(--primary);
 }
 
 @media (max-width: 640px) {

@@ -27,7 +27,7 @@ import sqlite3
 import uuid
 from datetime import datetime
 
-from flask import Flask, jsonify, request, g, render_template, send_from_directory
+from flask import Flask, jsonify, request, g, render_template, send_from_directory, abort, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # -------------------- 基础配置 --------------------
@@ -324,7 +324,26 @@ def features_page():
 
 @app.route('/docs/file/<path:filename>')
 def serve_doc_file(filename):
-    return send_from_directory(DOC_DIR, filename)
+    doc_path = os.path.join(DOC_DIR, filename)
+    if not os.path.isfile(doc_path):
+        abort(404)
+    download = request.args.get('download')
+    return send_from_directory(DOC_DIR, filename, as_attachment=bool(download))
+
+
+def load_markdown_file(filename):
+    doc_path = os.path.join(DOC_DIR, filename)
+    if not os.path.isfile(doc_path):
+        abort(404)
+    with open(doc_path, 'r', encoding='utf-8') as f:
+        return f.read()
+
+
+@app.route('/docs/view/<path:filename>')
+def doc_view(filename):
+    content = load_markdown_file(filename)
+    return render_template('doc_view.html', github_url=GITHUB_URL, active='docs',
+                           title=f'{filename} · 文档预览', markdown_text=content, filename=filename)
 
 
 # =====================================================

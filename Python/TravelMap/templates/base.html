@@ -16,6 +16,7 @@
         <a href="{{ url_for('features_page') }}" class="{% if active == 'features' %}active{% endif %}">功能介绍</a>
         <a href="{{ github_url }}" target="_blank" rel="noopener">GitHub</a>
       </nav>
+      <button id="themeToggle" class="btn btn-ghost" type="button" aria-label="切换主题">🌙</button>
     </header>
 
     {% block content %}{% endblock %}
@@ -24,5 +25,35 @@
       © 2025 TravelMap · 由 Flask + SQLite 驱动
     </footer>
   </div>
+  <script>
+    (function() {
+      const body = document.body;
+      const toggleBtn = document.getElementById('themeToggle');
+      const storageKey = 'travelmap-theme';
+
+      function setTheme(mode) {
+        if (mode === 'light') {
+          body.classList.add('theme-light');
+          toggleBtn.textContent = '☀️';
+        } else {
+          body.classList.remove('theme-light');
+          toggleBtn.textContent = '🌙';
+        }
+      }
+
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        setTheme(saved);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        setTheme('light');
+      }
+
+      toggleBtn.addEventListener('click', () => {
+        const isLight = body.classList.toggle('theme-light');
+        setTheme(isLight ? 'light' : 'dark');
+        localStorage.setItem(storageKey, isLight ? 'light' : 'dark');
+      });
+    })();
+  </script>
 </body>
 </html>

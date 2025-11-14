@@ -31,3 +31,8 @@
 ## Security & Configuration Tips
 - Never commit `.db` replacements without confirming migrations; back up `db/TravelMap.db` before destructive schema work.
 - Validate all incoming JSON with explicit field checks (see `get_json()` usage) and avoid trusting client-provided IDs without verifying ownership in SQL.
+
+## 特别要求（请严格遵守）
+- 与用户互动时 **必须使用中文回复**，包含最终交付说明与讨论。
+- 用户已永久移除冒烟测试脚本，后续处理任务 **禁止创建或运行任何测试**；如需验证逻辑，请通过代码审查、手工推演或用户指定方式。
+- 当前阶段的工作聚焦前端官网与文档体验，**不得改动既有 API 接口逻辑或响应结构**（除非用户未来明确授权）。

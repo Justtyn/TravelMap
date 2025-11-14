@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% set active = "docs" %}
+{% block content %}
+<section class="hero">
+  <p class="tagline">Live Markdown</p>
+  <h1>{{ filename }}</h1>
+  <p>
+    以下内容由 Flask 动态渲染，支持标题、表格、代码块等常见 Markdown 语法。
+    如需下载原始文件，可点击
+    <a class="doc-link" href="{{ url_for('serve_doc_file', filename=filename) }}" target="_blank" rel="noopener">这里</a>。
+  </p>
+</section>
+
+<section class="card doc-container">
+  <article id="docRoot" class="doc-content">
+    <p>正在加载文档...</p>
+  </article>
+</section>
+<script src="{{ url_for('static', filename='marked.min.js') }}" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const rawMd = {{ markdown_text|tojson }};
+    const root = document.getElementById('docRoot');
+
+    function render() {
+      if (window.marked) {
+        root.innerHTML = window.marked.parse(rawMd, { mangle: false, headerIds: true });
+      } else {
+        root.textContent = rawMd;
+      }
+    }
+
+    if (window.marked) {
+      render();
+    } else {
+      const fallback = document.createElement('script');
+      fallback.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+      fallback.onload = render;
+      fallback.onerror = () => {
+        root.textContent = rawMd;
+      };
+      document.body.appendChild(fallback);
+    }
+  });
+</script>
+{% endblock %}
