@@ -42,6 +42,7 @@ dependencies {
     implementation libs.recyclerview
     implementation libs.swiperefreshlayout
     implementation libs.glide
+    implementation libs.shimmer
     annotationProcessor libs.glideCompiler
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit

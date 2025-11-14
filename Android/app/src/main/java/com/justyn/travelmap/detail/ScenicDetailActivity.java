@@ -1,6 +1,5 @@
 package com.justyn.travelmap.detail;
 
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -14,8 +13,8 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.imageview.ShapeableImageView;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.justyn.travelmap.R;
 import com.justyn.travelmap.data.local.UserPreferences;
 import com.justyn.travelmap.data.local.UserProfile;
@@ -23,6 +22,7 @@ import com.justyn.travelmap.data.remote.TravelRepository;
 import com.justyn.travelmap.data.remote.UserCenterRepository;
 import com.justyn.travelmap.model.FeedItem;
 import com.justyn.travelmap.model.VisitedRecord;
+import com.facebook.shimmer.ShimmerFrameLayout;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
@@ -42,7 +42,10 @@ public class ScenicDetailActivity extends AppCompatActivity {
     private TextView tvDescription;
     private MaterialButton btnFavorite;
     private MaterialButton btnVisited;
-    private CircularProgressIndicator progressIndicator;
+    private CircularProgressIndicator favoriteProgress;
+    private CircularProgressIndicator visitedProgress;
+    private ShimmerFrameLayout skeletonLayout;
+    private View contentContainer;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final TravelRepository travelRepository = new TravelRepository();
@@ -86,14 +89,18 @@ public class ScenicDetailActivity extends AppCompatActivity {
         tvDescription = findViewById(R.id.tvDescription);
         btnFavorite = findViewById(R.id.btnFavorite);
         btnVisited = findViewById(R.id.btnVisited);
-        progressIndicator = findViewById(R.id.detailProgress);
+        favoriteProgress = findViewById(R.id.favoriteProgress);
+        visitedProgress = findViewById(R.id.visitedProgress);
+        skeletonLayout = findViewById(R.id.scenicSkeleton);
+        contentContainer = findViewById(R.id.scenicContent);
 
         btnFavorite.setOnClickListener(v -> toggleFavorite());
         btnVisited.setOnClickListener(v -> toggleVisited());
     }
 
     private void loadDetail() {
-        setLoading(true);
+        showSkeleton(true);
+        setButtonsEnabled(false);
         executor.execute(() -> {
             try {
                 FeedItem detail = travelRepository.fetchScenicDetail(scenicId);
@@ -105,11 +112,12 @@ public class ScenicDetailActivity extends AppCompatActivity {
                     visitedRecord = record;
                     bindScenic(detail);
                     updateButtonStates();
-                    setLoading(false);
+                    showSkeleton(false);
+                    setButtonsEnabled(true);
                 });
             } catch (IOException | JSONException e) {
                 runOnUiThread(() -> {
-                    setLoading(false);
+                    showSkeleton(false);
                     Toast.makeText(this, getString(R.string.feed_loading_error, e.getMessage()), Toast.LENGTH_SHORT).show();
                     finish();
                 });
@@ -162,7 +170,7 @@ public class ScenicDetailActivity extends AppCompatActivity {
         if (currentScenic == null) {
             return;
         }
-        setLoading(true);
+        setFavoriteLoading(true);
         executor.execute(() -> {
             try {
                 if (isFavorited) {
@@ -174,11 +182,11 @@ public class ScenicDetailActivity extends AppCompatActivity {
                 }
                 runOnUiThread(() -> {
                     updateButtonStates();
-                    setLoading(false);
+                    setFavoriteLoading(false);
                 });
             } catch (IOException | JSONException e) {
                 runOnUiThread(() -> {
-                    setLoading(false);
+                    setFavoriteLoading(false);
                     Toast.makeText(this, getString(R.string.detail_favorite_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
                 });
             }
@@ -210,18 +218,18 @@ public class ScenicDetailActivity extends AppCompatActivity {
     }
 
     private void addVisited(int rating) {
-        setLoading(true);
+        setVisitedLoading(true);
         executor.execute(() -> {
             try {
                 userCenterRepository.addVisited(profile.getId(), scenicId, rating);
                 visitedRecord = userCenterRepository.getVisitedRecord(profile.getId(), scenicId);
                 runOnUiThread(() -> {
                     updateButtonStates();
-                    setLoading(false);
+                    setVisitedLoading(false);
                 });
             } catch (IOException | JSONException e) {
                 runOnUiThread(() -> {
-                    setLoading(false);
+                    setVisitedLoading(false);
                     Toast.makeText(this, getString(R.string.detail_visit_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
                 });
             }
@@ -229,33 +237,57 @@ public class ScenicDetailActivity extends AppCompatActivity {
     }
 
     private void removeVisited() {
-        setLoading(true);
+        setVisitedLoading(true);
         executor.execute(() -> {
             try {
                 userCenterRepository.removeVisited(profile.getId(), scenicId);
                 visitedRecord = null;
                 runOnUiThread(() -> {
                     updateButtonStates();
-                    setLoading(false);
+                    setVisitedLoading(false);
                 });
             } catch (IOException | JSONException e) {
                 runOnUiThread(() -> {
-                    setLoading(false);
+                    setVisitedLoading(false);
                     Toast.makeText(this, getString(R.string.detail_visit_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
                 });
             }
         });
     }
 
-    private void setLoading(boolean loading) {
-        progressIndicator.setVisibility(loading ? View.VISIBLE : View.GONE);
+    private void showSkeleton(boolean show) {
+        if (show) {
+            contentContainer.setVisibility(View.INVISIBLE);
+            skeletonLayout.setVisibility(View.VISIBLE);
+            skeletonLayout.startShimmer();
+        } else {
+            skeletonLayout.stopShimmer();
+            skeletonLayout.setVisibility(View.GONE);
+            contentContainer.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void setButtonsEnabled(boolean enabled) {
+        btnFavorite.setEnabled(enabled);
+        btnVisited.setEnabled(enabled);
+    }
+
+    private void setFavoriteLoading(boolean loading) {
         btnFavorite.setEnabled(!loading);
+        favoriteProgress.setVisibility(loading ? View.VISIBLE : View.GONE);
+    }
+
+    private void setVisitedLoading(boolean loading) {
         btnVisited.setEnabled(!loading);
+        visitedProgress.setVisibility(loading ? View.VISIBLE : View.GONE);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (skeletonLayout != null) {
+            skeletonLayout.stopShimmer();
+        }
         executor.shutdownNow();
     }
 }

@@ -25,6 +25,7 @@ import org.json.JSONException;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import com.facebook.shimmer.ShimmerFrameLayout;
 
 public class ProductDetailActivity extends AppCompatActivity {
 
@@ -39,7 +40,10 @@ public class ProductDetailActivity extends AppCompatActivity {
     private TextView tvDesc;
     private MaterialButton btnFavorite;
     private MaterialButton btnAddCart;
-    private CircularProgressIndicator progressIndicator;
+    private CircularProgressIndicator favoriteProgress;
+    private CircularProgressIndicator cartProgress;
+    private ShimmerFrameLayout skeletonLayout;
+    private View contentContainer;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final TravelRepository travelRepository = new TravelRepository();
@@ -81,13 +85,17 @@ public class ProductDetailActivity extends AppCompatActivity {
         tvDesc = findViewById(R.id.tvProductDesc);
         btnFavorite = findViewById(R.id.btnFavorite);
         btnAddCart = findViewById(R.id.btnAddCart);
-        progressIndicator = findViewById(R.id.productProgress);
+        favoriteProgress = findViewById(R.id.favoriteProgress);
+        cartProgress = findViewById(R.id.cartProgress);
+        skeletonLayout = findViewById(R.id.productSkeleton);
+        contentContainer = findViewById(R.id.productContent);
         btnFavorite.setOnClickListener(v -> toggleFavorite());
         btnAddCart.setOnClickListener(v -> addToCart());
     }
 
     private void loadProduct() {
-        setLoading(true);
+        showSkeleton(true);
+        setButtonsEnabled(false);
         executor.execute(() -> {
             try {
                 FeedItem detail = travelRepository.fetchProductDetail(productId);
@@ -97,11 +105,12 @@ public class ProductDetailActivity extends AppCompatActivity {
                     isFavorited = favorited;
                     bindProduct(detail);
                     updateFavoriteButton();
-                    setLoading(false);
+                    showSkeleton(false);
+                    setButtonsEnabled(true);
                 });
             } catch (IOException | JSONException e) {
                 runOnUiThread(() -> {
-                    setLoading(false);
+                    showSkeleton(false);
                     Toast.makeText(this, getString(R.string.feed_loading_error, e.getMessage()), Toast.LENGTH_SHORT).show();
                     finish();
                 });
@@ -146,7 +155,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         if (product == null) {
             return;
         }
-        setLoading(true);
+        setFavoriteLoading(true);
         executor.execute(() -> {
             try {
                 if (isFavorited) {
@@ -158,11 +167,11 @@ public class ProductDetailActivity extends AppCompatActivity {
                 }
                 runOnUiThread(() -> {
                     updateFavoriteButton();
-                    setLoading(false);
+                    setFavoriteLoading(false);
                 });
             } catch (IOException | JSONException e) {
                 runOnUiThread(() -> {
-                    setLoading(false);
+                    setFavoriteLoading(false);
                     Toast.makeText(this, getString(R.string.detail_favorite_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
                 });
             }
@@ -173,32 +182,56 @@ public class ProductDetailActivity extends AppCompatActivity {
         if (product == null) {
             return;
         }
-        setLoading(true);
+        setCartLoading(true);
         executor.execute(() -> {
             try {
                 userCenterRepository.addToCart(profile.getId(), productId, 1);
                 runOnUiThread(() -> {
-                    setLoading(false);
+                    setCartLoading(false);
                     Toast.makeText(this, R.string.detail_cart_success, Toast.LENGTH_SHORT).show();
                 });
             } catch (IOException | JSONException e) {
                 runOnUiThread(() -> {
-                    setLoading(false);
+                    setCartLoading(false);
                     Toast.makeText(this, getString(R.string.detail_cart_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
                 });
             }
         });
     }
 
-    private void setLoading(boolean loading) {
-        progressIndicator.setVisibility(loading ? View.VISIBLE : View.GONE);
+    private void showSkeleton(boolean show) {
+        if (show) {
+            contentContainer.setVisibility(View.INVISIBLE);
+            skeletonLayout.setVisibility(View.VISIBLE);
+            skeletonLayout.startShimmer();
+        } else {
+            skeletonLayout.stopShimmer();
+            skeletonLayout.setVisibility(View.GONE);
+            contentContainer.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void setButtonsEnabled(boolean enabled) {
+        btnFavorite.setEnabled(enabled);
+        btnAddCart.setEnabled(enabled);
+    }
+
+    private void setFavoriteLoading(boolean loading) {
         btnFavorite.setEnabled(!loading);
+        favoriteProgress.setVisibility(loading ? View.VISIBLE : View.GONE);
+    }
+
+    private void setCartLoading(boolean loading) {
         btnAddCart.setEnabled(!loading);
+        cartProgress.setVisibility(loading ? View.VISIBLE : View.GONE);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (skeletonLayout != null) {
+            skeletonLayout.stopShimmer();
+        }
         executor.shutdownNow();
     }
 }

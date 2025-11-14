@@ -16,4 +16,8 @@
 
     <!-- 输入框背景的轻微分隔色（浅色） -->
     <color name="surface_variant_light">#FFEFF2F7</color>
+
+    <!-- 骨架屏占位颜色 -->
+    <color name="skeleton_base">#FFE3E7F0</color>
+    <color name="skeleton_highlight">#FFF0F4FA</color>
 </resources>
