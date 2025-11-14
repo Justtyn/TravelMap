@@ -12,6 +12,9 @@
 4. **首页/商城/预订 UI 与数据**
    - 新增统一的 `BaseFeedFragment`、`FeedAdapter`、`TravelRepository`，实现搜索栏 + Banner + 列表卡片。
    - 首页接入 `/api/scenics`，商城筛选 `/api/products` 的 `TICKET/TRAVEL`，预订筛选 `HOTEL`，支持下拉刷新与搜索。
+5. **用户中心与订单/收藏**
+   - “我的”页支持圆角头像、邮箱展示以及快捷菜单，跳转到个人资料编辑、收藏、去过、订单、购物车等页面。
+   - `UserInfoActivity`、`FavoritesActivity`、`VisitedActivity`、`OrdersActivity`、`CartActivity` 等已完成基础 UI 与数据加载（收藏/去过/购物车列表、下单、个人信息修改等），并与 `UserCenterRepository` 统一管理接口调用。
 
 ## 📋 待开发计划
 1. **Feed 详情页跳转**
