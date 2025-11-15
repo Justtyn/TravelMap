@@ -72,3 +72,140 @@
    - `OrdersActivity` 中的每条订单可点击查看详情：状态、收货人、联系方式、子项列表等。
 
 > 以上开发说明涵盖当前所有已实现模块及 UI/交互细节，后续迭代将按“行程页改版 → 景点详情地图 → 购物车增强 → 订单详情”顺序推进。***
+
+---
+
+## TravelMap 软件说明文档（2025-11-15 可投放版）
+
+# TravelMap
+
+## 1. 软件概述（Software Overview）
+- **软件名称**：TravelMap
+- **软件定位**：集“目的地发现 + 地图导航 + 旅行电商”于一体的本地游伴侣 App
+- **主要功能简介**：TravelMap 通过首页 Feed、商城/预订频道和地图页串联“灵感 → 决策 → 到店”的全流程，用户可浏览城市热门玩法、查看实时坐标、收藏心仪景点、直接下单门票或旅行商品，并用“我的”中心管理收藏、去过、购物车与订单。统一的骨架屏、搜索、面包屑导航与 Material 3 组件保证在浅色/深色模式以及不同尺寸设备上都有一致体验。
+- **目标用户**：热衷周末出行、城市漫游与轻量化旅行计划的高校学生、背包客与本地新居民。
+- **适用场景**：周末短途、毕业旅行、团建踩点、到店前核对门票/订单、分享打卡脚本等。
+- **当前版本**：v1.0.0（versionCode 1，对应 `app/build.gradle` 中的 `versionName "1.0"`）
+- **更新日期**：2025-11-15
+
+## 2. 项目背景与设计理念（Background & Design Philosophy）
+- **痛点/需求**：传统 OTA 对本地生活支持有限，地图 App 又缺乏场景化运营内容，导致“找灵感、看位置、买门票”需要在多个 App 间切换。
+- **开发初衷**：打造一款讲得清的本科课程示范项目，同时可直接演示真实业务流程，方便答辩、展示和团队协作。
+- **解决问题**：把“内容 + 地图 + 交易”整合在一个底部导航中，提供骨架屏、空态、加载态，确保弱网设备也能顺畅浏览；通过 `UserPreferences` 与 `UserProfile` 统一登录态管理，减少重复输入。
+- **核心价值**：高一致性的 UI/UX、即时的地图定位、全链路的旅行商品下单体验，以及面向口头展示的中文注释与结构化代码。
+- **技术/架构理念**：Activity + Fragment 容器搭配 Repository + 数据模型，网络层使用轻量 HttpURLConnection 包装；UI 贯彻 Material 3、骨架屏和 Safe Area 处理，并为地图与列表提供独立模块以便替换或扩展。
+
+## 3. 软件功能介绍（Features）
+
+### 3.1 核心功能
+1. **智能推荐首页（Home）**
+   - 功能说明：使用 `TravelRepository.fetchScenicFeed()` 拉取景点列表，`BaseFeedFragment` 自动提供搜索框、Banner、下拉刷新与骨架屏。
+   - 用户流程：进入 App → 选择“首页” → 输入关键词或直接下拉刷新 → 点进卡片查看详情。
+   - 使用示例：搜索「海岛」，立即获得带城市/评分/库存的卡片，继续点击跳入详情页。
+2. **商城/预订频道**
+   - 功能说明：`MallFragment` 与 `BookingFragment` 调用 `fetchProductsByTypes()` 将商品按类型拆分，所有卡片支持收藏与跳转商品详情。
+   - 用户流程：切换到底部 Tab → 按关键词筛选 → 加入购物车或直接下单。
+   - 使用示例：在预订页选择酒店类型商品，点击“加入购物车”后在购物车页面统一提交订单。
+3. **景点/商品详情页**
+   - 功能说明：`ScenicDetailActivity` / `ProductDetailActivity` 展示详情、地址/经纬度、库存/价格、收藏与“去过”按钮，并实时调用 `UserCenterRepository` 更新状态。
+   - 用户流程：从任何 Feed 卡片进入 → 查看面包屑导航和骨架屏加载 → 执行收藏/评分/加入购物车 → 完成后返回列表自动刷新。
+4. **地图与定位（Plan Tab）**
+   - 功能说明：`MapFragment` 结合高德 3D 地图 SDK、`AMapLocationClient` 与 `TravelRepository.fetchScenicMapPoints()` 在地图中绘制所有景点并显示当前定位、缩放、Marker 缩略图。
+   - 用户流程：首次进入提示定位权限 → MapView 自动聚焦至城市 → 点击任意 Marker 进入景点详情。
+5. **订单与购物车闭环**
+   - 功能说明：`CartActivity`/`OrdersActivity` 读取 `/api/cart` `/api/orders` 数据，提供骨架屏、空态、一次性下单与成功页；后续可扩展删除/修改数量。
+   - 使用示例：挑选多个商品 → 统一在购物车提交 → 跳至订单成功页查看订单号，再到订单列表追踪。
+
+### 3.2 次要功能
+- **账号体系**：`LoginActivity`、`RegisterActivity`、`UserPreferences` 负责登录/注册/缓存；`MainActivity` 启动时校验登录态，无数据直接跳转登录页。
+- **我的中心**：`MyFragment` 展示头像、用户名、邮箱、常用入口以及退出登录；个人资料/收藏/去过/订单/购物车都提供骨架屏和面包屑副标题。
+- **统一 UI 与状态管理**：`BaseFeedFragment`、`FeedAdapter`、空态和骨架屏组件保证相同体验；Toast/副标题/安全区处理所有页面一致。
+
+### 3.3 特色模块（AI/地图/定位）
+- **地图服务说明**：内置高德 3D Map，使用 `MapPrivacyHelper` 自动弹出隐私合规对话框，`MapMarkerRenderer` 根据景点标题 + Glide 缩略图生成自定义 Marker。
+- **定位服务说明**：`AMapLocationClient` 高频率更新当前位置，合并 bounds 后自动缩放镜头；权限关闭时弹出中文提示。
+- **AI 接口**：当前版本未接入 AI，但在 API 层留有扩展参数位，可在后续版本引入智能推荐/行程规划。
+
+## 4. 技术架构（Tech Stack）
+
+### 4.1 Android 技术栈
+- Java 11 + Android SDK 36，Activity/Fragment 组合管理导航。
+- Material Components、AppCompat、ConstraintLayout、RecyclerView、SwipeRefreshLayout 构建 UI 与交互。
+- Glide、Shimmer 提供图片加载与骨架屏；`CircularProgressIndicator` 呈现加载状态。
+- 自研 Repository 层 + `ApiClient`（HttpURLConnection）保证网络通信、分页与异常处理。
+- SharedPreferences 封装为 `UserPreferences`，`UserProfile` 负责反序列化用户模型。
+
+### 4.2 后端技术栈
+- 依据 `app/API_DOC.md` 与 `app.py`，后端为 Python Flask 示例服务，统一响应 `{code,msg,data}`，存储可接 SQLite/Mock 数据源。
+- 认证暂不发 token，返回完整用户 JSON，由客户端缓存；所有接口使用 JSON 请求体并遵循 snake_case。
+
+### 4.3 第三方服务
+- **高德 3D Map & 定位 SDK**：地图渲染、Marker、自定义缩放/罗盘。
+- **Glide**：网络图片缓存及 Marker 缩略图生成。
+- **Material Design 组件库**：按钮、Tab、TextInputLayout、骨架屏样式。
+
+### 4.4 系统架构（文字版）
+- **表示层**：`MainActivity` + 五大 Fragment（Home/Mall/Booking/Map/My）+ 活动详情页。
+- **数据层**：`AuthRepository`、`TravelRepository`、`UserCenterRepository` 负责调用 API。
+- **本地层**：`UserPreferences` 写入 `travelmap_user_pref` SharedPreferences，供启动登录态校验。
+- **扩展点**：Map 模块、购物车与订单等二级页面均解耦，可按模块替换或扩展。
+
+## 5. 安装与使用教程（Installation & Usage）
+
+### 5.1 Android APK 安装
+1. 克隆仓库并安装 Android Studio Iguana 以上版本。
+2. 执行 `./gradlew assembleDebug`，APK 位于 `app/build/outputs/apk/debug/app-debug.apk`。
+3. 允许“未知来源”，把 APK 拷贝到手机安装；首次启动需授予定位、网络权限。
+4. 如需真机调试，执行 `./gradlew installDebug` 直接推送到已连接设备。
+
+### 5.2 使用流程简介
+1. **注册/登录**：输入用户名+密码即可登录，成功后本地缓存用户 JSON。
+2. **浏览与搜索**：在首页/商城/预订 Tab 搜索关键字，向下滚动加载更多卡片。
+3. **地图查看**：切换“行程/地图”查看所有景点坐标，点击 Marker 进入详情。
+4. **交易流程**：在详情页加入购物车 → 打开购物车核对 → 提交后在订单页查看状态。
+5. **个人中心**：在“我的”页查看资料、收藏、去过记录，必要时退出登录。
+
+## 6. 下载地址（Download）
+
+### 6.1 APK 下载
+- **最新版本**：`app/build/outputs/apk/debug/app-debug.apk`（CI 可产出同路径 release 包）。
+- **历史版本**：按 Git Tag 区分，构建输出保留在 `app/build/outputs/apk/<variant>/`。
+- **安全校验**：执行 `shasum -a 256 app-debug.apk` 生成校验值，随发布一同提供。
+
+### 6.2 Git 仓库
+- **仓库地址**：TravelMap/Android（当前私有仓库，main 分支为主干）。
+- **分支说明**：`main` 保持稳定，功能分支遵循 `feature/<module>` 命名。
+- **Issue & PR 规则**：PR 描述需包含变更目的、涉及模块、运行过的 `./gradlew lint`, `./gradlew testDebugUnitTest` 以及 UI 截图；未通过 lint/单测/仪器测试不得合并。
+
+## 7. 隐私政策与权限说明（Privacy & Permissions）
+- **数据类型**：登录后缓存完整 `user` JSON（含用户名、昵称、手机、邮箱、头像 URL）。
+- **采集隐私数据**：定位仅用于在 Map 页面显示当前坐标，不会上传服务器；其余接口只使用账号信息。
+- **权限用途**：
+  - 定位（精确/粗略）：用于地图和周边展示。
+  - 网络：访问后端 API、下载图片与地图瓦片。
+  - 存储（间接）：SharedPreferences 持久化登录态。
+- **数据保护**：缓存全部保存在 `travelmap_user_pref`，退出登录即调用 `UserPreferences.clear()` 清除；后台不采集额外第三方数据。
+- **联系渠道**：`support@travelmap.app`（可替换为实际邮箱）。
+
+## 8. 更新日志（Changelog）
+### v1.0.0（2025-11-15）
+- 初始版本，包含首页/商城/预订 Feed。
+- 上线高德地图页与实时定位。
+- 支持景点收藏、去过、评分以及商品购物车/订单流程。
+- 实现完整登录/注册/我的中心与骨架屏体验。
+
+## 9. 常见问题（FAQ）
+1. **安装 APK 提示风险？** Android 会提醒来自企业签名的 APK，确认来源可信即可继续安装。
+2. **地图无法定位怎么办？** 确认授予精确定位权限，若仍失败可在系统设置中清除 App 权限重新打开；地图页也支持手动拖动查看。
+3. **接口超时或加载空白？** 检查是否能访问 `BuildConfig.API_BASE_URL`（当前为 `http://138.68.59.41:5001`），必要时在 `local.properties` 中指向内网服务。
+4. **如何清除缓存重新登录？** 进入“我的”页点击“退出登录”，`UserPreferences` 会立即清空用户信息并跳回登录页。
+5. **拉取代码后无法编译？** 执行 `./gradlew wrapper --gradle-version 8.7` 确保 Wrapper 完整，Android Studio 中同步 Gradle 并重启。
+
+## 10. 关于作者 / 团队（About Developer）
+- **团队**：TravelMap 学生创新小组（产品/设计/Android/后端 4 人）。
+- **职责**：Android 负责客户端 UI、地图、高德 SDK；后端维护 `app.py` 接口与 Mock 数据；设计输出 Material 3 视觉稿。
+- **联系方式**：`support@travelmap.app`、GitHub Issues 或课程群。
+
+## 11. 开源协议（License）
+- 当前版本仅供课程设计展示与内部 demo 使用，版权归 TravelMap 团队所有；若需二次分发请先取得授权。
+- 后续若迁移到开源，请遵守指定的 MIT/Apache-2.0 等协议并在仓库根目录附上 LICENSE。
