@@ -3,6 +3,7 @@ package com.justyn.travelmap.profile;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -16,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
+import com.google.android.material.textfield.TextInputEditText;
 import com.justyn.travelmap.R;
 import com.justyn.travelmap.data.local.UserPreferences;
 import com.justyn.travelmap.data.local.UserProfile;
@@ -41,6 +43,8 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartA
     private MaterialButton btnSubmit;
     private View contentContainer;
     private ShimmerFrameLayout skeletonLayout;
+    private TextInputEditText etContactName;
+    private TextInputEditText etContactPhone;
     private CartAdapter adapter;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -74,9 +78,12 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartA
         contentContainer = findViewById(R.id.cartContent);
         skeletonLayout = findViewById(R.id.cartSkeleton);
         btnSubmit = findViewById(R.id.btnSubmitOrder);
+        etContactName = findViewById(R.id.etContactName);
+        etContactPhone = findViewById(R.id.etContactPhone);
         adapter = new CartAdapter(this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
+        prefillContactInfo();
     }
 
     private void bindEvents() {
@@ -171,16 +178,21 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartA
             Toast.makeText(this, R.string.cart_empty, Toast.LENGTH_SHORT).show();
             return;
         }
-        String contactPhone = profile.getPhone();
-        if (contactPhone == null || contactPhone.isEmpty()) {
-            Toast.makeText(this, R.string.user_info_phone, Toast.LENGTH_SHORT).show();
+        String contactName = getContactNameInput();
+        String contactPhone = getContactPhoneInput();
+        if (TextUtils.isEmpty(contactName)) {
+            Toast.makeText(this, R.string.cart_contact_name_hint, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (TextUtils.isEmpty(contactPhone)) {
+            Toast.makeText(this, R.string.cart_contact_phone_hint, Toast.LENGTH_SHORT).show();
             return;
         }
         setProgressVisible(true);
         executor.execute(() -> {
             try {
                 org.json.JSONObject data = repository.createOrder(profile.getId(),
-                        profile.getNickname() != null ? profile.getNickname() : profile.getUsername(),
+                        contactName,
                         contactPhone,
                         "GENERAL",
                         null,
@@ -314,5 +326,28 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartA
             skeletonLayout.setVisibility(View.GONE);
             contentContainer.setVisibility(View.VISIBLE);
         }
+    }
+
+    private void prefillContactInfo() {
+        if (profile == null) {
+            return;
+        }
+        if (etContactName != null) {
+            String defaultName = !TextUtils.isEmpty(profile.getNickname()) ? profile.getNickname() : profile.getUsername();
+            etContactName.setText(defaultName);
+        }
+        if (etContactPhone != null) {
+            etContactPhone.setText(profile.getPhone());
+        }
+    }
+
+    private String getContactNameInput() {
+        return etContactName != null && etContactName.getText() != null
+                ? etContactName.getText().toString().trim() : "";
+    }
+
+    private String getContactPhoneInput() {
+        return etContactPhone != null && etContactPhone.getText() != null
+                ? etContactPhone.getText().toString().trim() : "";
     }
 }

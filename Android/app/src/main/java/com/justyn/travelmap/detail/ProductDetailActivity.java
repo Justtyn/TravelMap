@@ -7,8 +7,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.imageview.ShapeableImageView;
@@ -25,7 +23,10 @@ import org.json.JSONException;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
 import com.facebook.shimmer.ShimmerFrameLayout;
+import com.justyn.travelmap.ui.common.ImageLoader;
+
 
 public class ProductDetailActivity extends AppCompatActivity {
 
@@ -143,12 +144,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         }
         tvDesc.setText(detail.getDescription());
 
-        Glide.with(this)
-                .load(detail.getImageUrl())
-                .placeholder(R.drawable.banner_placeholder)
-                .error(R.drawable.banner_placeholder)
-                .transition(DrawableTransitionOptions.withCrossFade())
-                .into(ivCover);
+        ImageLoader.load(ivCover, detail.getImageUrl());
     }
 
     private void updateToolbarSubtitle(FeedItem detail) {

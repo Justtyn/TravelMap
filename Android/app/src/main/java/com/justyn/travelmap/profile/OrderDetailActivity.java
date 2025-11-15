@@ -1,9 +1,11 @@
 package com.justyn.travelmap.profile;
 
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,6 +31,7 @@ import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.justyn.travelmap.R;
+import com.justyn.travelmap.data.remote.TravelRepository;
 import com.justyn.travelmap.data.remote.UserCenterRepository;
 import com.justyn.travelmap.model.FeedItem;
 import com.justyn.travelmap.model.OrderDetail;
@@ -48,12 +51,14 @@ import java.util.concurrent.Executors;
 
 public class OrderDetailActivity extends AppCompatActivity {
 
+    private static final String TAG = "OrderDetailActivity";
     public static final String EXTRA_ORDER_ID = "extra_order_id";
     public static final String EXTRA_ORDER_STATUS = "extra_order_status";
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final UserCenterRepository repository = new UserCenterRepository();
+    private final TravelRepository travelRepository = new TravelRepository();
 
     private NestedScrollView contentContainer;
     private CircularProgressIndicator progressIndicator;
@@ -186,56 +191,71 @@ public class OrderDetailActivity extends AppCompatActivity {
 
     private void updateMapMarkers(List<OrderItemDetail> items) {
         clearMapMarkers();
-        if (orderMap == null || items == null || items.isEmpty()) {
+        if (items == null || items.isEmpty()) {
             hideMapSection();
             return;
         }
-        List<OrderItemDetail> validItems = new ArrayList<>();
+        List<OrderItemDetail> needFetch = new ArrayList<>();
         for (OrderItemDetail item : items) {
             FeedItem product = item.getProduct();
             if (product != null && product.getLatitude() != null && product.getLongitude() != null) {
-                validItems.add(item);
+                showMapSection();
+                addMarkerForItem(item);
+            } else if (item.getScenicId() > 0) {
+                needFetch.add(item);
             }
         }
-        if (validItems.isEmpty()) {
+        if (boundsCount > 0) {
+            fitMapBounds();
+        }
+        if (!needFetch.isEmpty()) {
+            showMapSection();
+            fetchMissingLocations(needFetch);
+        }
+        if (boundsCount == 0 && needFetch.isEmpty()) {
             hideMapSection();
-            return;
         }
-        mapCard.setVisibility(View.VISIBLE);
-        tvMapTitle.setVisibility(View.VISIBLE);
-        tvMapHint.setText(R.string.detail_map_hint);
-        boundsBuilder = new LatLngBounds.Builder();
-        boundsCount = 0;
-        for (OrderItemDetail item : validItems) {
-            addMarkerForItem(item);
-        }
-        fitMapBounds();
     }
 
     private void addMarkerForItem(OrderItemDetail item) {
-        if (orderMap == null) {
-            return;
-        }
         FeedItem product = item.getProduct();
         if (product == null || product.getLatitude() == null || product.getLongitude() == null) {
             return;
         }
-        LatLng latLng = new LatLng(product.getLatitude(), product.getLongitude());
+        addMarker(product.getLatitude(), product.getLongitude(),
+                product.getTitle(), product.getAddress(), product.getImageUrl());
+    }
+
+    private void addMarker(double lat, double lng, String title, String address, @Nullable String imageUrl) {
+        if (orderMap == null) {
+            return;
+        }
+        LatLng latLng = new LatLng(lat, lng);
         MarkerOptions options = new MarkerOptions()
                 .position(latLng)
                 .anchor(0.5f, 1f)
-                .title(product.getTitle())
-                .snippet(product.getAddress())
-                .icon(MapMarkerRenderer.create(this, product.getTitle(), null));
+                .title(title)
+                .snippet(address)
+                .icon(MapMarkerRenderer.create(this, title, null));
         Marker marker = orderMap.addMarker(options);
         mapMarkers.add(marker);
+        if (boundsBuilder == null) {
+            boundsBuilder = new LatLngBounds.Builder();
+        }
         boundsBuilder.include(latLng);
         boundsCount++;
         lastMarkerLatLng = latLng;
-        CustomTarget<android.graphics.Bitmap> target = new CustomTarget<android.graphics.Bitmap>() {
+        loadMarkerIcon(marker, title, imageUrl);
+    }
+
+    private void loadMarkerIcon(Marker marker, String title, @Nullable String imageUrl) {
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            return;
+        }
+        CustomTarget<Bitmap> target = new CustomTarget<Bitmap>() {
             @Override
-            public void onResourceReady(@NonNull android.graphics.Bitmap resource, @Nullable Transition<? super android.graphics.Bitmap> transition) {
-                marker.setIcon(MapMarkerRenderer.create(OrderDetailActivity.this, product.getTitle(), resource));
+            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                marker.setIcon(MapMarkerRenderer.create(OrderDetailActivity.this, title, resource));
             }
 
             @Override
@@ -244,14 +264,46 @@ public class OrderDetailActivity extends AppCompatActivity {
 
             @Override
             public void onLoadFailed(@Nullable Drawable errorDrawable) {
-                marker.setIcon(MapMarkerRenderer.create(OrderDetailActivity.this, product.getTitle(), null));
+                marker.setIcon(MapMarkerRenderer.create(OrderDetailActivity.this, title, null));
             }
         };
         markerTargets.add(target);
         Glide.with(this)
                 .asBitmap()
-                .load(product.getImageUrl())
+                .load(imageUrl)
                 .into(target);
+    }
+
+    private void fetchMissingLocations(List<OrderItemDetail> items) {
+        executor.execute(() -> {
+            List<MarkerPayload> payloads = new ArrayList<>();
+            for (OrderItemDetail item : items) {
+                try {
+                    FeedItem scenic = travelRepository.fetchScenicDetail(item.getScenicId());
+                    if (scenic != null && scenic.getLatitude() != null && scenic.getLongitude() != null) {
+                        payloads.add(new MarkerPayload(
+                                scenic.getLatitude(),
+                                scenic.getLongitude(),
+                                scenic.getTitle(),
+                                scenic.getAddress(),
+                                scenic.getImageUrl()
+                        ));
+                    }
+                } catch (IOException | JSONException e) {
+                    Log.w(TAG, "fetchMissingLocations: scenicId=" + item.getScenicId(), e);
+                }
+            }
+            handler.post(() -> {
+                for (MarkerPayload payload : payloads) {
+                    addMarker(payload.lat, payload.lng, payload.title, payload.address, payload.imageUrl);
+                }
+                if (boundsCount == 0) {
+                    hideMapSection();
+                } else {
+                    fitMapBounds();
+                }
+            });
+        });
     }
 
     private void fitMapBounds() {
@@ -275,6 +327,12 @@ public class OrderDetailActivity extends AppCompatActivity {
         tvMapTitle.setVisibility(View.GONE);
     }
 
+    private void showMapSection() {
+        mapCard.setVisibility(View.VISIBLE);
+        tvMapTitle.setVisibility(View.VISIBLE);
+        tvMapHint.setText(R.string.detail_map_hint);
+    }
+
     private void clearMapMarkers() {
         for (Marker marker : mapMarkers) {
             marker.remove();
@@ -287,6 +345,22 @@ public class OrderDetailActivity extends AppCompatActivity {
             Glide.with(this).clear(target);
         }
         markerTargets.clear();
+    }
+
+    private static class MarkerPayload {
+        final double lat;
+        final double lng;
+        final String title;
+        final String address;
+        final String imageUrl;
+
+        MarkerPayload(double lat, double lng, String title, String address, String imageUrl) {
+            this.lat = lat;
+            this.lng = lng;
+            this.title = title;
+            this.address = address;
+            this.imageUrl = imageUrl;
+        }
     }
 
     private void showLoading(boolean loading) {

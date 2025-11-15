@@ -114,6 +114,10 @@
     <string name="cart_delete_button">删除</string>
     <string name="cart_min_quantity">最少保留 1 件商品</string>
     <string name="cart_delete_failed">删除失败：%1$s</string>
+    <string name="cart_contact_name_label">收货人</string>
+    <string name="cart_contact_phone_label">联系方式</string>
+    <string name="cart_contact_name_hint">请输入收货人姓名</string>
+    <string name="cart_contact_phone_hint">请输入手机号</string>
     <string name="title_scenic_detail">景点详情</string>
     <string name="detail_map_title">景点位置</string>
     <string name="detail_map_hint">地图正在加载，可在此查看具体方位</string>

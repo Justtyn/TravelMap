@@ -9,11 +9,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.justyn.travelmap.R;
 import com.justyn.travelmap.model.FeedItem;
 import com.justyn.travelmap.model.OrderItemDetail;
+import com.justyn.travelmap.ui.common.ImageLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,13 +68,7 @@ public class OrderItemAdapter extends RecyclerView.Adapter<OrderItemAdapter.Orde
             if (product != null) {
                 tvTitle.setText(product.getTitle());
                 tvDesc.setText(product.getDescription());
-                Glide.with(ivCover.getContext())
-                        .load(product.getImageUrl())
-                        .placeholder(R.drawable.ic_image_placeholder)
-                        .error(R.drawable.ic_image_placeholder)
-                        .centerCrop()
-                        .transition(DrawableTransitionOptions.withCrossFade())
-                        .into(ivCover);
+                ImageLoader.load(ivCover, product.getImageUrl());
             } else {
                 tvTitle.setText(R.string.app_name);
                 tvDesc.setText("");

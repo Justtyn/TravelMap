@@ -104,7 +104,12 @@ public class UserCenterRepository {
         ensureSuccess(response);
         Object data = response.getData();
         if (data instanceof JSONObject) {
-            return buildOrderDetail((JSONObject) data);
+            JSONObject json = (JSONObject) data;
+            JSONObject orderJson = json.optJSONObject("order");
+            if (orderJson != null) {
+                return buildOrderDetail(orderJson);
+            }
+            return buildOrderDetail(json);
         }
         return null;
     }
@@ -396,7 +401,8 @@ public class UserCenterRepository {
                         itemJson.optLong("order_item_id", itemJson.optLong("id", i)),
                         itemJson.optInt("quantity", 1),
                         itemJson.optDouble("price", Double.NaN),
-                        product
+                        product,
+                        productJson != null ? productJson.optLong("scenic_id", -1) : -1
                 ));
             }
         }

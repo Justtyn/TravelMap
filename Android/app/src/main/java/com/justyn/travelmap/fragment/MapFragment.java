@@ -1,6 +1,7 @@
 package com.justyn.travelmap.fragment;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -38,6 +39,7 @@ import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.justyn.travelmap.R;
 import com.justyn.travelmap.data.remote.TravelRepository;
 import com.justyn.travelmap.model.FeedItem;
+import com.justyn.travelmap.detail.ScenicDetailActivity;
 import com.justyn.travelmap.ui.map.MapMarkerRenderer;
 import com.justyn.travelmap.ui.map.MapPrivacyHelper;
 
@@ -109,6 +111,15 @@ public class MapFragment extends Fragment implements AMapLocationListener {
         aMap.getUiSettings().setCompassEnabled(true);
         aMap.getUiSettings().setScaleControlsEnabled(true);
         aMap.setOnMapLoadedListener(() -> fitCameraToBounds(false, false));
+        aMap.setOnMarkerClickListener(marker -> {
+            Object tag = marker.getObject();
+            if (tag instanceof FeedItem) {
+                FeedItem scenic = (FeedItem) tag;
+                openScenicDetail(scenic.getId());
+                return true;
+            }
+            return false;
+        });
     }
 
     private void initLocationClient() {
@@ -251,6 +262,7 @@ public class MapFragment extends Fragment implements AMapLocationListener {
                 .icon(MapMarkerRenderer.create(getContext(), scenic.getTitle(), null));
         Marker marker = aMap.addMarker(options);
         scenicMarkers.add(marker);
+        marker.setObject(scenic);
         includeBounds(latLng);
         loadMarkerThumbnail(marker, scenic);
     }
@@ -412,5 +424,14 @@ public class MapFragment extends Fragment implements AMapLocationListener {
         if (mapView != null) {
             mapView.onSaveInstanceState(outState);
         }
+    }
+
+    private void openScenicDetail(long scenicId) {
+        if (!isAdded() || scenicId <= 0) {
+            return;
+        }
+        Intent intent = new Intent(requireContext(), ScenicDetailActivity.class);
+        intent.putExtra(ScenicDetailActivity.EXTRA_SCENIC_ID, scenicId);
+        startActivity(intent);
     }
 }

@@ -33,6 +33,7 @@ import com.justyn.travelmap.data.remote.TravelRepository;
 import com.justyn.travelmap.data.remote.UserCenterRepository;
 import com.justyn.travelmap.model.FeedItem;
 import com.justyn.travelmap.model.VisitedRecord;
+import com.justyn.travelmap.ui.common.ImageLoader;
 import com.justyn.travelmap.ui.map.MapMarkerRenderer;
 import com.justyn.travelmap.ui.map.MapPrivacyHelper;
 import com.facebook.shimmer.ShimmerFrameLayout;
@@ -177,12 +178,7 @@ public class ScenicDetailActivity extends AppCompatActivity {
             hideMapSection();
         }
         tvDescription.setText(detail.getDescription());
-        Glide.with(this)
-                .load(detail.getImageUrl())
-                .placeholder(R.drawable.banner_placeholder)
-                .error(R.drawable.banner_placeholder)
-                .transition(DrawableTransitionOptions.withCrossFade())
-                .into(ivBanner);
+        ImageLoader.load(ivBanner, detail.getImageUrl());
     }
 
     private String formatDouble(Double value) {

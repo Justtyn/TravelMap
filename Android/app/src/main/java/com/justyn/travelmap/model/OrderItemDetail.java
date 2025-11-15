@@ -5,12 +5,14 @@ public class OrderItemDetail {
     private final int quantity;
     private final double price;
     private final FeedItem product;
+    private final long scenicId;
 
-    public OrderItemDetail(long orderItemId, int quantity, double price, FeedItem product) {
+    public OrderItemDetail(long orderItemId, int quantity, double price, FeedItem product, long scenicId) {
         this.orderItemId = orderItemId;
         this.quantity = quantity;
         this.price = price;
         this.product = product;
+        this.scenicId = scenicId;
     }
 
     public long getOrderItemId() {
@@ -27,5 +29,9 @@ public class OrderItemDetail {
 
     public FeedItem getProduct() {
         return product;
+    }
+
+    public long getScenicId() {
+        return scenicId;
     }
 }
