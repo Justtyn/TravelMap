@@ -118,6 +118,8 @@ nav a.active {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  justify-content: flex-start;
+  padding-top: 8px;
 }
 
 .logo-pill {
@@ -175,7 +177,7 @@ nav a.active {
 }
 
 .hero-media img {
-  width: min(360px, 100%);
+  width: min(320px, 60%);
   border-radius: calc(var(--radius) * 0.8);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);

@@ -538,6 +538,12 @@ def home_page():
             'value': feedback_rate,
             'suffix': '%',
             'description': 'Visited 数据量占用户总量的比例'
+        },
+        {
+            'label': '行程计划',
+            'value': counts.get('trip_plan', 0),
+            'suffix': '',
+            'description': 'Trip Plan / 行程模板已创建数量'
         }
     ]
 
