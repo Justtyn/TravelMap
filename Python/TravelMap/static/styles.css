@@ -684,6 +684,27 @@ nav a.active {
   margin-bottom: 8px;
 }
 
+.software-grid {
+  gap: 32px;
+  margin-bottom: 32px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.software-grid .card {
+  min-height: auto;
+}
+
+.doc-cta {
+  justify-content: center;
+  margin-top: 16px;
+}
+
+@media (max-width: 768px) {
+  .software-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .gallery {
   margin-top: 40px;
 }

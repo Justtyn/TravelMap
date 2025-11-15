@@ -12,11 +12,26 @@
   <div class="cta-row">
     <a class="btn btn-primary" href="{{ url_for('doc_view', filename='API_DOC.md') }}" target="_blank" rel="noopener">在线查看 API_DOC.md</a>
     <a class="btn btn-ghost" href="{{ url_for('doc_view', filename='AGENTS.md') }}" target="_blank" rel="noopener">在线查看 AGENTS.md</a>
+    <a class="btn btn-ghost" href="{{ url_for('doc_view', filename='SOFTWARE_GUIDE.md') }}" target="_blank" rel="noopener">软件说明速览</a>
     <a class="btn btn-ghost" href="{{ url_for('serve_doc_file', filename='API_DOC.md', download=1) }}">下载 API_DOC.md</a>
   </div>
 </section>
 
 <section class="grid">
+  <article class="card highlight">
+    <h3>TravelMap 软件说明</h3>
+    <ul class="list">
+      <li>覆盖“软件概述 → 技术架构 → 安装 → 隐私”11 大章节，可快速补齐官网内容。</li>
+      <li>同步记录安卓端 Dev Log 与后续重点，如地图化 Plan Tab、订单详情等。</li>
+      <li>可直接引用到产品路演 / PRD / README，保持口径一致。</li>
+    </ul>
+    <a class="doc-link" href="{{ url_for('doc_view', filename='SOFTWARE_GUIDE.md') }}" target="_blank" rel="noopener">
+      打开 SOFTWARE_GUIDE.md
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M7 17 17 7M7 7h10v10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+  </article>
   <article class="card">
     <h3>API 关键信息</h3>
     <ul class="list">

@@ -13,56 +13,56 @@
 
 <section class="grid">
   <article class="card">
-    <h3>用户与认证</h3>
+    <h3>整体架构</h3>
     <ul class="list">
-      <li>本地注册 / 登录：返回完整用户档案，免 Token 配置。</li>
-      <li>微信登录占位：提供 <code>code</code> → openid 的示例流程。</li>
-      <li>字段透出：昵称、头像、手机号、邮箱、微信标识等。</li>
+      <li>`MainActivity` 管理 Home / Mall / Booking / Map / My 五大 Tab。</li>
+      <li>`BaseFeedFragment` 统一搜索框、骨架屏、Banner、空态。</li>
+      <li>`AuthRepository` + `UserPreferences` 负责注册 / 登录 / 会话。</li>
     </ul>
   </article>
 
   <article class="card">
-    <h3>内容与预订</h3>
+    <h3>首页 / 商城 / 预订</h3>
     <ul class="list">
-      <li>景点、商品接口默认全量返回，可通过 keyword / city / type 筛选。</li>
-      <li>预订接口同时返回商品与关联景点，方便展示城市 / 坐标。</li>
-      <li>数据库已注入真实感样本：北京、上海、厦门等热门区域。</li>
+      <li>Feed 卡片展示封面、经纬度、库存、评分，点击直达详情。</li>
+      <li>商城 / 预订根据商品类型切换副标题，支持收藏与购物车。</li>
+      <li>Dev Log 已规划地图化 Plan Tab 与详情页内嵌地图。</li>
     </ul>
   </article>
 
   <article class="card">
-    <h3>旅程互动</h3>
+    <h3>旅程互动与地图</h3>
     <ul class="list">
-      <li>收藏：支持景点 / 商品两类 target，并附带 target 详情。</li>
-      <li>去过：记录 <code>visit_date</code> + rating，可驱动“足迹”页面。</li>
-      <li>行程计划：<code>content</code> 保存 JSON，适合前端渲染每日路线。</li>
+      <li>收藏 / 去过实时同步详情页，支持 1~5 分评分与撤销。</li>
+      <li>Plan Tab 将升级为高德 3D Map，展示全国景点 + 定位。</li>
+      <li>行程计划 / Visited 数据可驱动足迹或路线规划页面。</li>
     </ul>
   </article>
 
   <article class="card">
-    <h3>交易链路</h3>
+    <h3>交易链路升级</h3>
     <ul class="list">
-      <li>购物车：统一容纳各类商品；接口回传 product 快照。</li>
-      <li>订单：order + items + product 三段式结构，含联系人 / 入住日期等字段。</li>
-      <li>示例订单数据已写入 db，可直接展示列表与详情态。</li>
+      <li>购物车返回 product 快照，截图展示最新 UI（数量增减 / 删除）。</li>
+      <li>订单详情结构：order + items + product + 联系人 + 日期。</li>
+      <li>示例订单数据写入 SQLite，可直接渲染列表与详情。</li>
     </ul>
   </article>
 
   <article class="card">
-    <h3>部署集成</h3>
+    <h3>部署与安装</h3>
     <ul class="list">
-      <li>运行 <code>python app.py</code> 即可启动 API + 官网页面。</li>
-      <li>如需 https，可在服务器层做反向代理，后端无需改动。</li>
-      <li>tests_smoke.py 可模拟全链路调用，便于上线前回归。</li>
+      <li>后端：<code>pip install -r requirements.txt && python app.py</code>。</li>
+      <li>客户端：<code>./gradlew assembleDebug</code> 下载 APK / 真机调试。</li>
+      <li>Dev Log 中附有 Issue / PR 流程及 smoke test 提醒。</li>
     </ul>
   </article>
 
   <article class="card">
-    <h3>前端提示</h3>
+    <h3>隐私与权限</h3>
     <ul class="list">
-      <li>所有接口返回 JSON；错误场景同样给出 code/msg 描述。</li>
-      <li>列表接口已去分页，若需分页由前端自行切片或后端扩展参数。</li>
-      <li>需要最新字段请参考 <a href="{{ url_for('serve_doc_file', filename='API_DOC.md') }}" target="_blank" rel="noopener">API_DOC.md</a>。</li>
+      <li>定位仅用于 Map Tab 展示当前位置，不上传云端。</li>
+      <li>SharedPreferences 缓存登录态，退出即调用 <code>UserPreferences.clear()</code>。</li>
+      <li>更多说明请查阅 <a href="{{ url_for('doc_view', filename='SOFTWARE_GUIDE.md') }}" target="_blank" rel="noopener">SOFTWARE_GUIDE.md</a>。</li>
     </ul>
   </article>
 </section>

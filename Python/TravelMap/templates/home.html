@@ -96,6 +96,56 @@
   </div>
 </section>
 
+<section class="section software-brief reveal" data-reveal>
+  <div class="section-header">
+    <p class="eyebrow">软件说明速览</p>
+    <h2>把 Dev Log + 软件说明搬到官网，不遗漏任何关键信息</h2>
+    <p>以下摘要来自安卓团队最新《TravelMap 软件说明文档》，涵盖概述、功能、技术架构与隐私策略。</p>
+  </div>
+  <div class="grid software-grid">
+    <article class="card feature-card">
+      <h3>软件概述</h3>
+      <p>TravelMap 聚焦“目的地发现 + 地图导航 + 旅行电商”，面向高校学生、本地新居民与周末出行人群。</p>
+      <ul class="list">
+        <li>首页 Feed + 商城 / 预订 + 地图 + 我的，串联灵感到交易。</li>
+        <li>骨架屏、搜索、面包屑、副标题统一风格，暗黑模式适配。</li>
+        <li>Demo 数据覆盖北京、上海、厦门等热门城市。</li>
+      </ul>
+    </article>
+    <article class="card feature-card">
+      <h3>核心功能</h3>
+      <p>Dev Log 按业务链路拆解模块，便于阅读和答辩。</p>
+      <ul class="list">
+        <li>FeedAdapter、Mall / Booking、收藏 / 去过、购物车、订单闭环。</li>
+        <li>Plan Tab 将升级为高德地图视图，Marker 直达详情。</li>
+        <li>订单详情与购物车流程增强列入下一阶段待办。</li>
+      </ul>
+    </article>
+    <article class="card feature-card">
+      <h3>技术架构与安装</h3>
+      <p>Activity + Fragment + Repository 架构，后端 Flask / SQLite。</p>
+      <ul class="list">
+        <li>Java 11、Material 3、Shimmer、Glide、HttpURLConnection。</li>
+        <li>`./gradlew assembleDebug` 产出 APK，`pip install -r requirements.txt && python app.py` 即可起后端。</li>
+        <li>Tests & PR 流程在文档中给出，可复制到 CI。</li>
+      </ul>
+    </article>
+    <article class="card feature-card">
+      <h3>隐私与许可证</h3>
+      <p>定位、网络、存储权限用途清晰，退出登录自动清理缓存。</p>
+      <ul class="list">
+        <li>仅缓存登录用户 JSON，不上传额外隐私数据。</li>
+        <li>后端响应统一 `{code,msg,data}`，易于自建鉴权。</li>
+        <li>当前 Demo 限内部展示，可按 MIT / Apache 协议扩展。</li>
+      </ul>
+    </article>
+  </div>
+  <div class="cta-row doc-cta">
+    <a class="btn btn-primary" href="{{ url_for('doc_view', filename='SOFTWARE_GUIDE.md') }}" target="_blank" rel="noopener">阅读完整版软件说明</a>
+    <a class="btn btn-ghost" href="{{ url_for('serve_doc_file', filename='SOFTWARE_GUIDE.md', download=1) }}">下载 Markdown</a>
+  </div>
+</section>
+
 <section class="section module-animation reveal" data-reveal>
   <div class="module-animation-copy">
     <p class="eyebrow">底部导航动效</p>
@@ -127,26 +177,26 @@
   <div class="grid feature-grid">
     <article class="card feature-card">
       <h3>首页灵感流</h3>
-      <p>统一的 Feed Adapter + Banner 模块，支持搜索、分页前置处理及骨架屏加载。</p>
+      <p>统一的 Feed Adapter + Banner 模块，覆盖搜索、骨架屏、空态与面包屑导航。</p>
       <ul class="list">
-        <li>卡片展示经纬度、库存、评分等核心字段。</li>
-        <li>点击跳转景点详情并带副标题面包屑。</li>
+        <li>卡片展示经纬度、库存、评分等核心字段，并预留地图动效。</li>
+        <li>新地图页设计稿展示全国景点坐标 + 实时定位，是下一阶段重点。</li>
       </ul>
     </article>
     <article class="card feature-card">
       <h3>商城 / 预订</h3>
       <p>商品列表、详情页与购物车打通，支持收藏、加入购物车、下单成功页等链路。</p>
       <ul class="list">
-        <li>区分 Mall 与 Booking 场景，Toolbar 文案自动切换。</li>
-        <li>订单列表接入数据库样例，便于演示。</li>
+        <li>区分 Mall 与 Booking 场景，Toolbar 文案自动切换，酒店类型指向预订。</li>
+        <li>全新购物车 / 订单详情界面图展示数量调节、收货人及子项列表，便于迭代。</li>
       </ul>
     </article>
     <article class="card feature-card">
       <h3>我的 & 互动</h3>
       <p>个人中心聚合收藏、去过、订单、购物车、资料等页面，均带骨架屏与安全区适配。</p>
       <ul class="list">
-        <li>收藏/去过与详情页状态实时同步。</li>
-        <li>支持退出登录与 UserPreferences 会话管理。</li>
+        <li>收藏 / 去过与详情页状态实时同步，支持 1~5 分评分。</li>
+        <li>新版订单详情稿突出状态流转、联系人与商品快照，文档中列为高优先级。</li>
       </ul>
     </article>
   </div>
