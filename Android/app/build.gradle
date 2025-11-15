@@ -44,6 +44,7 @@ dependencies {
     implementation libs.glide
     implementation libs.shimmer
     annotationProcessor libs.glideCompiler
+    implementation 'com.amap.api:3dmap:latest.integration'
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core

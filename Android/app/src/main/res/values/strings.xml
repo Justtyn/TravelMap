@@ -16,8 +16,11 @@
     <string name="nav_home">首页</string>
     <string name="nav_mall">商城</string>
     <string name="nav_booking">预订</string>
-    <string name="nav_plan">行程</string>
+    <string name="nav_plan">地图</string>
     <string name="nav_my">我的</string>
+    <string name="map_permission_denied">未授予定位权限，无法显示当前位置</string>
+    <string name="map_location_failed">定位失败：%1$s</string>
+    <string name="map_my_location">当前位置</string>
 
     <!-- 提示语 -->
     <string name="toast_input_username">请输入用户名</string>

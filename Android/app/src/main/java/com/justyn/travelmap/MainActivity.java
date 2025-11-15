@@ -20,7 +20,7 @@ import com.justyn.travelmap.fragment.BookingFragment;
 import com.justyn.travelmap.fragment.HomeFragment;
 import com.justyn.travelmap.fragment.MallFragment;
 import com.justyn.travelmap.fragment.MyFragment;
-import com.justyn.travelmap.fragment.PlanFragment;
+import com.justyn.travelmap.fragment.MapFragment;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -117,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
         } else if (itemId == R.id.navigation_booking) {
             return new BookingFragment();
         } else if (itemId == R.id.navigation_plan) {
-            return new PlanFragment();
+            return new MapFragment();
         } else if (itemId == R.id.navigation_my) {
             return new MyFragment();
         } else {
