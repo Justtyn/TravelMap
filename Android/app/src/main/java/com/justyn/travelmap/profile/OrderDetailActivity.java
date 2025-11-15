@@ -49,6 +49,7 @@ import java.util.concurrent.Executors;
 public class OrderDetailActivity extends AppCompatActivity {
 
     public static final String EXTRA_ORDER_ID = "extra_order_id";
+    public static final String EXTRA_ORDER_STATUS = "extra_order_status";
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -147,7 +148,7 @@ public class OrderDetailActivity extends AppCompatActivity {
                 handler.post(() -> {
                     showLoading(false);
                     Toast.makeText(this, getString(R.string.order_detail_load_error, e.getMessage()), Toast.LENGTH_SHORT).show();
-                    finish();
+                    contentContainer.setVisibility(View.GONE);
                 });
             }
         });
@@ -155,7 +156,9 @@ public class OrderDetailActivity extends AppCompatActivity {
 
     private void bindDetail(@NonNull OrderDetail detail) {
         contentContainer.setVisibility(View.VISIBLE);
-        tvOrderStatus.setText(getString(R.string.order_detail_status_format, detail.getStatus()));
+        String initialStatus = getIntent().getStringExtra(EXTRA_ORDER_STATUS);
+        String statusText = detail.getStatus() != null ? detail.getStatus() : initialStatus;
+        tvOrderStatus.setText(getString(R.string.order_detail_status_format, statusText));
         tvOrderNo.setText(getString(R.string.order_detail_order_no, detail.getOrderNo()));
         tvOrderCreateTime.setText(getString(R.string.order_detail_create_time, detail.getCreateTime()));
         if (detail.getCheckinDate() != null && !detail.getCheckinDate().isEmpty()) {

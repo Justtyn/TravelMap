@@ -107,6 +107,7 @@ public class OrdersActivity extends AppCompatActivity implements FeedAdapter.OnI
     public void onFeedItemClicked(@NonNull FeedItem item) {
         Intent intent = new Intent(this, OrderDetailActivity.class);
         intent.putExtra(OrderDetailActivity.EXTRA_ORDER_ID, item.getId());
+        intent.putExtra(OrderDetailActivity.EXTRA_ORDER_STATUS, item.getDescription());
         startActivity(intent);
     }
 

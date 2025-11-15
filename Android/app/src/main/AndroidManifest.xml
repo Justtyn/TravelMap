@@ -16,6 +16,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TravelMap"
         android:usesCleartextTraffic="true">
+        <service
+            android:name="com.amap.api.location.APSService"
+            android:exported="false"
+            android:process=":remote" />
         <meta-data
             android:name="com.amap.api.v2.apikey"
             android:value="16d04e666b039a964aef10d1bdf9e8a4" />

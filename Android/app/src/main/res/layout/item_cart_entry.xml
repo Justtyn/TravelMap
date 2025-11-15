@@ -77,13 +77,15 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <com.google.android.material.button.MaterialButton
+                    <ImageButton
                         android:id="@+id/btnQuantityMinus"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="36dp"
-                        android:minWidth="48dp"
-                        android:text="-" />
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_quantity_button"
+                        android:contentDescription="@string/cart_delete_button"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_minus"
+                        android:tint="?attr/colorOnSecondaryContainer" />
 
                     <TextView
                         android:id="@+id/tvCartQuantity"
@@ -94,13 +96,16 @@
                         android:layout_marginEnd="12dp"
                         android:text="1" />
 
-                    <com.google.android.material.button.MaterialButton
+                    <ImageButton
                         android:id="@+id/btnQuantityPlus"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="36dp"
-                        android:minWidth="48dp"
-                        android:text="+" />
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_quantity_button"
+                        android:contentDescription="@string/cart_delete_button"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_add"
+                        android:tint="?attr/colorOnSecondaryContainer" />
                 </LinearLayout>
 
                 <com.google.android.material.button.MaterialButton
