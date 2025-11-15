@@ -559,7 +559,7 @@ def home_page():
     testimonials = [
         {
             'quote': '用 TravelMap 的 Demo 做路演，合作商一眼就明白产品节奏。',
-            'author': '岚洲文旅 · BD',
+            'author': '产品经理 · Leslie',
             'role': '泛旅行运营合作方'
         },
         {
