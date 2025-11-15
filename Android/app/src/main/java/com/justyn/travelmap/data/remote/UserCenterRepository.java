@@ -4,6 +4,8 @@ import android.text.TextUtils;
 
 import com.justyn.travelmap.model.CartItem;
 import com.justyn.travelmap.model.FeedItem;
+import com.justyn.travelmap.model.OrderDetail;
+import com.justyn.travelmap.model.OrderItemDetail;
 import com.justyn.travelmap.model.VisitedRecord;
 
 import org.json.JSONArray;
@@ -97,6 +99,16 @@ public class UserCenterRepository {
         return items;
     }
 
+    public OrderDetail fetchOrderDetail(long orderId) throws IOException, JSONException {
+        ApiResponse response = apiClient.get("/api/orders/" + orderId);
+        ensureSuccess(response);
+        Object data = response.getData();
+        if (data instanceof JSONObject) {
+            return buildOrderDetail((JSONObject) data);
+        }
+        return null;
+    }
+
     public List<CartItem> fetchCart(long userId) throws IOException, JSONException {
         Map<String, String> params = new HashMap<>();
         params.put("user_id", String.valueOf(userId));
@@ -115,10 +127,12 @@ public class UserCenterRepository {
             }
             JSONObject productJson = cartJson.optJSONObject("product");
             FeedItem product = productJson == null ? null : buildProductItem(productJson);
+            double unitPrice = productJson != null ? productJson.optDouble("price", Double.NaN) : Double.NaN;
             result.add(new CartItem(
                     cartJson.optLong("cart_id", i),
                     cartJson.optInt("quantity", 1),
-                    product
+                    product,
+                    unitPrice
             ));
         }
         return result;
@@ -199,6 +213,20 @@ public class UserCenterRepository {
         payload.put("product_id", productId);
         payload.put("quantity", quantity);
         ApiResponse response = apiClient.post("/api/cart", payload);
+        ensureSuccess(response);
+    }
+
+    public JSONObject updateCartItem(long cartId, int quantity) throws IOException, JSONException {
+        JSONObject payload = new JSONObject();
+        payload.put("quantity", quantity);
+        ApiResponse response = apiClient.put("/api/cart/" + cartId, payload);
+        ensureSuccess(response);
+        Object data = response.getData();
+        return data instanceof JSONObject ? (JSONObject) data : null;
+    }
+
+    public void deleteCartItem(long cartId) throws IOException, JSONException {
+        ApiResponse response = apiClient.delete("/api/cart/" + cartId, (JSONObject) null);
         ensureSuccess(response);
     }
 
@@ -338,6 +366,42 @@ public class UserCenterRepository {
         return new FeedItem(id, title, description, imageUrl, priceLabel,
                 productJson.optString("type"), TextUtils.isEmpty(address) ? null : address,
                 lat, lng, stock, null, null);
+    }
+
+    private OrderDetail buildOrderDetail(JSONObject orderJson) {
+        if (orderJson == null) {
+            return null;
+        }
+        long orderId = orderJson.optLong("id", 0);
+        String orderNo = orderJson.optString("order_no");
+        String status = orderJson.optString("status");
+        String orderType = orderJson.optString("order_type");
+        double totalPrice = orderJson.optDouble("total_price", Double.NaN);
+        String contactName = orderJson.optString("contact_name");
+        String contactPhone = orderJson.optString("contact_phone");
+        String createTime = orderJson.optString("create_time");
+        String checkinDate = orderJson.optString("checkin_date");
+        String checkoutDate = orderJson.optString("checkout_date");
+        List<OrderItemDetail> itemDetails = new ArrayList<>();
+        JSONArray items = orderJson.optJSONArray("items");
+        if (items != null) {
+            for (int i = 0; i < items.length(); i++) {
+                JSONObject itemJson = items.optJSONObject(i);
+                if (itemJson == null) {
+                    continue;
+                }
+                JSONObject productJson = itemJson.optJSONObject("product");
+                FeedItem product = productJson == null ? null : buildProductItem(productJson);
+                itemDetails.add(new OrderItemDetail(
+                        itemJson.optLong("order_item_id", itemJson.optLong("id", i)),
+                        itemJson.optInt("quantity", 1),
+                        itemJson.optDouble("price", Double.NaN),
+                        product
+                ));
+            }
+        }
+        return new OrderDetail(orderId, orderNo, status, orderType, totalPrice,
+                contactName, contactPhone, createTime, checkinDate, checkoutDate, itemDetails);
     }
 
     private String formatPrice(double price) {

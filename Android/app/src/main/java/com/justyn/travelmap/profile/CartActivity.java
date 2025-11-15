@@ -7,6 +7,8 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -23,17 +25,18 @@ import com.justyn.travelmap.profile.adapter.CartAdapter;
 import com.facebook.shimmer.ShimmerFrameLayout;
 
 import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class CartActivity extends AppCompatActivity {
+public class CartActivity extends AppCompatActivity implements CartAdapter.CartActionListener {
 
     private RecyclerView recyclerView;
     private TextView tvEmpty;
+    private TextView tvTotalAmount;
     private CircularProgressIndicator progressIndicator;
     private MaterialButton btnSubmit;
     private View contentContainer;
@@ -42,6 +45,7 @@ public class CartActivity extends AppCompatActivity {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final UserCenterRepository repository = new UserCenterRepository();
+    private List<CartItem> currentItems = new ArrayList<>();
     private UserProfile profile;
 
     @Override
@@ -65,11 +69,12 @@ public class CartActivity extends AppCompatActivity {
         toolbar.setSubtitle(R.string.cart_breadcrumb);
         recyclerView = findViewById(R.id.rvCart);
         tvEmpty = findViewById(R.id.tvCartEmpty);
+        tvTotalAmount = findViewById(R.id.tvCartTotal);
         progressIndicator = findViewById(R.id.cartProgress);
         contentContainer = findViewById(R.id.cartContent);
         skeletonLayout = findViewById(R.id.cartSkeleton);
         btnSubmit = findViewById(R.id.btnSubmitOrder);
-        adapter = new CartAdapter();
+        adapter = new CartAdapter(this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
     }
@@ -84,10 +89,10 @@ public class CartActivity extends AppCompatActivity {
             try {
                 List<CartItem> items = repository.fetchCart(profile.getId());
                 handler.post(() -> {
-                    adapter.submitList(items);
-                    boolean empty = items == null || items.isEmpty();
-                    tvEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
-                    btnSubmit.setEnabled(!empty);
+                    List<CartItem> safeItems = items == null ? new ArrayList<>() : items;
+                    currentItems = safeItems;
+                    adapter.submitList(safeItems);
+                    updateCartSummary(safeItems);
                     setLoading(false);
                 });
             } catch (IOException | JSONException e) {
@@ -97,6 +102,68 @@ public class CartActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    private void updateCartSummary(List<CartItem> items) {
+        boolean empty = items == null || items.isEmpty();
+        tvEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+        if (tvTotalAmount != null) {
+            double total = calculateTotal(items);
+            tvTotalAmount.setText(getString(R.string.cart_total_amount, formatCurrency(total)));
+            tvTotalAmount.setVisibility(empty ? View.GONE : View.VISIBLE);
+        }
+        if (progressIndicator == null || progressIndicator.getVisibility() != View.VISIBLE) {
+            btnSubmit.setEnabled(!empty);
+        }
+    }
+
+    private double calculateTotal(List<CartItem> items) {
+        if (items == null) {
+            return 0;
+        }
+        double sum = 0;
+        for (CartItem item : items) {
+            double price = item.getUnitPrice();
+            if (Double.isNaN(price)) {
+                price = parsePriceLabel(item.getProduct() != null ? item.getProduct().getPriceLabel() : null);
+            }
+            if (!Double.isNaN(price)) {
+                sum += price * item.getQuantity();
+            }
+        }
+        return sum;
+    }
+
+    private double parsePriceLabel(String label) {
+        if (label == null || label.isEmpty()) {
+            return Double.NaN;
+        }
+        try {
+            return Double.parseDouble(label.replace("¥", "").trim());
+        } catch (NumberFormatException e) {
+            return Double.NaN;
+        }
+    }
+
+    private String formatCurrency(double value) {
+        return String.format(Locale.getDefault(), "¥%.2f", value);
+    }
+
+    private boolean hasCartItems() {
+        return currentItems != null && !currentItems.isEmpty();
+    }
+
+    private void setProgressVisible(boolean show) {
+        if (progressIndicator == null) {
+            return;
+        }
+        progressIndicator.setVisibility(show ? View.VISIBLE : View.GONE);
+        recyclerView.setEnabled(!show);
+        if (show) {
+            btnSubmit.setEnabled(false);
+        } else {
+            btnSubmit.setEnabled(hasCartItems());
+        }
     }
 
     private void submitOrder() {
@@ -109,8 +176,7 @@ public class CartActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.user_info_phone, Toast.LENGTH_SHORT).show();
             return;
         }
-        btnSubmit.setEnabled(false);
-        progressIndicator.setVisibility(View.VISIBLE);
+        setProgressVisible(true);
         executor.execute(() -> {
             try {
                 org.json.JSONObject data = repository.createOrder(profile.getId(),
@@ -120,15 +186,13 @@ public class CartActivity extends AppCompatActivity {
                         null,
                         null);
                 handler.post(() -> {
-                    progressIndicator.setVisibility(View.GONE);
-                    btnSubmit.setEnabled(true);
+                    setProgressVisible(false);
                     launchSuccessPage(data);
                     loadCart();
                 });
             } catch (IOException | JSONException e) {
                 handler.post(() -> {
-                    progressIndicator.setVisibility(View.GONE);
-                    btnSubmit.setEnabled(true);
+                    setProgressVisible(false);
                     Toast.makeText(this, getString(R.string.cart_submit_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
                 });
             }
@@ -157,6 +221,73 @@ public class CartActivity extends AppCompatActivity {
 
     private void setLoading(boolean loading) {
         showSkeleton(loading);
+    }
+
+    @Override
+    public void onQuantityChanged(@NonNull CartItem item, int newQuantity) {
+        if (progressIndicator != null && progressIndicator.getVisibility() == View.VISIBLE) {
+            return;
+        }
+        if (newQuantity < 1) {
+            Toast.makeText(this, R.string.cart_min_quantity, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Toast.makeText(this, R.string.cart_adjusting_quantity, Toast.LENGTH_SHORT).show();
+        changeQuantity(item, newQuantity);
+    }
+
+    @Override
+    public void onItemDeleted(@NonNull CartItem item) {
+        if (progressIndicator != null && progressIndicator.getVisibility() == View.VISIBLE) {
+            return;
+        }
+        confirmDelete(item);
+    }
+
+    private void changeQuantity(CartItem item, int newQuantity) {
+        setProgressVisible(true);
+        executor.execute(() -> {
+            try {
+                repository.updateCartItem(item.getCartId(), newQuantity);
+                handler.post(() -> {
+                    setProgressVisible(false);
+                    Toast.makeText(this, R.string.cart_update_success, Toast.LENGTH_SHORT).show();
+                    loadCart();
+                });
+            } catch (IOException | JSONException e) {
+                handler.post(() -> {
+                    setProgressVisible(false);
+                    Toast.makeText(this, getString(R.string.cart_update_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
+    }
+
+    private void confirmDelete(CartItem item) {
+        new AlertDialog.Builder(this)
+                .setMessage(R.string.cart_delete_confirm)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> deleteItem(item))
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void deleteItem(CartItem item) {
+        setProgressVisible(true);
+        executor.execute(() -> {
+            try {
+                repository.deleteCartItem(item.getCartId());
+                handler.post(() -> {
+                    setProgressVisible(false);
+                    Toast.makeText(this, R.string.cart_delete_success, Toast.LENGTH_SHORT).show();
+                    loadCart();
+                });
+            } catch (IOException | JSONException e) {
+                handler.post(() -> {
+                    setProgressVisible(false);
+                    Toast.makeText(this, getString(R.string.cart_delete_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
     }
 
     @Override

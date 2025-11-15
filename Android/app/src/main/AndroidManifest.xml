@@ -33,6 +33,9 @@
             android:name=".profile.FavoritesActivity"
             android:exported="false" />
         <activity
+            android:name=".profile.OrderDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".profile.OrdersActivity"
             android:exported="false" />
         <activity

@@ -80,6 +80,42 @@
                 tools:text="31.2304, 121.4737" />
 
             <TextView
+                android:id="@+id/tvMapTitle"
+                style="@style/TextAppearance.Material3.TitleSmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/detail_map_title"
+                android:visibility="gone" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/scenicMapCard"
+                android:layout_width="match_parent"
+                android:layout_height="220dp"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                app:cardCornerRadius="16dp"
+                app:cardUseCompatPadding="false">
+
+                <com.amap.api.maps.MapView
+                    android:id="@+id/detailMapView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <TextView
+                    android:id="@+id/tvMapHint"
+                    style="@style/TextAppearance.Material3.LabelMedium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="12dp"
+                    android:background="@drawable/bg_marker_card"
+                    android:padding="8dp"
+                    android:text="@string/detail_map_hint"
+                    android:textColor="@android:color/white" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
                 android:id="@+id/tvDescription"
                 style="@style/TextAppearance.Material3.BodyMedium"
                 android:layout_width="match_parent"

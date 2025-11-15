@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import android.text.TextUtils;
-
 /**
  * 聚合首页/商城/预订需要的远程数据访问。
  */
@@ -45,16 +43,17 @@ public class TravelRepository {
         if (!(data instanceof JSONArray)) {
             return new ArrayList<>();
         }
-        JSONArray array = (JSONArray) data;
-        List<FeedItem> result = new ArrayList<>();
-        for (int i = 0; i < array.length(); i++) {
-            JSONObject scenic = array.optJSONObject(i);
-            FeedItem item = buildScenicItem(scenic);
-            if (item != null) {
-                result.add(item);
-            }
+        return parseScenicArray((JSONArray) data);
+    }
+
+    public List<FeedItem> fetchScenicMapPoints() throws IOException, JSONException {
+        ApiResponse response = apiClient.get("/api/scenics/map");
+        ensureSuccess(response);
+        Object data = response.getData();
+        if (!(data instanceof JSONArray)) {
+            return new ArrayList<>();
         }
-        return result;
+        return parseScenicArray((JSONArray) data);
     }
 
     public List<FeedItem> fetchProductsByTypes(@Nullable String keyword, String... types)
@@ -138,6 +137,18 @@ public class TravelRepository {
                 scenic.optString("city"),
                 TextUtils.isEmpty(address) ? null : address,
                 lat, lng, null, null, null);
+    }
+
+    private List<FeedItem> parseScenicArray(JSONArray array) {
+        List<FeedItem> result = new ArrayList<>();
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject scenic = array.optJSONObject(i);
+            FeedItem item = buildScenicItem(scenic);
+            if (item != null) {
+                result.add(item);
+            }
+        }
+        return result;
     }
 
     private FeedItem buildProductItem(JSONObject product) {

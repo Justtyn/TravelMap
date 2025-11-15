@@ -1,16 +1,27 @@
 package com.justyn.travelmap.detail;
 
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.amap.api.maps.AMap;
+import com.amap.api.maps.CameraUpdateFactory;
+import com.amap.api.maps.MapView;
+import com.amap.api.maps.model.LatLng;
+import com.amap.api.maps.model.Marker;
+import com.amap.api.maps.model.MarkerOptions;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.imageview.ShapeableImageView;
@@ -22,6 +33,8 @@ import com.justyn.travelmap.data.remote.TravelRepository;
 import com.justyn.travelmap.data.remote.UserCenterRepository;
 import com.justyn.travelmap.model.FeedItem;
 import com.justyn.travelmap.model.VisitedRecord;
+import com.justyn.travelmap.ui.map.MapMarkerRenderer;
+import com.justyn.travelmap.ui.map.MapPrivacyHelper;
 import com.facebook.shimmer.ShimmerFrameLayout;
 
 import java.io.IOException;
@@ -39,6 +52,7 @@ public class ScenicDetailActivity extends AppCompatActivity {
     private TextView tvCity;
     private TextView tvAddress;
     private TextView tvLatLng;
+    private TextView tvMapTitle;
     private TextView tvDescription;
     private MaterialButton btnFavorite;
     private MaterialButton btnVisited;
@@ -46,6 +60,11 @@ public class ScenicDetailActivity extends AppCompatActivity {
     private CircularProgressIndicator visitedProgress;
     private ShimmerFrameLayout skeletonLayout;
     private View contentContainer;
+    private View scenicMapCard;
+    private MapView detailMapView;
+    private AMap scenicMap;
+    private Marker scenicMarker;
+    private CustomTarget<Bitmap> scenicMarkerTarget;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final TravelRepository travelRepository = new TravelRepository();
@@ -61,6 +80,7 @@ public class ScenicDetailActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        MapPrivacyHelper.ensurePrivacyAgreement(this);
         setContentView(R.layout.activity_scenic_detail);
         scenicId = getIntent().getLongExtra(EXTRA_SCENIC_ID, -1);
         if (scenicId <= 0) {
@@ -74,11 +94,11 @@ public class ScenicDetailActivity extends AppCompatActivity {
             finish();
             return;
         }
-        initViews();
+        initViews(savedInstanceState);
         loadDetail();
     }
 
-    private void initViews() {
+    private void initViews(@Nullable Bundle savedInstanceState) {
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setNavigationOnClickListener(v -> finish());
         toolbar.setSubtitle(R.string.detail_breadcrumb_scenic);
@@ -87,6 +107,13 @@ public class ScenicDetailActivity extends AppCompatActivity {
         tvCity = findViewById(R.id.tvCity);
         tvAddress = findViewById(R.id.tvAddress);
         tvLatLng = findViewById(R.id.tvLatLng);
+        tvMapTitle = findViewById(R.id.tvMapTitle);
+        scenicMapCard = findViewById(R.id.scenicMapCard);
+        detailMapView = findViewById(R.id.detailMapView);
+        if (detailMapView != null) {
+            detailMapView.onCreate(savedInstanceState);
+            scenicMap = detailMapView.getMap();
+        }
         tvDescription = findViewById(R.id.tvDescription);
         btnFavorite = findViewById(R.id.btnFavorite);
         btnVisited = findViewById(R.id.btnVisited);
@@ -138,13 +165,16 @@ public class ScenicDetailActivity extends AppCompatActivity {
         } else {
             tvAddress.setVisibility(View.GONE);
         }
-        if (detail.getLatitude() != null && detail.getLongitude() != null) {
+        boolean hasLatLng = detail.getLatitude() != null && detail.getLongitude() != null;
+        if (hasLatLng) {
             tvLatLng.setText(String.format("%s, %s",
                     formatDouble(detail.getLatitude()),
                     formatDouble(detail.getLongitude())));
             tvLatLng.setVisibility(View.VISIBLE);
+            showScenicOnMap(detail);
         } else {
             tvLatLng.setVisibility(View.GONE);
+            hideMapSection();
         }
         tvDescription.setText(detail.getDescription());
         Glide.with(this)
@@ -160,6 +190,88 @@ public class ScenicDetailActivity extends AppCompatActivity {
             return "";
         }
         return String.format("%.4f", value);
+    }
+
+    private void showScenicOnMap(FeedItem detail) {
+        if (detailMapView == null || detail.getLatitude() == null || detail.getLongitude() == null) {
+            hideMapSection();
+            return;
+        }
+        if (scenicMap == null) {
+            scenicMap = detailMapView.getMap();
+        }
+        if (scenicMap == null) {
+            hideMapSection();
+            return;
+        }
+        if (tvMapTitle != null) {
+            tvMapTitle.setVisibility(View.VISIBLE);
+        }
+        if (scenicMapCard != null) {
+            scenicMapCard.setVisibility(View.VISIBLE);
+        }
+        LatLng latLng = new LatLng(detail.getLatitude(), detail.getLongitude());
+        if (scenicMarker != null) {
+            scenicMarker.remove();
+        }
+        MarkerOptions options = new MarkerOptions()
+                .position(latLng)
+                .anchor(0.5f, 1f)
+                .title(detail.getTitle())
+                .snippet(detail.getAddress())
+                .icon(MapMarkerRenderer.create(this, detail.getTitle(), null));
+        scenicMarker = scenicMap.addMarker(options);
+        scenicMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f));
+        loadDetailMarkerIcon(detail);
+    }
+
+    private void loadDetailMarkerIcon(FeedItem detail) {
+        if (scenicMarker == null) {
+            return;
+        }
+        if (scenicMarkerTarget != null) {
+            Glide.with(this).clear(scenicMarkerTarget);
+        }
+        scenicMarkerTarget = new CustomTarget<Bitmap>() {
+            @Override
+            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                if (scenicMarker != null) {
+                    scenicMarker.setIcon(MapMarkerRenderer.create(ScenicDetailActivity.this, detail.getTitle(), resource));
+                }
+            }
+
+            @Override
+            public void onLoadCleared(@Nullable Drawable placeholder) {
+            }
+
+            @Override
+            public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                if (scenicMarker != null) {
+                    scenicMarker.setIcon(MapMarkerRenderer.create(ScenicDetailActivity.this, detail.getTitle(), null));
+                }
+            }
+        };
+        Glide.with(this)
+                .asBitmap()
+                .load(detail.getImageUrl())
+                .into(scenicMarkerTarget);
+    }
+
+    private void hideMapSection() {
+        if (tvMapTitle != null) {
+            tvMapTitle.setVisibility(View.GONE);
+        }
+        if (scenicMapCard != null) {
+            scenicMapCard.setVisibility(View.GONE);
+        }
+        if (scenicMarker != null) {
+            scenicMarker.remove();
+            scenicMarker = null;
+        }
+        if (scenicMarkerTarget != null) {
+            Glide.with(this).clear(scenicMarkerTarget);
+            scenicMarkerTarget = null;
+        }
     }
 
     private void updateButtonStates() {
@@ -284,10 +396,49 @@ public class ScenicDetailActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (detailMapView != null) {
+            detailMapView.onResume();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (detailMapView != null) {
+            detailMapView.onPause();
+        }
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        if (detailMapView != null) {
+            detailMapView.onLowMemory();
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (detailMapView != null) {
+            detailMapView.onSaveInstanceState(outState);
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         if (skeletonLayout != null) {
             skeletonLayout.stopShimmer();
+        }
+        if (detailMapView != null) {
+            detailMapView.onDestroy();
+        }
+        if (scenicMarkerTarget != null) {
+            Glide.with(this).clear(scenicMarkerTarget);
+            scenicMarkerTarget = null;
         }
         executor.shutdownNow();
     }

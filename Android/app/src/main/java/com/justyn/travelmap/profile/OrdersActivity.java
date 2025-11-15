@@ -1,5 +1,6 @@
 package com.justyn.travelmap.profile;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -104,7 +105,9 @@ public class OrdersActivity extends AppCompatActivity implements FeedAdapter.OnI
 
     @Override
     public void onFeedItemClicked(@NonNull FeedItem item) {
-        Toast.makeText(this, R.string.feed_toast_feature_pending, Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, OrderDetailActivity.class);
+        intent.putExtra(OrderDetailActivity.EXTRA_ORDER_ID, item.getId());
+        startActivity(intent);
     }
 
     @Override

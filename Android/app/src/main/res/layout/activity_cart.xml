@@ -46,6 +46,17 @@
                 android:clipToPadding="false"
                 tools:listitem="@layout/item_cart_entry" />
 
+            <TextView
+                android:id="@+id/tvCartTotal"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="end"
+                android:text="@string/cart_total_amount"
+                android:visibility="gone"
+                tools:text="合计：¥0.00" />
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSubmitOrder"
                 style="@style/Widget.Material3.Button.TonalButton"

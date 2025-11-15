@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_marker_card"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="8dp"
+    android:paddingTop="6dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="6dp">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/ivMarkerImage"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:contentDescription="@string/feed_item_image_desc"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_image_placeholder"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.SmallComponent" />
+
+    <TextView
+        android:id="@+id/tvMarkerTitle"
+        style="@style/TextAppearance.Material3.LabelLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:maxLines="1"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
+        tools:text="景点" />
+</LinearLayout>

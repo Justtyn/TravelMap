@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.google.android.material.button.MaterialButton;
 import com.justyn.travelmap.R;
 import com.justyn.travelmap.model.CartItem;
 import com.justyn.travelmap.model.FeedItem;
@@ -20,7 +21,18 @@ import java.util.List;
 
 public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder> {
 
+    public interface CartActionListener {
+        void onQuantityChanged(@NonNull CartItem item, int newQuantity);
+
+        void onItemDeleted(@NonNull CartItem item);
+    }
+
+    private final CartActionListener listener;
     private List<CartItem> items = new ArrayList<>();
+
+    public CartAdapter(CartActionListener listener) {
+        this.listener = listener;
+    }
 
     public void submitList(List<CartItem> newItems) {
         if (newItems == null) {
@@ -40,7 +52,7 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull CartViewHolder holder, int position) {
-        holder.bind(items.get(position));
+        holder.bind(items.get(position), listener);
     }
 
     @Override
@@ -54,6 +66,9 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
         private final TextView tvDesc;
         private final TextView tvQuantity;
         private final TextView tvPrice;
+        private final MaterialButton btnMinus;
+        private final MaterialButton btnPlus;
+        private final MaterialButton btnDelete;
 
         CartViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -62,16 +77,21 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
             tvDesc = itemView.findViewById(R.id.tvCartDesc);
             tvQuantity = itemView.findViewById(R.id.tvCartQuantity);
             tvPrice = itemView.findViewById(R.id.tvCartPrice);
+            btnMinus = itemView.findViewById(R.id.btnQuantityMinus);
+            btnPlus = itemView.findViewById(R.id.btnQuantityPlus);
+            btnDelete = itemView.findViewById(R.id.btnDeleteItem);
         }
 
-        void bind(CartItem item) {
+        void bind(CartItem item, CartActionListener listener) {
             FeedItem product = item.getProduct();
             if (product != null) {
                 tvTitle.setText(product.getTitle());
                 tvDesc.setText(product.getDescription());
-                tvPrice.setVisibility(product.getPriceLabel() != null ? View.VISIBLE : View.GONE);
-                if (product.getPriceLabel() != null) {
+                if (product.getPriceLabel() != null && !product.getPriceLabel().isEmpty()) {
+                    tvPrice.setVisibility(View.VISIBLE);
                     tvPrice.setText(product.getPriceLabel());
+                } else {
+                    tvPrice.setVisibility(View.GONE);
                 }
                 Glide.with(ivCover.getContext())
                         .load(product.getImageUrl())
@@ -86,7 +106,23 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
                 tvPrice.setVisibility(View.GONE);
                 ivCover.setImageResource(R.drawable.ic_image_placeholder);
             }
-            tvQuantity.setText(itemView.getContext().getString(R.string.cart_quantity_label, item.getQuantity()));
+            tvQuantity.setText(String.valueOf(item.getQuantity()));
+            btnMinus.setEnabled(item.getQuantity() > 1);
+            btnMinus.setOnClickListener(v -> {
+                if (listener != null && item.getQuantity() > 1) {
+                    listener.onQuantityChanged(item, item.getQuantity() - 1);
+                }
+            });
+            btnPlus.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onQuantityChanged(item, item.getQuantity() + 1);
+                }
+            });
+            btnDelete.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onItemDeleted(item);
+                }
+            });
         }
     }
 }

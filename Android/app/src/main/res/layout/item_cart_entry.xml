@@ -54,15 +54,6 @@
                 tools:text="丝滑口感的文旅雪糕" />
 
             <TextView
-                android:id="@+id/tvCartQuantity"
-                style="@style/TextAppearance.Material3.BodySmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="?attr/colorOnSurface"
-                tools:text="数量：2" />
-
-            <TextView
                 android:id="@+id/tvCartPrice"
                 style="@style/TextAppearance.Material3.TitleSmall"
                 android:layout_width="wrap_content"
@@ -71,6 +62,55 @@
                 android:textColor="?attr/colorPrimary"
                 android:textStyle="bold"
                 tools:text="¥128" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnQuantityMinus"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:minWidth="48dp"
+                        android:text="-" />
+
+                    <TextView
+                        android:id="@+id/tvCartQuantity"
+                        style="@style/TextAppearance.Material3.TitleMedium"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginEnd="12dp"
+                        android:text="1" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnQuantityPlus"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:minWidth="48dp"
+                        android:text="+" />
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDeleteItem"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="@string/cart_delete_button" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 

@@ -21,6 +21,9 @@
     <string name="map_permission_denied">未授予定位权限，无法显示当前位置</string>
     <string name="map_location_failed">定位失败：%1$s</string>
     <string name="map_my_location">当前位置</string>
+    <string name="map_marker_default_title">景点</string>
+    <string name="map_points_error">地图数据加载失败：%1$s</string>
+    <string name="map_points_empty">暂无景点坐标可以展示</string>
 
     <!-- 提示语 -->
     <string name="toast_input_username">请输入用户名</string>
@@ -102,7 +105,18 @@
     <string name="cart_submit_success">下单成功</string>
     <string name="cart_submit_failed">下单失败：%1$s</string>
     <string name="cart_quantity_label">数量：%1$d</string>
+    <string name="cart_total_amount">合计：%1$s</string>
+    <string name="cart_update_failed">更新购物车失败：%1$s</string>
+    <string name="cart_update_success">数量已更新</string>
+    <string name="cart_delete_confirm">确定删除该商品吗？</string>
+    <string name="cart_delete_success">已删除该商品</string>
+    <string name="cart_adjusting_quantity">正在更新数量…</string>
+    <string name="cart_delete_button">删除</string>
+    <string name="cart_min_quantity">最少保留 1 件商品</string>
+    <string name="cart_delete_failed">删除失败：%1$s</string>
     <string name="title_scenic_detail">景点详情</string>
+    <string name="detail_map_title">景点位置</string>
+    <string name="detail_map_hint">地图正在加载，可在此查看具体方位</string>
     <string name="detail_favorite">收藏</string>
     <string name="detail_favorited">已收藏</string>
     <string name="detail_mark_visited">标记去过</string>
@@ -122,6 +136,7 @@
     <string name="favorites_breadcrumb">我的 / 收藏</string>
     <string name="visited_breadcrumb">我的 / 去过</string>
     <string name="orders_breadcrumb">我的 / 订单</string>
+    <string name="order_item_quantity">数量 × %1$d</string>
     <string name="cart_breadcrumb">我的 / 购物车</string>
     <string name="profile_breadcrumb">我的 / 个人资料</string>
     <string name="detail_favorite_failed">收藏操作失败：%1$s</string>
@@ -132,4 +147,17 @@
     <string name="order_success_no">订单号：%1$s</string>
     <string name="order_success_price">金额：%1$s</string>
     <string name="order_success_back">完成</string>
+    <string name="title_order_detail">订单详情</string>
+    <string name="order_detail_status_format">状态：%1$s</string>
+    <string name="order_detail_contact">收货人：%1$s</string>
+    <string name="order_detail_phone">联系方式：%1$s</string>
+    <string name="order_detail_total_amount">订单金额：%1$s</string>
+    <string name="order_detail_order_no">订单号：%1$s</string>
+    <string name="order_detail_create_time">创建时间：%1$s</string>
+    <string name="order_detail_checkin">入住：%1$s</string>
+    <string name="order_detail_checkout">离店：%1$s</string>
+    <string name="order_detail_items">包含商品</string>
+    <string name="order_detail_map_title">订单关联位置</string>
+    <string name="order_detail_map_empty">暂无坐标信息</string>
+    <string name="order_detail_load_error">订单详情获取失败：%1$s</string>
 </resources>

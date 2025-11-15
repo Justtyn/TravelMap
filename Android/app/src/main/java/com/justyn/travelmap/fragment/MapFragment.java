@@ -1,9 +1,12 @@
 package com.justyn.travelmap.fragment;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,21 +18,39 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.amap.api.maps.AMap;
-import com.amap.api.maps.CameraUpdateFactory;
-import com.amap.api.maps.MapView;
-import com.amap.api.maps.MapsInitializer;
-import com.amap.api.maps.model.LatLng;
-import com.amap.api.maps.model.MarkerOptions;
-import com.amap.api.maps.model.MyLocationStyle;
 import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
+import com.amap.api.maps.AMap;
+import com.amap.api.maps.CameraUpdateFactory;
+import com.amap.api.maps.MapView;
+import com.amap.api.maps.model.LatLng;
+import com.amap.api.maps.model.LatLngBounds;
+import com.amap.api.maps.model.Marker;
+import com.amap.api.maps.model.MarkerOptions;
+import com.amap.api.maps.model.MyLocationStyle;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.target.Target;
+import com.bumptech.glide.request.transition.Transition;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.justyn.travelmap.R;
+import com.justyn.travelmap.data.remote.TravelRepository;
+import com.justyn.travelmap.model.FeedItem;
+import com.justyn.travelmap.ui.map.MapMarkerRenderer;
+import com.justyn.travelmap.ui.map.MapPrivacyHelper;
+
+import org.json.JSONException;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
- * 地图页：负责展示高德地图与当前定位
+ * 地图页：展示景点坐标与实时定位。
  */
 public class MapFragment extends Fragment implements AMapLocationListener {
 
@@ -41,16 +62,31 @@ public class MapFragment extends Fragment implements AMapLocationListener {
     private MyLocationStyle myLocationStyle;
     private AMapLocationClient locationClient;
     private AMapLocationClientOption locationOption;
+    private CircularProgressIndicator mapProgress;
+
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final TravelRepository travelRepository = new TravelRepository();
+    private final List<Marker> scenicMarkers = new ArrayList<>();
+    private final List<Target<Bitmap>> markerTargets = new ArrayList<>();
+
+    private LatLngBounds.Builder boundsBuilder;
+    private LatLng lastBoundsLatLng;
+    private int boundsPointCount = 0;
+    private boolean hasFittedInitialBounds = false;
+    private boolean hasFittedWithLocation = false;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_map, container, false);
         mapView = view.findViewById(R.id.mapView);
-        updatePrivacyState();
+        mapProgress = view.findViewById(R.id.mapProgress);
+        MapPrivacyHelper.ensurePrivacyAgreement(requireContext());
         mapView.onCreate(savedInstanceState);
         initMap();
         initLocationClient();
+        loadScenicPoints();
         checkLocationPermission();
         return view;
     }
@@ -64,54 +100,35 @@ public class MapFragment extends Fragment implements AMapLocationListener {
         }
         if (myLocationStyle == null) {
             myLocationStyle = new MyLocationStyle();
-            myLocationStyle.myLocationType(MyLocationStyle.LOCATION_TYPE_LOCATE);
+            myLocationStyle.myLocationType(MyLocationStyle.LOCATION_TYPE_LOCATION_ROTATE_NO_CENTER);
+            myLocationStyle.interval(10_000);
         }
-        // 初始化 UI 设置，确保地图交互一致
         aMap.setMyLocationStyle(myLocationStyle);
         aMap.getUiSettings().setMyLocationButtonEnabled(true);
         aMap.getUiSettings().setZoomControlsEnabled(true);
+        aMap.getUiSettings().setCompassEnabled(true);
+        aMap.getUiSettings().setScaleControlsEnabled(true);
+        aMap.setOnMapLoadedListener(() -> fitCameraToBounds(false, false));
     }
 
     private void initLocationClient() {
-        if (getContext() == null) {
-            return;
-        }
         try {
             locationClient = new AMapLocationClient(requireContext().getApplicationContext());
         } catch (Exception e) {
             Log.e(TAG, "initLocationClient: create client failed", e);
-            if (getContext() != null) {
-                Toast.makeText(getContext(), getString(R.string.map_location_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
-            }
+            Toast.makeText(requireContext(), getString(R.string.map_location_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
             return;
         }
         locationOption = new AMapLocationClientOption();
-        // 使用高精度模式，方便课堂演示
         locationOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
-        locationOption.setOnceLocation(true);
+        locationOption.setOnceLocation(false);
+        locationOption.setInterval(10_000);
+        locationOption.setNeedAddress(true);
         locationClient.setLocationOption(locationOption);
         locationClient.setLocationListener(this);
     }
 
-    private void updatePrivacyState() {
-        Context context = getContext();
-        if (context == null) {
-            return;
-        }
-        try {
-            MapsInitializer.updatePrivacyShow(context, true, true);
-            MapsInitializer.updatePrivacyAgree(context, true);
-            AMapLocationClient.updatePrivacyShow(context, true, true);
-            AMapLocationClient.updatePrivacyAgree(context, true);
-        } catch (Exception e) {
-            Log.w(TAG, "updatePrivacyState: failed", e);
-        }
-    }
-
     private void checkLocationPermission() {
-        if (getContext() == null) {
-            return;
-        }
         boolean fineGranted = ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         boolean coarseGranted = ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         if (fineGranted || coarseGranted) {
@@ -138,7 +155,6 @@ public class MapFragment extends Fragment implements AMapLocationListener {
 
     private void startLocation() {
         if (locationClient != null) {
-            // 真正发起定位请求
             locationClient.startLocation();
         }
     }
@@ -156,6 +172,166 @@ public class MapFragment extends Fragment implements AMapLocationListener {
         }
     }
 
+    private void loadScenicPoints() {
+        showMapLoading(true);
+        executor.execute(() -> {
+            try {
+                List<FeedItem> scenics = travelRepository.fetchScenicMapPoints();
+                mainHandler.post(() -> {
+                    showMapLoading(false);
+                    renderScenicMarkers(scenics);
+                });
+            } catch (IOException | JSONException e) {
+                mainHandler.post(() -> {
+                    showMapLoading(false);
+                    if (isAdded()) {
+                        Toast.makeText(requireContext(), getString(R.string.map_points_error, e.getMessage()), Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+    }
+
+    private void showMapLoading(boolean show) {
+        if (mapProgress == null) {
+            return;
+        }
+        mapProgress.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
+
+    private void renderScenicMarkers(@Nullable List<FeedItem> scenics) {
+        if (aMap == null || !isAdded()) {
+            return;
+        }
+        clearScenicMarkers();
+        if (scenics == null || scenics.isEmpty()) {
+            Toast.makeText(requireContext(), R.string.map_points_empty, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        for (FeedItem scenic : scenics) {
+            addScenicMarker(scenic);
+        }
+        fitCameraToBounds(false, false);
+    }
+
+    private void clearScenicMarkers() {
+        for (Marker marker : scenicMarkers) {
+            marker.remove();
+        }
+        scenicMarkers.clear();
+        boundsBuilder = null;
+        boundsPointCount = 0;
+        lastBoundsLatLng = null;
+        hasFittedInitialBounds = false;
+        hasFittedWithLocation = false;
+        for (Target<Bitmap> target : markerTargets) {
+            try {
+                Glide.with(this).clear(target);
+            } catch (IllegalStateException ignored) {
+            }
+        }
+        markerTargets.clear();
+    }
+
+    private void addScenicMarker(FeedItem scenic) {
+        if (aMap == null || scenic == null) {
+            return;
+        }
+        Double lat = scenic.getLatitude();
+        Double lng = scenic.getLongitude();
+        if (lat == null || lng == null) {
+            return;
+        }
+        LatLng latLng = new LatLng(lat, lng);
+        MarkerOptions options = new MarkerOptions()
+                .position(latLng)
+                .anchor(0.5f, 1f)
+                .title(scenic.getTitle())
+                .snippet(scenic.getAddress())
+                .icon(MapMarkerRenderer.create(getContext(), scenic.getTitle(), null));
+        Marker marker = aMap.addMarker(options);
+        scenicMarkers.add(marker);
+        includeBounds(latLng);
+        loadMarkerThumbnail(marker, scenic);
+    }
+
+    private void loadMarkerThumbnail(Marker marker, FeedItem scenic) {
+        if (!isAdded() || marker == null) {
+            return;
+        }
+        CustomTarget<Bitmap> target = new CustomTarget<Bitmap>() {
+            @Override
+            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                if (!isAdded()) {
+                    return;
+                }
+                marker.setIcon(MapMarkerRenderer.create(getContext(), scenic.getTitle(), resource));
+            }
+
+            @Override
+            public void onLoadCleared(@Nullable Drawable placeholder) {
+            }
+
+            @Override
+            public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                if (!isAdded()) {
+                    return;
+                }
+                marker.setIcon(MapMarkerRenderer.create(getContext(), scenic.getTitle(), null));
+            }
+        };
+        markerTargets.add(target);
+        Glide.with(this)
+                .asBitmap()
+                .load(scenic.getImageUrl())
+                .into(target);
+    }
+
+    private void includeBounds(LatLng latLng) {
+        if (latLng == null) {
+            return;
+        }
+        if (boundsBuilder == null) {
+            boundsBuilder = new LatLngBounds.Builder();
+        }
+        boundsBuilder.include(latLng);
+        boundsPointCount++;
+        lastBoundsLatLng = latLng;
+    }
+
+    private void fitCameraToBounds(boolean force, boolean locationFit) {
+        if (mapView == null || aMap == null || boundsPointCount == 0) {
+            return;
+        }
+        if (locationFit && hasFittedWithLocation) {
+            return;
+        }
+        if (!force && hasFittedInitialBounds) {
+            return;
+        }
+        mapView.post(() -> {
+            if (locationFit && hasFittedWithLocation) {
+                return;
+            }
+            if (!force && hasFittedInitialBounds) {
+                return;
+            }
+            try {
+                if (boundsPointCount == 1 && lastBoundsLatLng != null) {
+                    aMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastBoundsLatLng, 13f));
+                } else if (boundsBuilder != null) {
+                    aMap.animateCamera(CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 120));
+                }
+                hasFittedInitialBounds = true;
+                if (locationFit) {
+                    hasFittedWithLocation = true;
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "fitCameraToBounds failed", e);
+            }
+        });
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -170,51 +346,21 @@ public class MapFragment extends Fragment implements AMapLocationListener {
             if (granted) {
                 enableMyLocationLayer();
                 startLocation();
-            } else {
-                showPermissionDeniedTip();
+            } else if (isAdded()) {
+                Toast.makeText(requireContext(), R.string.map_permission_denied, Toast.LENGTH_SHORT).show();
             }
-        }
-    }
-
-    private void showPermissionDeniedTip() {
-        if (getContext() != null) {
-            Toast.makeText(getContext(), R.string.map_permission_denied, Toast.LENGTH_SHORT).show();
         }
     }
 
     @Override
     public void onLocationChanged(AMapLocation aMapLocation) {
         if (aMapLocation != null && aMapLocation.getErrorCode() == 0) {
-            double lat = aMapLocation.getLatitude();
-            double lng = aMapLocation.getLongitude();
-            updateCamera(lat, lng);
-            addLocationMarker(lat, lng);
-        } else if (aMapLocation != null) {
+            includeBounds(new LatLng(aMapLocation.getLatitude(), aMapLocation.getLongitude()));
+            fitCameraToBounds(true, true);
+        } else if (aMapLocation != null && isAdded()) {
             Log.e(TAG, "onLocationChanged error: " + aMapLocation.getErrorCode() + ", info: " + aMapLocation.getErrorInfo());
-            if (getContext() != null) {
-                Toast.makeText(getContext(), getString(R.string.map_location_failed, aMapLocation.getErrorInfo()), Toast.LENGTH_SHORT).show();
-            }
+            Toast.makeText(requireContext(), getString(R.string.map_location_failed, aMapLocation.getErrorInfo()), Toast.LENGTH_SHORT).show();
         }
-    }
-
-    private void updateCamera(double lat, double lng) {
-        if (aMap == null) {
-            return;
-        }
-        LatLng target = new LatLng(lat, lng);
-        aMap.moveCamera(CameraUpdateFactory.newLatLngZoom(target, 16f));
-    }
-
-    private void addLocationMarker(double lat, double lng) {
-        if (aMap == null) {
-            return;
-        }
-        LatLng target = new LatLng(lat, lng);
-        aMap.clear();
-        aMap.addMarker(new MarkerOptions()
-                .position(target)
-                .title(getString(R.string.map_my_location))
-                .snippet(lat + ", " + lng));
     }
 
     @Override
@@ -223,6 +369,7 @@ public class MapFragment extends Fragment implements AMapLocationListener {
         if (mapView != null) {
             mapView.onResume();
         }
+        startLocation();
     }
 
     @Override
@@ -241,7 +388,14 @@ public class MapFragment extends Fragment implements AMapLocationListener {
             mapView.onDestroy();
             mapView = null;
         }
+        clearScenicMarkers();
         destroyLocation();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        executor.shutdownNow();
     }
 
     @Override
