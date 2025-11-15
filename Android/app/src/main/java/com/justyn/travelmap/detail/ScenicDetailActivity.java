@@ -265,7 +265,7 @@ public class ScenicDetailActivity extends AppCompatActivity {
             scenicMarker = null;
         }
         if (scenicMarkerTarget != null) {
-            Glide.with(this).clear(scenicMarkerTarget);
+            Glide.with(getApplicationContext()).clear(scenicMarkerTarget);
             scenicMarkerTarget = null;
         }
     }
@@ -433,7 +433,7 @@ public class ScenicDetailActivity extends AppCompatActivity {
             detailMapView.onDestroy();
         }
         if (scenicMarkerTarget != null) {
-            Glide.with(this).clear(scenicMarkerTarget);
+            Glide.with(getApplicationContext()).clear(scenicMarkerTarget);
             scenicMarkerTarget = null;
         }
         executor.shutdownNow();
