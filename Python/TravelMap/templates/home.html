@@ -2,23 +2,22 @@
 {% set title = "旅图 TravelMap · Android 应用" %}
 {% set active = "home" %}
 {% block content %}
-<section class="hero hero-app">
+<section class="hero hero-app reveal" data-reveal>
   <div class="hero-content">
     <div class="logo-pill">
       <img src="{{ url_for('static', filename='logo.png') }}" alt="旅图 TravelMap Logo" loading="lazy" />
       <span>旅图 · TravelMap</span>
     </div>
     <p class="tagline">Android 文旅助手</p>
-    <h1>景点、商品、预订与订单一站打通</h1>
+    <h1>四大底部模块 + 实时指标的沉浸式首屏</h1>
     <p>
-      旅图 App 将首页灵感流、商城、预订与个人中心四大模块整合在同一底部导航，
-      从浏览景点到收藏/去过、加入购物车再到订单回查，全链路复现真实文旅业务。
+      旅图 App 模拟真实文旅业务：灵感流、商城、预订与个人中心用一个底部导航串联，
+      配合后端 API、示例数据库与 DevLog，让“文旅助手”不仅好看，还可验证业务闭环。
     </p>
     <div class="capabilities">
-      <span class="chip">首页灵感流</span>
-      <span class="chip">商城/预订联动</span>
-      <span class="chip">收藏与去过</span>
-      <span class="chip">购物车 + 订单</span>
+      {% for module in hero_modules %}
+      <span class="chip">{{ module }}</span>
+      {% endfor %}
     </div>
     <div class="cta-row">
       <a class="btn btn-primary" href="{{ github_url }}" target="_blank" rel="noopener">
@@ -26,32 +25,100 @@
         <span>↗</span>
       </a>
       <a class="btn btn-ghost" href="{{ url_for('docs_page') }}">阅读文档</a>
-      <a class="btn btn-download" href="{{ url_for('static', filename='TravleMap.apk') }}" download>
+      <a class="btn btn-download" href="{{ url_for('static', filename=download_card.filename) }}" download>
         下载 Android 安装包
       </a>
     </div>
-    <p class="note">测试版正在封闭内测中，欢迎通过 GitHub Issue 申请体验与反馈。</p>
+    <p class="note">测试版正在封闭内测中，可通过 GitHub Issue / 页面底部 CTA 申请体验。</p>
+    <div class="live-metrics">
+      {% for metric in live_metrics %}
+      <article class="metric-card" data-target="{{ metric.value }}" data-suffix="{{ metric.suffix }}">
+        <p class="metric-label">{{ metric.label }}</p>
+        <p class="metric-number"><span class="metric-value">0</span><span class="metric-suffix">{{ metric.suffix }}</span></p>
+        <p class="metric-desc">{{ metric.description }}</p>
+      </article>
+      {% endfor %}
+    </div>
   </div>
   <div class="hero-media">
-    <img src="{{ url_for('static', filename='首页景点列表.jpg') }}" alt="旅图 App 首页界面" loading="lazy" />
-    <div class="hero-stats">
-      <div>
-        <strong>180+</strong>
-        <span>景点与商品样本</span>
+    <div class="device-preview">
+      <img src="{{ url_for('static', filename='首页景点列表.jpg') }}" alt="旅图 App 首页界面" loading="lazy" />
+      <div class="hero-stats">
+        <div>
+          <strong>{{ data_counts.scenic }}</strong>
+          <span>景点样本</span>
+        </div>
+        <div>
+          <strong>{{ data_counts.products }}</strong>
+          <span>商品 / 套餐</span>
+        </div>
+        <div>
+          <strong>{{ data_counts.interactions }}</strong>
+          <span>互动数据</span>
+        </div>
       </div>
-      <div>
-        <strong>4</strong>
-        <span>核心底部 Tab</span>
-      </div>
-      <div>
-        <strong>10+</strong>
-        <span>骨架屏状态</span>
-      </div>
+    </div>
+    <div class="hero-widgets">
+      <article class="download-card">
+        <header>
+          <p class="eyebrow">下载卡片</p>
+          <h3>APK v{{ download_card.version }}</h3>
+          <p>最新内测包含骨架屏、地图位置信息与暗色模式。</p>
+        </header>
+        <dl>
+          <div>
+            <dt>更新时间</dt>
+            <dd>{{ download_card.updated_at }}</dd>
+          </div>
+          <div>
+            <dt>文件大小</dt>
+            <dd>{{ download_card.size }}</dd>
+          </div>
+          <div>
+            <dt>SHA-256</dt>
+            <dd class="hash">{{ download_card.sha256 }}</dd>
+          </div>
+        </dl>
+        <a class="btn btn-download" href="{{ url_for('static', filename=download_card.filename) }}" download>下载可信安装包</a>
+      </article>
+      <article class="theme-demo-card">
+        <header>
+          <p class="eyebrow">昼夜切换</p>
+          <h3>Light / Dark</h3>
+          <p>切换下方开关即可预览 UI 适配情况。</p>
+        </header>
+        <button class="theme-toggle" id="miniThemeToggle" type="button" aria-label="切换主题">
+          <span>Light</span>
+          <span>Dark</span>
+        </button>
+      </article>
     </div>
   </div>
 </section>
 
-<section class="section">
+<section class="section module-animation reveal" data-reveal>
+  <div class="module-animation-copy">
+    <p class="eyebrow">底部导航动效</p>
+    <h2>轻量 Canvas 动画复刻四大模块切换</h2>
+    <p>灵感流、商城、预订与个人中心在 Canvas 中依次点亮，模拟底部导航的切换脉冲。相比静态图片，这里能动态展示 TravelMap 的“文旅助手”节奏，并与后文截图墙、真实数据相呼应。</p>
+    <ul class="list">
+      <li>每 4 秒自动切换一次模块，可手动点击 Tab。</li>
+      <li>内圈地图脉冲+外圈路径描边，展示路线感。</li>
+      <li>暗色 / 浅色模式都能保持清晰的对比度。</li>
+    </ul>
+  </div>
+  <div class="hero-animation-card">
+    <canvas id="moduleCanvas" width="320" height="320" aria-hidden="true"></canvas>
+    <div class="module-tabs">
+      {% for module in hero_modules %}
+      <button class="module-tab" type="button" data-index="{{ loop.index0 }}">{{ module }}</button>
+      {% endfor %}
+    </div>
+    <p class="animation-caption">轻量 Canvas 动效模拟底部四大模块切换，点亮“文旅助手”节奏。</p>
+  </div>
+</section>
+
+<section class="section reveal" data-reveal>
   <div class="section-header">
     <p class="eyebrow">产品定位</p>
     <h2>真实文旅业务的轻量级安卓实现</h2>
@@ -85,45 +152,52 @@
   </div>
 </section>
 
-{% set screens = [
-  ('首页景点列表.jpg', '首页景点列表'),
-  ('景点详情页.jpg', '景点详情'),
-  ('商城页面.jpg', '商城 Tab'),
-  ('预定页面.jpg', '预订页'),
-  ('我的页.jpg', '我的主页'),
-  ('我的收藏页.jpg', '收藏列表'),
-  ('我的去过页.jpg', '去过记录'),
-  ('我的购物车页.jpg', '购物车'),
-  ('我的订单页面.jpg', '订单列表'),
-  ('登录页.jpg', '登录页'),
-  ('注册页.jpg', '注册页'),
-  ('深色模式适配.jpg', '暗色模式')
-] %}
-<section class="section gallery">
+{% set default_screen = gallery_screens[0] if gallery_screens else None %}
+<section class="section screenshot-wall reveal" data-reveal>
   <div class="section-header">
-    <p class="eyebrow">界面预览</p>
-    <h2>旅图 App 主要页面速览</h2>
-    <p>从首页 Feed 到交易链路再到暗色模式，全流程界面素材均已准备好。</p>
+    <p class="eyebrow">交互式截图墙</p>
+    <h2>Hover / 点击切换，探索每个页面亮点</h2>
+    <p>截图墙可放大主图、查看功能说明，还能提示暗色模式支持。</p>
   </div>
-  <div class="screen-grid">
-    {% for screen in screens %}
-    <figure class="screen-card">
-      <img src="{{ url_for('static', filename=screen[0]) }}" alt="旅图 App {{ screen[1] }}" loading="lazy" />
-      <figcaption>{{ screen[1] }}</figcaption>
-    </figure>
-    {% endfor %}
+  <div class="screenshot-grid">
+    <div class="screenshot-primary" data-active>
+      {% if default_screen %}
+      <img id="activeScreenshot" src="{{ url_for('static', filename=default_screen.file) }}" alt="旅图 App {{ default_screen.title }}" loading="lazy" />
+      <div class="screenshot-tooltip" id="screenshotTooltip">
+        <span class="tooltip-tag">{{ default_screen.tag }}</span>
+        <h3 id="screenshotTitle">{{ default_screen.title }}</h3>
+        <p id="screenshotDesc">{{ default_screen.description }}</p>
+      </div>
+      {% endif %}
+    </div>
+    <div class="screenshot-thumbs" role="list">
+      {% for screen in gallery_screens %}
+      <button class="thumb-card {% if loop.first %}active{% endif %}" type="button"
+              data-index="{{ loop.index0 }}"
+              data-file="{{ url_for('static', filename=screen.file) }}"
+              data-title="{{ screen.title }}"
+              data-description="{{ screen.description }}"
+              data-tag="{{ screen.tag }}">
+        <img src="{{ url_for('static', filename=screen.file) }}" alt="旅图 App {{ screen.title }}" loading="lazy" />
+        <div class="thumb-meta">
+          <span class="badge">{{ screen.tag }}</span>
+          <p>{{ screen.title }}</p>
+        </div>
+      </button>
+      {% endfor %}
+    </div>
   </div>
 </section>
 
-<section class="section devlog">
+<section class="section devlog reveal" data-reveal>
   <div class="section-header">
     <p class="eyebrow">开发记录</p>
     <h2>版本节奏、未来待办与对 TravelMap 的期待</h2>
-    <p>用时间线回顾近期亮点，同时公开下一阶段计划与愿景，方便关注者同步节奏。</p>
+    <p>时间线节点进入视窗时闪亮，搭配 TODO 看板更易理解演进方向。</p>
   </div>
   <div class="devlog-grid">
     <div class="timeline">
-      <article class="timeline-item">
+      <article class="timeline-item reveal">
         <div class="timeline-date">11.15</div>
         <div class="timeline-body">
           <h3>安卓四大底部模块全部打通</h3>
@@ -131,7 +205,7 @@
           <span class="status-pill status-done">已上线</span>
         </div>
       </article>
-      <article class="timeline-item">
+      <article class="timeline-item reveal">
         <div class="timeline-date">11.13</div>
         <div class="timeline-body">
           <h3>官网与素材焕新</h3>
@@ -139,7 +213,7 @@
           <span class="status-pill status-done">已发布</span>
         </div>
       </article>
-      <article class="timeline-item">
+      <article class="timeline-item reveal">
         <div class="timeline-date">11.09</div>
         <div class="timeline-body">
           <h3>骨架屏、空态、面包屑统一规范</h3>
@@ -160,7 +234,7 @@
       </article>
       <article class="todo-card optimistic">
         <h3>更远的期待</h3>
-        <p>我们希望 TravelMap 能成为轻量出行 SaaS 的移动端范本：</p>
+        <p>希望 TravelMap 成为轻量出行 SaaS 的移动端范本：</p>
         <ul>
           <li>引入实时协作与评论，让团队一起策划线路。</li>
           <li>开放插件化数据源，快速切换目的地/供应商。</li>
@@ -171,20 +245,322 @@
   </div>
 </section>
 
-<section class="section">
-  <div class="grid split-grid">
-    <article class="card highlight-card">
-      <p class="eyebrow">开发者角度</p>
-      <h3>开源后端 + 产品官网一体</h3>
-      <p>TravelMap Flask 后端已开源，包含 API、管理端与示例数据，可直接复用为你的行程记录服务。</p>
-      <a class="doc-link" href="{{ github_url }}" target="_blank" rel="noopener">在 GitHub 了解更多 ↗</a>
+<section class="section testimonials reveal" data-reveal>
+  <div class="section-header">
+    <p class="eyebrow">用户声量</p>
+    <h2>合作伙伴 / 真实用户的现场引用</h2>
+    <p>2-3 条短评 + 身份，帮助建立社会证明。</p>
+  </div>
+  <div class="testimonial-grid">
+    {% for item in testimonials %}
+    <article class="testimonial-card">
+      <p class="quote">“{{ item.quote }}”</p>
+      <p class="author">{{ item.author }}</p>
+      <span class="role">{{ item.role }}</span>
     </article>
-    <article class="card highlight-card">
-      <p class="eyebrow">了解更多</p>
-      <h3>文档中心</h3>
-      <p>前往文档页获取安装、接口、数据模型与二次开发指南，帮助你快速上手旅图生态。</p>
-      <a class="doc-link" href="{{ url_for('docs_page') }}">打开 Docs 页面 →</a>
-    </article>
+    {% endfor %}
   </div>
 </section>
+
+<section class="section map-band reveal" data-reveal>
+  <div class="map-content">
+    <div>
+      <p class="eyebrow">路线 / 地图氛围</p>
+      <h2>底部半透明地图衬底，讲述一次旅途</h2>
+      <p>尾部加入抽象路线插画，象征 TravelMap 将景点、订单与路线串联，形成库 → 地图 → 订单闭环。</p>
+    </div>
+    <div class="map-illustration" aria-hidden="true">
+      <svg viewBox="0 0 400 200" role="presentation">
+        <defs>
+          <linearGradient id="route" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#38bdf8" />
+            <stop offset="100%" stop-color="#f472b6" />
+          </linearGradient>
+        </defs>
+        <path d="M20 150 Q 100 20 180 120 T 360 60" stroke="url(#route)" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="20" cy="150" r="8" fill="#38bdf8" />
+        <circle cx="180" cy="120" r="8" fill="#facc15" />
+        <circle cx="360" cy="60" r="10" fill="#f472b6" />
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section class="section faq reveal" data-reveal id="faq">
+  <div class="section-header">
+    <p class="eyebrow">FAQ · 为什么选择我们</p>
+    <h2>安装、数据、安全、开源协议一次说明白</h2>
+    <p>折叠面板随滚动渐显，解答最常见的 4 个问题，提高转化效率。</p>
+  </div>
+  <div class="faq-accordion">
+    {% for faq in faq_entries %}
+    <article class="faq-item{% if loop.first %} open{% endif %}">
+      <button class="faq-question" type="button" aria-expanded="{% if loop.first %}true{% else %}false{% endif %}">
+        <span>{{ faq.question }}</span>
+        <span class="icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <p>{{ faq.answer }}</p>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="section final-cta reveal" data-reveal id="subscribe">
+  <div class="section-header">
+    <p class="eyebrow">CTA 多样化</p>
+    <h2>下载只是开始，再拉你进社群 / 更新订阅</h2>
+    <p>在页面结尾再次给出加入内测群、订阅 DevLog 的选项，延伸触点。</p>
+  </div>
+  <div class="cta-panel">
+    <div class="cta-channels">
+      {% for channel in cta_channels %}
+      <a class="channel-card" href="{{ channel.href }}" {% if channel.href.startswith('http') %}target="_blank" rel="noopener"{% endif %}>
+        <h3>{{ channel.label }}</h3>
+        <p>{{ channel.description }}</p>
+      </a>
+      {% endfor %}
+    </div>
+    <form class="subscribe-form" id="subscribeForm">
+      <label for="subscribeEmail">订阅 DevLog</label>
+      <div class="subscribe-input">
+        <input type="email" id="subscribeEmail" name="email" placeholder="name@email.com" required />
+        <button class="btn btn-primary" type="submit">订阅更新</button>
+      </div>
+      <p class="form-note" id="subscribeNote">我们只在有重要版本时发送邮件，无垃圾信息。</p>
+    </form>
+  </div>
+</section>
+
+<section class="section share-section reveal" data-reveal>
+  <div class="share-bar">
+    <div>
+      <p class="eyebrow">社交分享</p>
+      <h2>把 TravelMap 推荐给更多文旅产品人</h2>
+      <p>一键复制或跳转到常用社交网络，传播真实数据与 Demo 下载链接。</p>
+    </div>
+    <div class="share-buttons">
+      {% for share in share_links %}
+        {% if share.action == 'copy' %}
+        <button type="button" class="share-button" data-share-copy data-share-url="{{ share_url }}">
+          <span class="icon">{{ share.icon }}</span>
+          <span>{{ share.label }}</span>
+        </button>
+        {% else %}
+        <a class="share-button" href="{{ share.href }}" target="_blank" rel="noopener">
+          <span class="icon">{{ share.icon }}</span>
+          <span>{{ share.label }}</span>
+        </a>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<script>
+  (function() {
+    const revealEls = document.querySelectorAll('.reveal');
+    if ('IntersectionObserver' in window) {
+      const revealObserver = new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in-view');
+            obs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.2 });
+      revealEls.forEach(el => revealObserver.observe(el));
+    } else {
+      revealEls.forEach(el => el.classList.add('in-view'));
+    }
+
+    const metricCards = document.querySelectorAll('.metric-card');
+    function animateMetric(card) {
+      const target = parseFloat(card.dataset.target || '0');
+      const duration = 1200;
+      const valueEl = card.querySelector('.metric-value');
+      let startTime = null;
+      function step(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const progress = Math.min((timestamp - startTime) / duration, 1);
+        const current = target * progress;
+        if (valueEl) {
+          valueEl.textContent = target % 1 === 0 ? Math.round(current) : current.toFixed(1);
+        }
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        }
+      }
+      requestAnimationFrame(step);
+    }
+    if ('IntersectionObserver' in window) {
+      const metricObserver = new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            animateMetric(entry.target);
+            obs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.5 });
+      metricCards.forEach(card => metricObserver.observe(card));
+    } else {
+      metricCards.forEach(animateMetric);
+    }
+
+    const thumbButtons = document.querySelectorAll('.thumb-card');
+    const mainImage = document.getElementById('activeScreenshot');
+    const tooltip = document.getElementById('screenshotTooltip');
+    const tooltipTag = tooltip ? tooltip.querySelector('.tooltip-tag') : null;
+    const tooltipTitle = document.getElementById('screenshotTitle');
+    const tooltipDesc = document.getElementById('screenshotDesc');
+    function setActiveScreen(btn) {
+      if (!btn || !mainImage) return;
+      thumbButtons.forEach(b => b.classList.toggle('active', b === btn));
+      mainImage.src = btn.dataset.file;
+      mainImage.alt = `旅图 App ${btn.dataset.title}`;
+      if (tooltipTag) tooltipTag.textContent = btn.dataset.tag;
+      if (tooltipTitle) tooltipTitle.textContent = btn.dataset.title;
+      if (tooltipDesc) tooltipDesc.textContent = btn.dataset.description;
+    }
+    thumbButtons.forEach(btn => {
+      const update = () => setActiveScreen(btn);
+      btn.addEventListener('mouseenter', update);
+      btn.addEventListener('click', update);
+    });
+
+    const faqItems = document.querySelectorAll('.faq-item');
+    faqItems.forEach(item => {
+      const control = item.querySelector('.faq-question');
+      if (!control) return;
+      control.addEventListener('click', () => {
+        const opened = item.classList.toggle('open');
+        control.setAttribute('aria-expanded', opened ? 'true' : 'false');
+      });
+    });
+
+    const subscribeForm = document.getElementById('subscribeForm');
+    if (subscribeForm) {
+      subscribeForm.addEventListener('submit', event => {
+        event.preventDefault();
+        const note = document.getElementById('subscribeNote');
+        if (note) {
+          note.textContent = '已记录邮箱，我们会在有新版本时通知你 ✅';
+          note.classList.add('success');
+        }
+        subscribeForm.reset();
+      });
+    }
+
+    const miniToggle = document.getElementById('miniThemeToggle');
+    if (miniToggle) {
+      miniToggle.addEventListener('click', () => {
+        const mainToggle = document.getElementById('themeToggle');
+        if (mainToggle) {
+          mainToggle.click();
+        } else {
+          document.body.classList.toggle('theme-light');
+        }
+        miniToggle.classList.toggle('dark-mode');
+      });
+    }
+
+    const shareButtons = document.querySelectorAll('[data-share-copy]');
+    shareButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const shareUrl = btn.getAttribute('data-share-url');
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(shareUrl).then(() => {
+            btn.classList.add('copied');
+            setTimeout(() => btn.classList.remove('copied'), 1500);
+          });
+        } else {
+          const textarea = document.createElement('textarea');
+          textarea.value = shareUrl;
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+          btn.classList.add('copied');
+          setTimeout(() => btn.classList.remove('copied'), 1500);
+        }
+      });
+    });
+
+    const canvas = document.getElementById('moduleCanvas');
+    const tabButtons = document.querySelectorAll('.module-tab');
+    let activeTab = 0;
+    function setActiveTab(idx) {
+      activeTab = idx;
+      tabButtons.forEach((btn, index) => btn.classList.toggle('active', index === activeTab));
+    }
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => setActiveTab(Number(btn.dataset.index) || 0));
+    });
+    if (tabButtons.length) {
+      setActiveTab(0);
+    }
+    let autoTimer = null;
+    function startAutoSwitch() {
+      if (!tabButtons.length) return;
+      clearInterval(autoTimer);
+      autoTimer = setInterval(() => {
+        const next = (activeTab + 1) % tabButtons.length;
+        setActiveTab(next);
+      }, 4000);
+    }
+    startAutoSwitch();
+    tabButtons.forEach(btn => btn.addEventListener('click', startAutoSwitch));
+
+    if (canvas && canvas.getContext) {
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      function resizeCanvas() {
+        const size = canvas.clientWidth || 320;
+        canvas.width = size * dpr;
+        canvas.height = size * dpr;
+        canvas.style.height = `${size}px`;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr, dpr);
+      }
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      function draw(time = 0) {
+        const size = canvas.clientWidth || 320;
+        const center = size / 2;
+        const radius = size * 0.35;
+        ctx.clearRect(0, 0, size, size);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+        ctx.beginPath();
+        ctx.arc(center, center, radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.setLineDash([6, 12]);
+        ctx.strokeStyle = 'rgba(244, 114, 182, 0.3)';
+        ctx.beginPath();
+        ctx.arc(center, center, radius + 12 + Math.sin(time / 800) * 4, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        tabButtons.forEach((btn, index) => {
+          const angle = (index / tabButtons.length) * Math.PI * 2 + time * 0.0008;
+          const x = center + Math.cos(angle) * radius;
+          const y = center + Math.sin(angle) * radius;
+          const isActive = index === activeTab;
+          ctx.beginPath();
+          ctx.fillStyle = isActive ? 'rgba(244, 114, 182, 0.9)' : 'rgba(56, 189, 248, 0.6)';
+          ctx.shadowBlur = isActive ? 20 : 8;
+          ctx.shadowColor = ctx.fillStyle;
+          ctx.arc(x, y, isActive ? 10 : 6, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.shadowBlur = 0;
+        requestAnimationFrame(draw);
+      }
+      requestAnimationFrame(draw);
+    }
+  })();
+</script>
 {% endblock %}

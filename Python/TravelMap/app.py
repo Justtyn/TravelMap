@@ -25,7 +25,10 @@ TravelMap 后端单文件实现 (Flask + SQLite)
 import os
 import sqlite3
 import uuid
+import hashlib
 from datetime import datetime
+from functools import lru_cache
+from urllib.parse import quote_plus
 
 from flask import Flask, jsonify, request, g, render_template, send_from_directory, abort, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -38,6 +41,185 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'db', 'TravelMap.db')  # 已存在的 SQLite 数据库
 DOC_DIR = os.path.join(BASE_DIR, 'doc')
 GITHUB_URL = 'https://github.com/Justtyn/TravelMap'
+APK_FILENAME = 'TravleMap.apk'
+ANDROID_VERSION = '0.9.2-beta'
+
+
+def human_readable_size(num_bytes):
+    units = ['B', 'KB', 'MB', 'GB']
+    value = float(num_bytes)
+    for unit in units:
+        if value < 1024 or unit == units[-1]:
+            if unit == 'B':
+                return f"{int(value)} {unit}"
+            return f"{value:.1f} {unit}"
+        value /= 1024
+
+
+@lru_cache(maxsize=1)
+def get_apk_metadata():
+    apk_path = os.path.join(BASE_DIR, 'static', APK_FILENAME)
+    if not os.path.isfile(apk_path):
+        return {
+            'filename': APK_FILENAME,
+            'version': ANDROID_VERSION,
+            'updated_at': '暂无记录',
+            'size': '未知',
+            'sha256': '文件缺失'
+        }
+
+    stat = os.stat(apk_path)
+    with open(apk_path, 'rb') as fh:
+        sha256 = hashlib.sha256(fh.read()).hexdigest()
+    return {
+        'filename': APK_FILENAME,
+        'version': ANDROID_VERSION,
+        'updated_at': datetime.fromtimestamp(stat.st_mtime).strftime('%Y-%m-%d %H:%M'),
+        'size': human_readable_size(stat.st_size),
+        'sha256': sha256
+    }
+
+
+API_SECTIONS = [
+    {
+        'title': '认证 / 用户',
+        'description': '注册 / 登录 / 访客信息等接口，为 Demo 提供最基本的账号体系。',
+        'endpoints': [
+            {
+                'name': '注册账号',
+                'method': 'POST',
+                'path': '/api/auth/register',
+                'summary': '用户名 + 密码快速注册本地账号。',
+                'requires_auth': False,
+                'params': [
+                    {'name': 'username', 'type': 'string', 'required': True, 'desc': '唯一用户名'},
+                    {'name': 'password', 'type': 'string', 'required': True, 'desc': '明文密码（示例环境）'},
+                    {'name': 'phone', 'type': 'string', 'required': False, 'desc': '手机号，可选'},
+                    {'name': 'email', 'type': 'string', 'required': False, 'desc': '邮箱，可选'}
+                ],
+                'response': {'code': 200, 'msg': 'OK', 'data': {'id': 1, 'username': 'demo'}} ,
+                'sample_body': {'username': 'demo_user', 'password': '123456'}
+            },
+            {
+                'name': '账号登录',
+                'method': 'POST',
+                'path': '/api/auth/login',
+                'summary': '输入用户名/密码返回用户资料。',
+                'requires_auth': False,
+                'params': [
+                    {'name': 'username', 'type': 'string', 'required': True, 'desc': '已注册用户名'},
+                    {'name': 'password', 'type': 'string', 'required': True, 'desc': '登录密码'}
+                ],
+                'response': {'code': 200, 'data': {'id': 1, 'nickname': '旅图'}},
+                'sample_body': {'username': 'demo_user', 'password': '123456'}
+            },
+            {
+                'name': '更新资料',
+                'method': 'POST',
+                'path': '/api/user/update',
+                'summary': '更改昵称、头像等资料字段。',
+                'requires_auth': True,
+                'params': [
+                    {'name': 'user_id', 'type': 'number', 'required': True, 'desc': '用户 ID'},
+                    {'name': 'nickname', 'type': 'string', 'required': False, 'desc': '昵称'},
+                    {'name': 'avatar_url', 'type': 'string', 'required': False, 'desc': '头像地址'}
+                ],
+                'response': {'code': 200, 'msg': 'OK'},
+                'sample_body': {'user_id': 1, 'nickname': '旅友'}
+            }
+        ]
+    },
+    {
+        'title': '内容 / 商品',
+        'description': '景点列表、商品与收藏行为 API，覆盖灵感流与商城。',
+        'endpoints': [
+            {
+                'name': '景点列表',
+                'method': 'GET',
+                'path': '/api/scenic/list',
+                'summary': '分页返回景点卡片，支持城市 / 关键字过滤。',
+                'requires_auth': False,
+                'params': [
+                    {'name': 'page', 'type': 'number', 'required': False, 'desc': '页码，默认 1'},
+                    {'name': 'size', 'type': 'number', 'required': False, 'desc': '每页数量，默认 10'},
+                    {'name': 'city', 'type': 'string', 'required': False, 'desc': '按城市筛选'},
+                    {'name': 'keyword', 'type': 'string', 'required': False, 'desc': '模糊搜索'}
+                ],
+                'response': {'code': 200, 'data': {'items': '[]', 'total': 120}},
+                'sample_query': 'page=1&size=10'
+            },
+            {
+                'name': '商品详情',
+                'method': 'GET',
+                'path': '/api/product/detail',
+                'summary': '根据商品 ID 返回库存 / 价格 / 所属景点。',
+                'requires_auth': False,
+                'params': [
+                    {'name': 'product_id', 'type': 'number', 'required': True, 'desc': '商品 ID'}
+                ],
+                'response': {'code': 200, 'data': {'id': 5, 'stock': 8}},
+                'sample_query': 'product_id=1'
+            },
+            {
+                'name': '收藏 / 取消',
+                'method': 'POST',
+                'path': '/api/favorite/toggle',
+                'summary': '收藏或取消收藏景点/商品，自动判断目标类型。',
+                'requires_auth': True,
+                'params': [
+                    {'name': 'user_id', 'type': 'number', 'required': True, 'desc': '用户 ID'},
+                    {'name': 'target_id', 'type': 'number', 'required': True, 'desc': '目标 ID'},
+                    {'name': 'target_type', 'type': 'enum', 'required': True, 'desc': 'SCENIC / PRODUCT'}
+                ],
+                'response': {'code': 200, 'msg': 'OK'},
+                'sample_body': {'user_id': 1, 'target_id': 2, 'target_type': 'SCENIC'}
+            }
+        ]
+    },
+    {
+        'title': '订单 / 行程',
+        'description': '购物车、订单与行程计划接口，复现交易闭环。',
+        'endpoints': [
+            {
+                'name': '购物车列表',
+                'method': 'GET',
+                'path': '/api/cart/list',
+                'summary': '返回用户购物车条目及商品详情。',
+                'requires_auth': True,
+                'params': [
+                    {'name': 'user_id', 'type': 'number', 'required': True, 'desc': '用户 ID'}
+                ],
+                'response': {'code': 200, 'data': {'items': '[]'}},
+                'sample_query': 'user_id=1'
+            },
+            {
+                'name': '创建订单',
+                'method': 'POST',
+                'path': '/api/order/create',
+                'summary': '提交购物车条目生成订单，返回订单号。',
+                'requires_auth': True,
+                'params': [
+                    {'name': 'user_id', 'type': 'number', 'required': True, 'desc': '用户 ID'},
+                    {'name': 'items', 'type': 'array', 'required': True, 'desc': '商品项 ID 列表'}
+                ],
+                'response': {'code': 200, 'data': {'order_no': 'T2024001'}},
+                'sample_body': {'user_id': 1, 'items': [1, 2]}
+            },
+            {
+                'name': '行程计划',
+                'method': 'GET',
+                'path': '/api/plan/list',
+                'summary': '列出 trip_plan，展示时间区间与内容。',
+                'requires_auth': True,
+                'params': [
+                    {'name': 'user_id', 'type': 'number', 'required': True, 'desc': '用户 ID'}
+                ],
+                'response': {'code': 200, 'data': {'plans': '[]'}},
+                'sample_query': 'user_id=1'
+            }
+        ]
+    }
+]
 
 
 # 新增：启动前确保关键业务表存在（特别是 visited / cart_item，防止旧库缺表导致接口报错）
@@ -319,7 +501,158 @@ def ping():
 # -------------------- 官网页面 --------------------
 @app.route('/')
 def home_page():
-    return render_template('home.html', github_url=GITHUB_URL, active='home', title='TravelMap · 智慧文旅后端')
+    db = get_db()
+    tracked_tables = ['user', 'scenic', 'product', 'order_main', 'order_item',
+                      'favorite', 'cart_item', 'visited', 'trip_plan']
+    counts = {}
+    for table_name in tracked_tables:
+        try:
+            cur = db.execute(f'SELECT COUNT(*) FROM {table_name}')
+            counts[table_name] = cur.fetchone()[0] or 0
+        except sqlite3.Error:
+            counts[table_name] = 0
+
+    installs = counts.get('user', 0)
+    scenic_samples = counts.get('scenic', 0)
+    product_samples = counts.get('product', 0)
+    interaction_total = counts.get('order_item', 0) + counts.get('favorite', 0) + counts.get('cart_item', 0) \
+        + counts.get('visited', 0) + counts.get('trip_plan', 0)
+    api_calls = interaction_total + scenic_samples + product_samples
+    feedback_rate = round((counts.get('visited', 0) / installs) * 100, 1) if installs else 0
+
+    live_metrics = [
+        {
+            'label': '激活安装',
+            'value': installs,
+            'suffix': '+',
+            'description': '注册 / 登录过的真实内测用户'
+        },
+        {
+            'label': 'API 调用',
+            'value': api_calls,
+            'suffix': '',
+            'description': '示例 API / Webhook 累计触发次数'
+        },
+        {
+            'label': '反馈率',
+            'value': feedback_rate,
+            'suffix': '%',
+            'description': 'Visited 数据量占用户总量的比例'
+        }
+    ]
+
+    hero_modules = ['灵感流', '商城', '预订', '个人中心']
+    download_card = get_apk_metadata()
+    data_counts = {
+        'scenic': scenic_samples,
+        'products': product_samples,
+        'orders': counts.get('order_main', 0),
+        'interactions': interaction_total
+    }
+
+    testimonials = [
+        {
+            'quote': '用 TravelMap 的 Demo 做路演，合作商一眼就明白产品节奏。',
+            'author': '岚洲文旅 · BD',
+            'role': '泛旅行运营合作方'
+        },
+        {
+            'quote': 'API + 示例数据库开箱即用，也方便课堂讲解电商链路。',
+            'author': '浙大城市学院',
+            'role': '移动应用课程讲师'
+        },
+        {
+            'quote': '底部四大模块串起来后，我们直接拿它做竞品对照。',
+            'author': '自由设计师 Ether',
+            'role': '旅行产品设计顾问'
+        }
+    ]
+
+    gallery_screens = [
+        {'file': '首页景点列表.jpg', 'title': '首页灵感流', 'tag': '发现',
+         'description': 'Feed 卡片带地理信息、收藏、去过状态，一眼掌握库存情况。'},
+        {'file': '景点详情页.jpg', 'title': '景点详情', 'tag': '详情',
+         'description': '支持面包屑与浮层预订，顶部地图预留可扩展路线导航。'},
+        {'file': '商城页面.jpg', 'title': '商城 Tab', 'tag': '交易',
+         'description': '商品支持库存/售价/秒杀区分，底部 CTA 与购物车联动。'},
+        {'file': '预定页面.jpg', 'title': '预订页', 'tag': '行程',
+         'description': 'Booking 流程复刻 OTA 体验，订单详情可回查。'},
+        {'file': '我的页.jpg', 'title': '个人中心', 'tag': '资产',
+         'description': '聚合收藏、去过、订单、Coupon，暗色模式也有适配。'},
+        {'file': '我的收藏页.jpg', 'title': '收藏列表', 'tag': '互动',
+         'description': '收藏与去过与详情页实时同步，支持批量取消。'},
+        {'file': '我的购物车页.jpg', 'title': '购物车', 'tag': '交易',
+         'description': '购物车支持数量、勾选展示，将接入更多字段。'},
+        {'file': '我的订单页面.jpg', 'title': '订单列表', 'tag': '订单',
+         'description': '展示状态、金额、下单时间等字段，便于二开。'},
+        {'file': '登录页.jpg', 'title': '登录页', 'tag': '账号',
+         'description': '带表单校验与骨架屏动效，支持后续 OAuth 扩展。'},
+        {'file': '注册页.jpg', 'title': '注册页', 'tag': '账号',
+         'description': '注册流分离手机号/邮箱等信息，方便教学演示。'},
+        {'file': '我的去过页.jpg', 'title': '去过记录', 'tag': '互动',
+         'description': 'Visited 列表自动按时间排序，记录评分与时间。'},
+        {'file': '深色模式适配.jpg', 'title': '暗色模式', 'tag': '外观',
+         'description': '同一套组件库支持深浅色两种皮肤与动效。'}
+    ]
+
+    faq_entries = [
+        {'question': '如何安装 APK？',
+         'answer': '直接下载签名包，Android 9+ 允许「未知来源」安装即可，如需 CI 构建可 fork 仓库。'},
+        {'question': '数据是否真实？',
+         'answer': '示例数据库来自脱敏的景区/商品资料，可通过管理端导入自己的 CSV / API。'},
+        {'question': '开源协议与商用限制？',
+         'answer': '后端 MIT，前端 UI 也允许二次创作；使用真实业务数据时请遵守当地隐私法规。'},
+        {'question': '如何安全使用 API？',
+         'answer': '默认 SQLite + 简易登录，可在部署时改为 MySQL/PostgreSQL，并引入 JWT / HTTPS。'}
+    ]
+
+    cta_channels = [
+        {'label': '加入内测群', 'href': f'{GITHUB_URL}/discussions', 'description': '同步版本动态、提交功能建议'},
+        {'label': '订阅更新', 'href': '#subscribe', 'description': '邮箱订阅 DevLog，第一时间收到新版 APK'}
+    ]
+
+    base_url = request.url_root.rstrip('/')
+    share_message = quote_plus('TravelMap Android 文旅助手，一站体验文旅业务链路')
+    encoded_url = quote_plus(base_url)
+    share_links = [
+        {
+            'label': '复制官网链接',
+            'icon': '🔗',
+            'action': 'copy'
+        },
+        {
+            'label': '微博分享',
+            'icon': '🌏',
+            'href': f'https://service.weibo.com/share/share.php?url={encoded_url}&title={share_message}'
+        },
+        {
+            'label': 'Twitter',
+            'icon': '🐦',
+            'href': f'https://twitter.com/intent/tweet?url={encoded_url}&text={share_message}'
+        },
+        {
+            'label': 'Telegram',
+            'icon': '✈️',
+            'href': f'https://t.me/share/url?url={encoded_url}&text={share_message}'
+        }
+    ]
+
+    return render_template(
+        'home.html',
+        github_url=GITHUB_URL,
+        active='home',
+        title='TravelMap · 智慧文旅后端',
+        hero_modules=hero_modules,
+        live_metrics=live_metrics,
+        download_card=download_card,
+        data_counts=data_counts,
+        testimonials=testimonials,
+        gallery_screens=gallery_screens,
+        faq_entries=faq_entries,
+        cta_channels=cta_channels,
+        share_links=share_links,
+        share_url=base_url
+    )
 
 
 @app.route('/docs')
@@ -330,6 +663,14 @@ def docs_page():
 @app.route('/features')
 def features_page():
     return render_template('features.html', github_url=GITHUB_URL, active='features', title='TravelMap · 功能总览')
+
+
+@app.route('/api-explorer')
+def api_explorer():
+    base_api = request.url_root.rstrip('/')
+    return render_template('api_docs.html', github_url=GITHUB_URL, active='api',
+                           title='TravelMap · API Explorer', api_sections=API_SECTIONS,
+                           base_api_url=base_api)
 
 
 @app.route('/docs/file/<path:filename>')

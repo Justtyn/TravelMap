@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% set title = "TravelMap · API Explorer" %}
+{% set active = "api" %}
+{% block content %}
+<section class="hero api-hero">
+  <div>
+    <p class="eyebrow">API Explorer</p>
+    <h1>Swagger 风格的交互式接口总览</h1>
+    <p>无需额外插件即可搜索、筛选与预览 TravelMap Flask API，操作逻辑接近 Swagger：左侧列出所有接口，右侧显示参数、示例与响应结构。</p>
+  </div>
+  <div class="api-hero-cta">
+    <a class="btn btn-primary" href="{{ github_url }}" target="_blank" rel="noopener">查看源码 ↗</a>
+    <a class="btn btn-ghost" href="{{ url_for('docs_page') }}">阅读文档</a>
+  </div>
+</section>
+
+<section class="api-explorer">
+  <div class="api-controls">
+    <label for="apiSearch">快速筛选接口</label>
+    <input type="search" id="apiSearch" placeholder="输入关键字 / 路径 / Method" />
+    <p class="base-url">Base URL: <code>{{ base_api_url }}</code></p>
+  </div>
+  <div class="api-layout">
+    <div class="endpoint-list" id="endpointList">
+      {% for section in api_sections %}
+      <div class="endpoint-section" data-section="{{ section.title }}">
+        <h3>{{ section.title }}</h3>
+        <p>{{ section.description }}</p>
+        <div class="endpoint-cards">
+          {% for ep in section.endpoints %}
+          <article class="endpoint-card" data-method="{{ ep.method }}"
+                   data-path="{{ ep.path }}"
+                   data-section="{{ section.title }}"
+                   data-meta='{{ ep | tojson | safe }}'>
+            <header>
+              <span class="method-badge method-{{ ep.method|lower }}">{{ ep.method }}</span>
+              <span class="endpoint-path">{{ ep.path }}</span>
+              {% if ep.requires_auth %}<span class="auth-pill">Auth</span>{% endif %}
+            </header>
+            <p>{{ ep.summary }}</p>
+          </article>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <aside class="endpoint-detail" id="endpointDetail">
+      <h3>接口详情</h3>
+      <div class="detail-body">
+        <p>点击左侧任意接口查看参数、示例请求与响应结构。</p>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<script>
+  (function() {
+    const list = document.getElementById('endpointList');
+    const detail = document.getElementById('endpointDetail');
+    const searchInput = document.getElementById('apiSearch');
+
+    function renderDetail(meta) {
+      const container = detail.querySelector('.detail-body');
+      if (!container) return;
+      const params = (meta.params || []).map(param => `
+        <tr>
+          <td>${param.name}</td>
+          <td>${param.type || '-'}</td>
+          <td>${param.required ? 'Yes' : 'No'}</td>
+          <td>${param.desc || ''}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="4">无参数</td></tr>';
+      const sampleBody = meta.sample_body ? JSON.stringify(meta.sample_body, null, 2) : '';
+      const query = meta.sample_query ? `?${meta.sample_query}` : '';
+      const url = '{{ base_api_url }}' + meta.path + query;
+      let curl = `curl "${url}"`;
+      if (meta.method !== 'GET') {
+        curl = `curl -X ${meta.method} "${url}" -H 'Content-Type: application/json'`;
+        if (sampleBody) {
+          curl += ` \\\n  -d '${sampleBody.replace(/\n/g, '\\n')}'`;
+        }
+      }
+      container.innerHTML = `
+        <div class="detail-header">
+          <span class="method-badge method-${meta.method.toLowerCase()}">${meta.method}</span>
+          <code>${meta.path}</code>
+          ${meta.requires_auth ? '<span class="auth-pill">需要登录</span>' : ''}
+        </div>
+        <p>${meta.summary || ''}</p>
+        <h4>请求参数</h4>
+        <table class="params-table">
+          <thead><tr><th>名称</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+          <tbody>${params}</tbody>
+        </table>
+        <h4>示例请求</h4>
+        <pre><code>${curl}</code></pre>
+        ${sampleBody ? `<h4>请求体</h4><pre><code>${sampleBody}</code></pre>` : ''}
+        <h4>示例响应</h4>
+        <pre><code>${JSON.stringify(meta.response || {}, null, 2)}</code></pre>
+      `;
+    }
+
+    function handleCardClick(event) {
+      const card = event.currentTarget;
+      document.querySelectorAll('.endpoint-card.active').forEach(el => el.classList.remove('active'));
+      card.classList.add('active');
+      try {
+        const meta = JSON.parse(card.dataset.meta || '{}');
+        meta.method = card.dataset.method || meta.method || 'GET';
+        meta.path = card.dataset.path || meta.path || '';
+        renderDetail(meta);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    list.querySelectorAll('.endpoint-card').forEach(card => {
+      card.addEventListener('click', handleCardClick);
+    });
+
+    searchInput.addEventListener('input', () => {
+      const keyword = searchInput.value.trim().toLowerCase();
+      list.querySelectorAll('.endpoint-card').forEach(card => {
+        const text = `${card.dataset.method} ${card.dataset.path} ${card.textContent}`.toLowerCase();
+        const match = !keyword || text.includes(keyword);
+        card.style.display = match ? '' : 'none';
+      });
+    });
+  })();
+</script>
+{% endblock %}
