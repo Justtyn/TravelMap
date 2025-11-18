@@ -197,7 +197,7 @@
 ## 9. 常见问题（FAQ）
 1. **安装 APK 提示风险？** Android 会提醒来自企业签名的 APK，确认来源可信即可继续安装。
 2. **地图无法定位怎么办？** 确认授予精确定位权限，若仍失败可在系统设置中清除 App 权限重新打开；地图页也支持手动拖动查看。
-3. **接口超时或加载空白？** 检查是否能访问 `BuildConfig.API_BASE_URL`（当前为 `http://138.68.59.41:5001`），必要时在 `local.properties` 中指向内网服务。
+3. **接口超时或加载空白？** 检查是否能访问 `BuildConfig.API_BASE_URL`（当前为 `http://139.59.227.54:5001`），必要时在 `local.properties` 中指向内网服务。
 4. **如何清除缓存重新登录？** 进入“我的”页点击“退出登录”，`UserPreferences` 会立即清空用户信息并跳回登录页。
 5. **拉取代码后无法编译？** 执行 `./gradlew wrapper --gradle-version 8.7` 确保 Wrapper 完整，Android Studio 中同步 Gradle 并重启。
 

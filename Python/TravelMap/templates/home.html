@@ -9,10 +9,10 @@
       <span>旅图 · TravelMap</span>
     </div>
     <p class="tagline">Android 文旅助手</p>
-    <h1>四大底部模块 + 实时指标的沉浸式首屏</h1>
+    <h1>五大底部模块 + 实时指标的沉浸式首屏</h1>
     <p>
       旅图 App 模拟真实文旅业务：灵感流、商城、预订与个人中心用一个底部导航串联，
-      配合后端 API、示例数据库与 DevLog，让“文旅助手”不仅好看，还可验证业务闭环。
+      配合后端 API、SQLite 数据库，让“文旅助手”不仅好看，还可验证业务闭环。
     </p>
     <div class="capabilities">
       {% for module in hero_modules %}
@@ -29,7 +29,6 @@
         下载 Android 安装包
       </a>
     </div>
-    <p class="note">测试版正在封闭内测中，可通过 GitHub Issue / 页面底部 CTA 申请体验。</p>
     <div class="live-metrics">
       {% for metric in live_metrics %}
       <article class="metric-card" data-target="{{ metric.value }}" data-suffix="{{ metric.suffix }}">
@@ -63,7 +62,7 @@
         <header>
           <p class="eyebrow">下载卡片</p>
           <h3>APK v{{ download_card.version }}</h3>
-          <p>最新内测包含骨架屏、地图位置信息与暗色模式。</p>
+          <p>最新版本包含骨架屏、地图位置信息与暗色模式。</p>
         </header>
         <dl>
           <div>
@@ -83,9 +82,8 @@
       </article>
       <article class="theme-demo-card">
         <header>
-          <p class="eyebrow">昼夜切换</p>
+          <p class="eyebrow">深色 / 浅色模式切换</p>
           <h3>Light / Dark</h3>
-          <p>切换下方开关即可预览 UI 适配情况。</p>
         </header>
         <button class="theme-toggle" id="miniThemeToggle" type="button" aria-label="切换主题">
           <span>Light</span>
@@ -100,16 +98,16 @@
   <div class="section-header">
     <p class="eyebrow">软件说明速览</p>
     <h2>把 Dev Log + 软件说明搬到官网，不遗漏任何关键信息</h2>
-    <p>以下摘要来自安卓团队最新《TravelMap 软件说明文档》，涵盖概述、功能、技术架构与隐私策略。</p>
+    <p>以下摘要来自《TravelMap 软件说明文档》，涵盖概述、功能、技术架构与隐私策略。</p>
   </div>
   <div class="grid software-grid">
     <article class="card feature-card">
       <h3>软件概述</h3>
       <p>TravelMap 聚焦“目的地发现 + 地图导航 + 旅行电商”，面向高校学生、本地新居民与周末出行人群。</p>
       <ul class="list">
-        <li>首页 Feed + 商城 / 预订 + 地图 + 我的，串联灵感到交易。</li>
+        <li>首页 + 商城 + 预订 + 地图 + 我的，串联灵感。</li>
         <li>骨架屏、搜索、面包屑、副标题统一风格，暗黑模式适配。</li>
-        <li>Demo 数据覆盖北京、上海、厦门等热门城市。</li>
+        <li>Demo 数据覆盖全国几十个热门城市。</li>
       </ul>
     </article>
     <article class="card feature-card">
@@ -136,7 +134,7 @@
       <ul class="list">
         <li>仅缓存登录用户 JSON，不上传额外隐私数据。</li>
         <li>后端响应统一 `{code,msg,data}`，易于自建鉴权。</li>
-        <li>当前 Demo 限内部展示，可按 MIT / Apache 协议扩展。</li>
+        <li>当前 Demo 限内部展示使用。</li>
       </ul>
     </article>
   </div>
@@ -150,7 +148,7 @@
   <div class="module-animation-copy">
     <p class="eyebrow">底部导航动效</p>
     <h2>轻量 Canvas 动画复刻四大模块切换</h2>
-    <p>灵感流、商城、预订与个人中心在 Canvas 中依次点亮，模拟底部导航的切换脉冲。相比静态图片，这里能动态展示 TravelMap 的“文旅助手”节奏，并与后文截图墙、真实数据相呼应。</p>
+    <p>灵感流、商城、预订、地图与个人中心在 Canvas 中依次点亮，模拟底部导航切换。动态展示 TravelMap 的“文旅助手”节奏，并与后文截图墙、真实数据相呼应。</p>
     <ul class="list">
       <li>每 4 秒自动切换一次模块，可手动点击 Tab。</li>
       <li>内圈地图脉冲+外圈路径描边，展示路线感。</li>
@@ -171,7 +169,7 @@
 <section class="section reveal" data-reveal>
   <div class="section-header">
     <p class="eyebrow">产品定位</p>
-    <h2>真实文旅业务的轻量级安卓实现</h2>
+    <h2>文旅业务的轻量级安卓实现</h2>
     <p>App 已串联内容浏览、互动、交易与个人资产四条链路，可直接对接 TravelMap 开源后端。</p>
   </div>
   <div class="grid feature-grid">
@@ -378,7 +376,7 @@
         <input type="email" id="subscribeEmail" name="email" placeholder="name@email.com" required />
         <button class="btn btn-primary" type="submit">订阅更新</button>
       </div>
-      <p class="form-note" id="subscribeNote">我们只在有重要版本时发送邮件，无垃圾信息。</p>
+      <p class="form-note" id="subscribeNote">只在有重要版本时发送邮件，无垃圾信息。</p>
     </form>
   </div>
 </section>
@@ -387,8 +385,8 @@
   <div class="share-bar">
     <div>
       <p class="eyebrow">社交分享</p>
-      <h2>把 TravelMap 推荐给更多文旅产品人</h2>
-      <p>一键复制或跳转到常用社交网络，传播真实数据与 Demo 下载链接。</p>
+      <h2>把 TravelMap 推荐给更多人</h2>
+      <p>一键复制或跳转到常用社交网络</p>
     </div>
     <div class="share-buttons">
       {% for share in share_links %}

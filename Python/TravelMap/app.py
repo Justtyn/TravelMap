@@ -547,7 +547,7 @@ def home_page():
         }
     ]
 
-    hero_modules = ['灵感流', '商城', '预订', '个人中心']
+    hero_modules = ['灵感流', '商城', '预订', '地图','个人中心']
     download_card = get_apk_metadata()
     data_counts = {
         'scenic': scenic_samples,
