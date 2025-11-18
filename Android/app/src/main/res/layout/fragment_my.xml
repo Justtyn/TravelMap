@@ -282,7 +282,6 @@
             </com.google.android.material.card.MaterialCardView>
 
 
-
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardShare"
                 android:layout_width="match_parent"
@@ -408,15 +407,6 @@
                         android:text="@string/project_info_link_github_url" />
 
                     <TextView
-                        android:id="@+id/tvLinkBlog"
-                        style="@style/TextAppearance.Material3.BodyMedium"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:autoLink="web"
-                        android:text="@string/project_info_link_blog_url" />
-
-                    <TextView
                         android:id="@+id/tvLinkRepo"
                         style="@style/TextAppearance.Material3.BodyMedium"
                         android:layout_width="match_parent"
@@ -433,10 +423,19 @@
                         android:layout_marginTop="4dp"
                         android:autoLink="web"
                         android:text="@string/project_info_link_site_url" />
+
+                    <TextView
+                        android:id="@+id/tvLinkBlog"
+                        style="@style/TextAppearance.Material3.BodyMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:autoLink="web"
+                        android:text="@string/project_info_link_blog_url" />
+
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
-
 
 
         </LinearLayout>

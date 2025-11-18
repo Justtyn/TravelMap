@@ -2,6 +2,7 @@ package com.justyn.travelmap.profile;
 
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,11 +25,14 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Pattern;
 
 /**
  * 用户信息编辑页面，仅允许修改手机号与邮箱。
  */
 public class UserInfoActivity extends AppCompatActivity {
+
+    private static final Pattern CN_PHONE_PATTERN = Pattern.compile("^1[3-9]\\d{9}$");
 
     private TextView tvUsername;
     private TextView tvNickname;
@@ -105,7 +109,12 @@ public class UserInfoActivity extends AppCompatActivity {
         String email = etEmail.getText() != null ? etEmail.getText().toString().trim() : "";
 
         if (TextUtils.isEmpty(phone) && TextUtils.isEmpty(email)) {
+            tilPhone.setError(null);
+            tilEmail.setError(null);
             Toast.makeText(this, R.string.user_info_empty_fields, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!validateContactInput(phone, email)) {
             return;
         }
         setLoading(true);
@@ -121,6 +130,8 @@ public class UserInfoActivity extends AppCompatActivity {
                     setLoading(false);
                     renderProfile();
                     Toast.makeText(this, R.string.user_info_update_success, Toast.LENGTH_SHORT).show();
+                    setResult(RESULT_OK);
+                    finish();
                 });
             } catch (IOException | JSONException e) {
                 runOnUiThread(() -> {
@@ -140,5 +151,23 @@ public class UserInfoActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         executor.shutdownNow();
+    }
+
+    /**
+     * 本地校验输入的手机号和邮箱，避免无效请求。
+     */
+    private boolean validateContactInput(String phone, String email) {
+        tilPhone.setError(null);
+        tilEmail.setError(null);
+        boolean valid = true;
+        if (!TextUtils.isEmpty(phone) && !CN_PHONE_PATTERN.matcher(phone).matches()) {
+            tilPhone.setError(getString(R.string.user_info_invalid_phone));
+            valid = false;
+        }
+        if (!TextUtils.isEmpty(email) && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            tilEmail.setError(getString(R.string.user_info_invalid_email));
+            valid = false;
+        }
+        return valid;
     }
 }

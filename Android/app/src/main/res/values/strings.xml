@@ -98,6 +98,8 @@
     <string name="user_info_email">邮箱</string>
     <string name="user_info_save">保存信息</string>
     <string name="user_info_empty_fields">请至少填写手机号或邮箱</string>
+    <string name="user_info_invalid_phone">请输入 11 位手机号码</string>
+    <string name="user_info_invalid_email">请输入正确邮箱地址</string>
     <string name="user_info_update_success">资料已更新</string>
     <string name="title_favorites">我的收藏</string>
     <string name="favorites_tab_products">商品</string>
@@ -199,7 +201,7 @@
     <string name="project_info_section_label">当前章节：%1$s</string>
     <string name="share_project_title">TravelMap 课程设计 Demo</string>
     <string name="share_project_desc">厦门大学嘉庚学院软件工程焦梓豪的安卓课程设计，欢迎体验并反馈。</string>
-    <string name="share_project_url">TravelMap官网：https://canulove.me/</string>
+    <string name="share_project_url">https://canulove.me/</string>
     <string name="my_project_info_title">项目与开发者说明</string>
     <string name="my_project_overview">TravelMap 是厦门大学嘉庚学院信息科学学院软件工程专业焦梓豪为安卓期末课程设计打造的 Demo，涵盖景点、商城、预订及个人中心全链路。</string>
     <string name="my_project_developer_line">开发者：焦梓豪（GitHub @Justtyn）</string>
