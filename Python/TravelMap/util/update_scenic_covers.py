@@ -10,8 +10,18 @@ This script will:
 4. Update scenic.cover_image so it points to http://139.59.227.54:5001/static/cover/{file_name}.
 
 Usage examples (run from the project root):
-    python util/update_scenic_covers.py --mode test --scenic-id 1
-    python util/update_scenic_covers.py --mode full
+    python util/update_scenic_covers.py --mode test --scenic-id 1 --dashscope-key sk-xxx
+    python util/update_scenic_covers.py --mode full --skip-existing
+
+Key flags:
+    --mode              test 只处理指定 scenic_id；full 遍历全部景点
+    --scenic-id         test 模式下的景点 ID
+    --dashscope-key     Ali DashScope API key（必填）
+    --skip-existing     cover_image 非空的记录直接跳过
+    --allow-overwrite   覆盖已存在的封面文件；默认追加 _1、_2
+    --cover-dir         本地静态文件目录，默认 static/cover
+    --base-url          更新到数据库时使用的 URL 前缀
+    --dry-run-download  仅打印计划，不下载也不写库
 """
 
 from __future__ import annotations

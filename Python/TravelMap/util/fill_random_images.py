@@ -1,3 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Quickly backfill cover/头像字段 with placeholder images pulled from util/image_urls.py.
+
+Usage (run from repo root):
+    python util/fill_random_images.py
+
+Key behavior:
+    - 依次为 scenic.cover_image / product.cover_image / user.avatar_url 随机挑选占位图。
+    - 仅填充 NULL 或空字符串，避免覆盖手动上传的正式图片。
+    - 默认读取 db/TravelMap.db，可自行修改 DB_PATH。
+"""
+
 import os
 import sqlite3
 import random

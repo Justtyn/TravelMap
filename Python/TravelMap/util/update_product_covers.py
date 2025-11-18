@@ -10,8 +10,17 @@ This script mirrors util/update_scenic_covers.py but targets the `product` table
 4. Update product.cover_image with https://travelmap-1307490573.cos.ap-guangzhou.myqcloud.com/travelmap-coverimage/{商品名}.jpg.
 
 Usage examples (run from the project root):
-    python util/update_product_covers.py --mode test --product-id 1
-    python util/update_product_covers.py --mode full --skip-existing
+    python util/update_product_covers.py --mode test --product-id 1 --dashscope-key sk-xxx
+    python util/update_product_covers.py --mode full --skip-existing --allow-overwrite
+
+Key flags:
+    --mode              test 仅处理单个 product_id；full 遍历整张表
+    --product-id        测试模式下指定的商品 ID
+    --dashscope-key     Ali DashScope API key（必须提供）
+    --skip-existing     已存在 cover_image 的记录跳过
+    --allow-overwrite   允许覆盖已存在的封面文件，否则重命名为 *_1.jpg
+    --base-url          更新到数据库中的静态资源前缀
+    --dry-run-download  仅输出 plan，不下载/写库
 """
 
 from __future__ import annotations

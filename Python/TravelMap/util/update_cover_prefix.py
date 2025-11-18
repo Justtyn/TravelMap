@@ -1,4 +1,17 @@
-"""Update scenic cover_image URLs by swapping the base prefix and URL-encoding the path."""
+"""Update scenic cover_image URLs by swapping the base prefix and URL-encoding the path.
+
+Usage examples (run from the project root):
+    python util/update_cover_prefix.py --dry-run
+    python util/update_cover_prefix.py --table product --column cover_image --old-prefix ... --new-prefix ...
+
+Key options:
+    --db           SQLite 数据库路径（默认 db/TravelMap.db）
+    --table        需要更新的表，默认 scenic，可切换为 product
+    --column       目标列，默认 cover_image
+    --old-prefix   需要替换掉的 URL 前缀
+    --new-prefix   新的 URL 前缀，会自动去掉尾部的 /
+    --dry-run      仅打印即将变更的 URL，不写入数据库
+"""
 
 from __future__ import annotations
 
