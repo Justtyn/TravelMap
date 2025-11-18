@@ -30,14 +30,16 @@ from typing import Dict, Iterable, List, Optional, Tuple
 from urllib.parse import urlparse
 
 import requests
-from requests import Response, Session
+from requests import Session
+from requests.exceptions import HTTPError
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DB_PATH = PROJECT_ROOT / "db" / "TravelMap.db"
 DEFAULT_COVER_DIR = PROJECT_ROOT / "static" / "cover"
 DEFAULT_BASE_URL = "http://139.59.227.54:5001/static/cover/"
 
-DASHSCOPE_URL = "https://dashscope.aliyuncs.com/api/v1/services/aigc/image-generation/generation"
+DASHSCOPE_URL = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis"
+DASHSCOPE_ALLOWED_SIZES = {"1024*1024", "720*1280", "1280*720", "768*1152"}
 DASHSCOPE_TASK_URL = "https://dashscope.aliyuncs.com/api/v1/tasks/{task_id}"
 
 PROMPT_TEMPLATE = (
@@ -76,6 +78,34 @@ def sanitize_filename(name: str, scenic_id: int) -> str:
     if not candidate:
         candidate = f"scenic_{scenic_id}"
     return candidate
+
+
+def normalize_style(style: Optional[str]) -> str:
+    if not style:
+        return "<photography>"
+    value = style.strip()
+    if not value.startswith("<"):
+        value = "<" + value
+    if not value.endswith(">"):
+        value = value + ">"
+    return value
+
+
+class ProgressBar:
+    def __init__(self, total: int, width: int = 40) -> None:
+        self.total = max(total, 1)
+        self.width = width
+
+    def update(self, current: int) -> None:
+        ratio = min(max(current / self.total, 0.0), 1.0)
+        filled = int(self.width * ratio)
+        bar = "#" * filled + "-" * (self.width - filled)
+        percent = ratio * 100
+        sys.stdout.write(f"\rProgress: |{bar}| {percent:6.2f}% ({current}/{self.total})")
+        sys.stdout.flush()
+        if current >= self.total:
+            sys.stdout.write("\n")
+            sys.stdout.flush()
 
 
 def build_file_name(
@@ -140,7 +170,7 @@ def call_dashscope_image(
     }
     logger.debug("Submitting DashScope task payload=%s", json.dumps(payload, ensure_ascii=False))
     response = session.post(DASHSCOPE_URL, headers=headers, json=payload, timeout=30)
-    response.raise_for_status()
+    raise_for_status_verbose(response)
     data = response.json()
     return extract_result_or_poll(session, api_key, data, poll_interval, poll_timeout)
 
@@ -177,7 +207,7 @@ def poll_dashscope_task(
     deadline = time.monotonic() + poll_timeout
     while time.monotonic() < deadline:
         resp = session.get(url, headers=headers, timeout=15)
-        resp.raise_for_status()
+        raise_for_status_verbose(resp)
         payload = resp.json()
         output = payload.get("output") or {}
         task_status = output.get("task_status")
@@ -193,7 +223,7 @@ def poll_dashscope_task(
 
 def download_image(session: Session, url: str, target_path: Path) -> None:
     with session.get(url, timeout=120, stream=True) as resp:
-        resp.raise_for_status()
+        raise_for_status_verbose(resp)
         with open(target_path, "wb") as fh:
             for chunk in resp.iter_content(chunk_size=8192):
                 if chunk:
@@ -350,10 +380,14 @@ def configure_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--size",
-        default="2048*2048",
-        help="图片尺寸（官方规格，如 1024*1024、2048*2048 等）",
+        default="1280*720",
+        help="图片尺寸，DashScope 当前仅允许 1024*1024/720*1280/1280*720/768*1152",
     )
-    parser.add_argument("--style", default="photography", help="风格，可为 photograph / illustration 等")
+    parser.add_argument(
+        "--style",
+        default="<photography>",
+        help="风格，DashScope 需要传入如 <photography>/<anime> 这样的值",
+    )
     parser.add_argument(
         "--poll-interval",
         type=int,
@@ -408,6 +442,21 @@ def validate_args(args: argparse.Namespace) -> None:
         args.base_url += "/"
     if args.mode == "test" and args.limit is None and args.scenic_id is None:
         args.limit = 1
+    args.style = normalize_style(args.style)
+    if args.size not in DASHSCOPE_ALLOWED_SIZES:
+        raise SystemExit(
+            f"当前模型仅支持尺寸 {sorted(DASHSCOPE_ALLOWED_SIZES)}，请通过 --size 选择其中之一。",
+        )
+
+
+def raise_for_status_verbose(resp) -> None:
+    try:
+        resp.raise_for_status()
+    except HTTPError as exc:  # noqa: PERF203
+        text = resp.text or ""
+        if len(text) > 2000:
+            text = text[:2000] + "...<truncated>"
+        raise HTTPError(f"{exc}. body={text}", response=resp) from exc
 
 
 def main() -> None:
@@ -441,7 +490,9 @@ def main() -> None:
         session = requests.Session()
         try:
             summary = {"updated": 0, "skipped": 0, "failed": 0}
-            for row in rows:
+            total = len(rows)
+            progress = ProgressBar(total)
+            for idx, row in enumerate(rows, start=1):
                 result = process_scenic(
                     session,
                     conn,
@@ -450,6 +501,7 @@ def main() -> None:
                     args=args,
                 )
                 summary[result] = summary.get(result, 0) + 1
+                progress.update(idx)
             logger.info(
                 "任务结束：更新=%s, 跳过=%s, 失败=%s",
                 summary.get("updated", 0),

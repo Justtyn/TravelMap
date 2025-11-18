@@ -28,6 +28,8 @@ python util/update_scenic_covers.py --mode full --skip-existing
 4. 下载返回的图片到 `static/cover/{景点名}.ext`（非法字符自动替换 `_`）。
 5. 更新 `cover_image` 字段为 `http://139.59.227.54:5001/static/cover/{文件名}`。
 
+默认尺寸设置为 `1280*720`，便于生成横向封面；如需竖图可通过 `--size 720*1280` 指定。
+
 常用可选项：
 
 - `--skip-existing`：若已有目标域名且文件存在则跳过（推荐防止重复生成）。
@@ -53,8 +55,10 @@ python util/update_scenic_covers.py --mode test --scenic-id 42
 | `--db` | SQLite 文件路径，默认 `db/TravelMap.db` |
 | `--cover-dir` | 图片保存目录，默认 `static/cover` |
 | `--base-url` | 对外访问 URL 前缀，默认 `http://139.59.227.54:5001/static/cover/` |
+| `--size` | 默认 `1280*720`，可选 `1024*1024` / `720*1280` / `1280*720` / `768*1152` |
 | `--poll-interval / --poll-timeout` | DashScope 异步任务轮询配置 |
 | `--dry-run` | 仅打印提示词/SQL，不真正调用 API |
+| `--style` | DashScope 需要形如 `<photography>` / `<anime>` 的取值，默认 `<photography>` |
 
 日志示例：
 
