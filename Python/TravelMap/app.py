@@ -883,14 +883,15 @@ def wechat_login():
     avatar_url = normalize_optional_str(data.get('avatar_url')) or normalize_optional_str(profile.get('headimgurl'))
     if not nickname:
         nickname = f'微信用户_{openid[-4:]}'
+    username = normalize_optional_str(data.get('username')) or nickname
 
     db = get_db()
     row = db.execute('SELECT * FROM user WHERE wx_openid = ?', (openid,)).fetchone()
     if row is None:
         cur = db.execute(
-            'INSERT INTO user (login_type, nickname, avatar_url, wx_openid, wx_unionid, wx_access_token, wx_refresh_token, wx_token_expires_at) '
-            'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            ('WECHAT', nickname, avatar_url, openid, unionid, access_token, refresh_token, expires_at)
+            'INSERT INTO user (login_type, username, nickname, avatar_url, wx_openid, wx_unionid, wx_access_token, wx_refresh_token, wx_token_expires_at) '
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            ('WECHAT', username, nickname, avatar_url, openid, unionid, access_token, refresh_token, expires_at)
         )
         db.commit()
         user_id = cur.lastrowid
@@ -919,6 +920,10 @@ def wechat_login():
         if nickname and should_update_nickname:
             push('nickname', nickname)
 
+        should_update_username = not row['username']
+        if username and should_update_username:
+            push('username', username)
+
         if update_fields:
             params.append(row['id'])
             db.execute(f"UPDATE user SET {', '.join(update_fields)} WHERE id = ?", params)
@@ -926,7 +931,15 @@ def wechat_login():
         user_id = row['id']
 
     user_row = db.execute('SELECT * FROM user WHERE id = ?', (user_id,)).fetchone()
-    return json_response(200, '微信登录成功', {'user': sanitize_user_row(user_row)})
+    sanitized = sanitize_user_row(user_row)
+    app.logger.info(
+        'WeChat login success user_id=%s openid=%s nickname=%s username=%s',
+        user_id,
+        openid,
+        nickname,
+        sanitized.get('username') if sanitized else None
+    )
+    return json_response(200, '微信登录成功', {'user': sanitized})
 
 
 @app.route('/api/users/<int:user_id>', methods=['PUT'])

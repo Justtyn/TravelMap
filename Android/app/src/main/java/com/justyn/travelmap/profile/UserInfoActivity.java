@@ -81,13 +81,16 @@ public class UserInfoActivity extends AppCompatActivity {
     }
 
     private void renderProfile() {
-        tvUsername.setText(getString(R.string.user_info_username_format, profile.getUsername()));
-        String nicknameDisplay = TextUtils.isEmpty(profile.getNickname())
-                ? getString(R.string.my_item_empty_placeholder)
-                : profile.getNickname();
+        String usernameDisplay = safeDisplay(profile.getUsername());
+        String nicknameDisplay = safeDisplay(profile.getNickname());
+        tvUsername.setText(getString(R.string.user_info_username_format, usernameDisplay));
         tvNickname.setText(getString(R.string.user_info_nickname_format, nicknameDisplay));
-        etPhone.setText(profile.getPhone());
-        etEmail.setText(profile.getEmail());
+        etPhone.setText(TextUtils.isEmpty(profile.getPhone()) ? "" : profile.getPhone());
+        etEmail.setText(TextUtils.isEmpty(profile.getEmail()) ? "" : profile.getEmail());
+    }
+
+    private String safeDisplay(String value) {
+        return TextUtils.isEmpty(value) ? getString(R.string.my_item_empty_placeholder) : value;
     }
 
     private void attemptUpdate() {

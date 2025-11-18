@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,6 +31,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class LoginActivity extends AppCompatActivity implements WeChatLoginManager.Callback {
+
+    private static final String TAG = "LoginActivity";
 
     // 用户名、密码输入框引用
     private TextInputEditText etUsername;
@@ -154,6 +157,7 @@ public class LoginActivity extends AppCompatActivity implements WeChatLoginManag
                 showLoginError(getString(R.string.toast_missing_user_info));
                 return;
             }
+            Log.d(TAG, "login success user=" + userJson);
             userPreferences.saveUser(userJson);
             Toast.makeText(this, getString(R.string.toast_login_success), Toast.LENGTH_SHORT).show();
             navigateToMain();
