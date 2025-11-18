@@ -44,7 +44,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'db', 'TravelMap.db')  # 已存在的 SQLite 数据库
 DOC_DIR = os.path.join(BASE_DIR, 'doc')
 GITHUB_URL = 'https://github.com/Justtyn/TravelMap'
-APK_FILENAME = 'TravleMap.apk'
+APK_FILENAME = 'TravelMap.apk'
 ANDROID_VERSION = '0.9.2-beta'
 
 WECHAT_APP_ID = 'wxb47bc8f618cc1b59'
