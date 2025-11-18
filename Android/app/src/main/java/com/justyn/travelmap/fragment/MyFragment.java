@@ -197,7 +197,14 @@ public class MyFragment extends Fragment {
     }
 
     private String formatField(String value) {
-        return TextUtils.isEmpty(value) ? getString(R.string.my_item_empty_placeholder) : value;
+        if (TextUtils.isEmpty(value)) {
+            return getString(R.string.my_item_empty_placeholder);
+        }
+        String trimmed = value.trim();
+        if ("null".equalsIgnoreCase(trimmed)) {
+            return getString(R.string.my_item_empty_placeholder);
+        }
+        return value;
     }
 
     private void redirectToLogin() {

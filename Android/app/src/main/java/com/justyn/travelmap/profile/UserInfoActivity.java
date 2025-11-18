@@ -85,12 +85,19 @@ public class UserInfoActivity extends AppCompatActivity {
         String nicknameDisplay = safeDisplay(profile.getNickname());
         tvUsername.setText(getString(R.string.user_info_username_format, usernameDisplay));
         tvNickname.setText(getString(R.string.user_info_nickname_format, nicknameDisplay));
-        etPhone.setText(TextUtils.isEmpty(profile.getPhone()) ? "" : profile.getPhone());
-        etEmail.setText(TextUtils.isEmpty(profile.getEmail()) ? "" : profile.getEmail());
+        etPhone.setText(isNullLike(profile.getPhone()) ? "" : profile.getPhone());
+        etEmail.setText(isNullLike(profile.getEmail()) ? "" : profile.getEmail());
     }
 
     private String safeDisplay(String value) {
-        return TextUtils.isEmpty(value) ? getString(R.string.my_item_empty_placeholder) : value;
+        return isNullLike(value) ? getString(R.string.my_item_empty_placeholder) : value;
+    }
+
+    private boolean isNullLike(String value) {
+        if (TextUtils.isEmpty(value)) {
+            return true;
+        }
+        return "null".equalsIgnoreCase(value.trim());
     }
 
     private void attemptUpdate() {

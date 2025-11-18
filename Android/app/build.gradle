@@ -17,7 +17,7 @@ android {
         targetSdk 36
         versionCode 1
         versionName "1.0"
-        buildConfigField "String", "API_BASE_URL", "\"http://qcd76498.natappfree.cc\""
+        buildConfigField "String", "API_BASE_URL", "\"http://139.59.227.54:5001\""
         buildConfigField "String", "WECHAT_APP_ID", "\"${wechatAppId}\""
         buildConfigField "String", "WECHAT_APP_SECRET", "\"${wechatAppSecret}\""
         resValue "string", "wechat_app_id", "\"${wechatAppId}\""
