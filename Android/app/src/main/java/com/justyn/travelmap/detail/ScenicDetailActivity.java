@@ -425,7 +425,6 @@ public class ScenicDetailActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         if (skeletonLayout != null) {
             skeletonLayout.stopShimmer();
         }
@@ -437,5 +436,6 @@ public class ScenicDetailActivity extends AppCompatActivity {
             scenicMarkerTarget = null;
         }
         executor.shutdownNow();
+        super.onDestroy();
     }
 }

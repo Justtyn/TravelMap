@@ -58,10 +58,26 @@
 - **备注**：密码错误 → `401 / "用户名或密码错误"`。
 
 ### POST /api/auth/wechat
-- **说明**：模拟微信登录，使用 `code` 构造 mock openid，首次会创建 `login_type=WECHAT` 用户。
-- **请求体**：`{"code":"abc123"}`（必填）
-- **成功响应**：与登录一致。
-- **备注**：缺 `code` → `400 / "code 不能为空"`。
+- **说明**：真实调用微信开放平台 `sns/oauth2/access_token`，将客户端 `SendAuth.Resp.code` 换取 `openid`，并在 TravelMap 中创建/更新 `login_type=WECHAT` 用户。
+- **请求体示例**
+  ```json
+  {
+    "code": "051yPm0w3mBQF12b8q1w3YMFx92yPm0a",
+    "nickname": "出行侠",
+    "avatar_url": "https://thirdwx.qlogo.cn/mmopen/vi_32/xxx"
+  }
+  ```
+  > `nickname` / `avatar_url` 可选，用于后端在微信头像接口不可用时兜底。至少需要提供 `code`。
+- **成功响应**：与用户名密码登录返回格式一致，`data.user` 包含完整用户信息。
+- **错误情况**
+
+  | 场景 | 返回 |
+  |------|------|
+  | 未传 `code` | `400 / "code 不能为空"` |
+  | 未配置 `WECHAT_APP_ID/SECRET` | `500 / "WECHAT_APP_ID/WECHAT_APP_SECRET 未配置"` |
+  | 微信接口返回 `errcode` 或网络异常 | `502 / "微信接口调用失败：..."`，并在 `data.errcode` 中附带原始错误码 |
+
+- **部署提示**：在运行环境设置 `WECHAT_APP_ID`、`WECHAT_APP_SECRET`（可选 `WECHAT_HTTP_TIMEOUT`、`WECHAT_OAUTH_URL`、`WECHAT_USERINFO_URL`），并保证服务器网络可访问 `api.weixin.qq.com`。
 
 ### PUT /api/users/{id}
 - **说明**：用户在 App “个人资料”里修改联系方式，仅允许更新 `phone` / `email` 两个字段。

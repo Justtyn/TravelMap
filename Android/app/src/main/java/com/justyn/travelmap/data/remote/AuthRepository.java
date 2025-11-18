@@ -1,5 +1,7 @@
 package com.justyn.travelmap.data.remote;
 
+import androidx.annotation.Nullable;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -38,5 +40,14 @@ public class AuthRepository {
             payload.put("nickname", nickname);
         }
         return apiClient.post("/api/auth/register", payload);
+    }
+
+    public ApiResponse wechatLogin(String code, @Nullable String state) throws IOException, JSONException {
+        JSONObject payload = new JSONObject();
+        payload.put("code", code);
+        if (state != null && !state.isEmpty()) {
+            payload.put("state", state);
+        }
+        return apiClient.post("/api/auth/wechat", payload);
     }
 }

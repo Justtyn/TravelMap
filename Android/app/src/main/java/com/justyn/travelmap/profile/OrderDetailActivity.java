@@ -1,5 +1,6 @@
 package com.justyn.travelmap.profile;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -334,6 +335,7 @@ public class OrderDetailActivity extends AppCompatActivity {
     }
 
     private void clearMapMarkers() {
+        Context appContext = getApplicationContext();
         for (Marker marker : mapMarkers) {
             marker.remove();
         }
@@ -342,7 +344,7 @@ public class OrderDetailActivity extends AppCompatActivity {
         boundsCount = 0;
         lastMarkerLatLng = null;
         for (Target<?> target : markerTargets) {
-            Glide.with(this).clear(target);
+            Glide.with(appContext).clear(target);
         }
         markerTargets.clear();
     }
@@ -409,11 +411,11 @@ public class OrderDetailActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         if (orderMapView != null) {
             orderMapView.onDestroy();
         }
         clearMapMarkers();
         executor.shutdownNow();
+        super.onDestroy();
     }
 }

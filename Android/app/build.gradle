@@ -2,6 +2,9 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
+def wechatAppId = "wxb47bc8f618cc1b59"
+def wechatAppSecret = "84ae2dde3996c26339ad06c7c55345a8"
+
 android {
     namespace 'com.justyn.travelmap'
     compileSdk {
@@ -15,6 +18,9 @@ android {
         versionCode 1
         versionName "1.0"
         buildConfigField "String", "API_BASE_URL", "\"http://139.59.227.54:5001\""
+        buildConfigField "String", "WECHAT_APP_ID", "\"${wechatAppId}\""
+        buildConfigField "String", "WECHAT_APP_SECRET", "\"${wechatAppSecret}\""
+        resValue "string", "wechat_app_id", "\"${wechatAppId}\""
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -45,6 +51,7 @@ dependencies {
     implementation libs.shimmer
     annotationProcessor libs.glideCompiler
     implementation 'com.amap.api:3dmap:latest.integration'
+    implementation 'com.tencent.mm.opensdk:wechat-sdk-android:6.8.0'
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core

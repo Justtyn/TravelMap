@@ -26,12 +26,15 @@ import os
 import sqlite3
 import uuid
 import hashlib
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import lru_cache
 from urllib.parse import quote_plus
 
 from flask import Flask, jsonify, request, g, render_template, send_from_directory, abort, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
+
+import requests
+from requests import RequestException
 
 # -------------------- 基础配置 --------------------
 # BASE_DIR: 当前后端根目录；DB_PATH 指向已存在的 SQLite 数据库文件（不是 schema，而是数据文件）。
@@ -43,6 +46,21 @@ DOC_DIR = os.path.join(BASE_DIR, 'doc')
 GITHUB_URL = 'https://github.com/Justtyn/TravelMap'
 APK_FILENAME = 'TravleMap.apk'
 ANDROID_VERSION = '0.9.2-beta'
+
+WECHAT_APP_ID = 'wxb47bc8f618cc1b59'
+WECHAT_APP_SECRET = '84ae2dde3996c26339ad06c7c55345a8'
+WECHAT_OAUTH_URL = os.environ.get(
+    'WECHAT_OAUTH_URL',
+    'https://api.weixin.qq.com/sns/oauth2/access_token'
+)
+WECHAT_USERINFO_URL = os.environ.get(
+    'WECHAT_USERINFO_URL',
+    'https://api.weixin.qq.com/sns/userinfo'
+)
+try:
+    WECHAT_HTTP_TIMEOUT = float(os.environ.get('WECHAT_HTTP_TIMEOUT', '5'))
+except ValueError:
+    WECHAT_HTTP_TIMEOUT = 5.0
 
 
 def human_readable_size(num_bytes):
@@ -318,6 +336,77 @@ def json_response(code=200, msg='OK', data=None, http_status=None):
     if http_status is None:
         http_status = 200 if code == 200 else 400
     return jsonify(body), http_status
+
+
+class WeChatConfigError(Exception):
+    """Raised when mandatory WeChat config is missing."""
+
+
+class WeChatAPIError(Exception):
+    """Raised when calling the WeChat Open Platform fails."""
+
+    def __init__(self, errcode, errmsg):
+        super().__init__(f'WeChat API error {errcode}: {errmsg}')
+        self.errcode = errcode
+        self.errmsg = errmsg
+
+
+def _ensure_wechat_env():
+    if not WECHAT_APP_ID or not WECHAT_APP_SECRET:
+        raise WeChatConfigError('WECHAT_APP_ID/WECHAT_APP_SECRET 未配置')
+    return WECHAT_APP_ID, WECHAT_APP_SECRET
+
+
+def exchange_code_for_wechat_token(code):
+    app_id, app_secret = _ensure_wechat_env()
+    params = {
+        'appid': app_id,
+        'secret': app_secret,
+        'code': code,
+        'grant_type': 'authorization_code'
+    }
+    try:
+        resp = requests.get(WECHAT_OAUTH_URL, params=params, timeout=WECHAT_HTTP_TIMEOUT)
+    except RequestException as exc:
+        raise WeChatAPIError(-1, f'网络异常：{exc}') from exc
+    try:
+        payload = resp.json()
+    except ValueError as exc:
+        raise WeChatAPIError(-2, '解析微信响应失败') from exc
+
+    errcode = payload.get('errcode')
+    if errcode:
+        raise WeChatAPIError(errcode, payload.get('errmsg', '微信接口返回错误'))
+    if 'openid' not in payload:
+        raise WeChatAPIError(-3, '微信响应缺少 openid')
+    return payload
+
+
+def fetch_wechat_user_profile(access_token, openid):
+    if not access_token or not openid:
+        return {}
+    params = {
+        'access_token': access_token,
+        'openid': openid,
+        'lang': 'zh_CN'
+    }
+    try:
+        resp = requests.get(WECHAT_USERINFO_URL, params=params, timeout=WECHAT_HTTP_TIMEOUT)
+        data = resp.json()
+    except (RequestException, ValueError):
+        return {}
+    if data.get('errcode'):
+        return {}
+    return data
+
+
+def compute_wechat_token_expire_at(expires_in):
+    try:
+        seconds = int(expires_in)
+    except (TypeError, ValueError):
+        return None
+    expire_at = datetime.utcnow() + timedelta(seconds=seconds)
+    return expire_at.strftime('%Y-%m-%d %H:%M:%S')
 
 
 def get_json():
@@ -770,31 +859,71 @@ def login():
 
 @app.route('/api/auth/wechat', methods=['POST'])
 def wechat_login():
-    """微信登录占位：模拟 OAuth 流程；真实实现应使用 code 换取 access_token / openid 后再建用户。"""
+    """真实对接微信移动应用登录，使用 auth code 换取 openid 并维护用户。"""
     data = get_json()
-    code = data.get('code')
+    code = normalize_optional_str(data.get('code'))
     if not code:
         return json_response(400, 'code 不能为空', None, 400)
 
-    db = get_db()
-    # 用 code 伪造 openid（演示用）
-    mock_openid = f'mock_openid_{code}'
+    try:
+        token_payload = exchange_code_for_wechat_token(code)
+    except WeChatConfigError as exc:
+        return json_response(500, str(exc), None, 500)
+    except WeChatAPIError as exc:
+        return json_response(502, f'微信接口调用失败：{exc.errmsg}', {'errcode': exc.errcode}, 502)
 
-    cur = db.execute('SELECT * FROM user WHERE wx_openid = ?', (mock_openid,))
-    row = cur.fetchone()
+    openid = token_payload['openid']
+    unionid = token_payload.get('unionid')
+    access_token = token_payload.get('access_token')
+    refresh_token = token_payload.get('refresh_token')
+    expires_at = compute_wechat_token_expire_at(token_payload.get('expires_in'))
+
+    profile = fetch_wechat_user_profile(access_token, openid)
+    nickname = normalize_optional_str(data.get('nickname')) or normalize_optional_str(profile.get('nickname'))
+    avatar_url = normalize_optional_str(data.get('avatar_url')) or normalize_optional_str(profile.get('headimgurl'))
+    if not nickname:
+        nickname = f'微信用户_{openid[-4:]}'
+
+    db = get_db()
+    row = db.execute('SELECT * FROM user WHERE wx_openid = ?', (openid,)).fetchone()
     if row is None:
-        nickname = f'微信用户_{code[-4:]}'
         cur = db.execute(
-            'INSERT INTO user (login_type, nickname, wx_openid) VALUES (?, ?, ?)',
-            ('WECHAT', nickname, mock_openid)
+            'INSERT INTO user (login_type, nickname, avatar_url, wx_openid, wx_unionid, wx_access_token, wx_refresh_token, wx_token_expires_at) '
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            ('WECHAT', nickname, avatar_url, openid, unionid, access_token, refresh_token, expires_at)
         )
         db.commit()
         user_id = cur.lastrowid
-        avatar_url = None
     else:
+        update_fields = []
+        params = []
+
+        def push(field, value):
+            update_fields.append(f'{field} = ?')
+            params.append(value)
+
+        if access_token is not None:
+            push('wx_access_token', access_token)
+        if refresh_token is not None:
+            push('wx_refresh_token', refresh_token)
+        if expires_at is not None:
+            push('wx_token_expires_at', expires_at)
+        if unionid and not row['wx_unionid']:
+            push('wx_unionid', unionid)
+
+        should_update_avatar = not row['avatar_url'] or 'default_avatar' in str(row['avatar_url'])
+        if avatar_url and should_update_avatar:
+            push('avatar_url', avatar_url)
+
+        should_update_nickname = not row['nickname'] or str(row['nickname']).startswith('微信用户_')
+        if nickname and should_update_nickname:
+            push('nickname', nickname)
+
+        if update_fields:
+            params.append(row['id'])
+            db.execute(f"UPDATE user SET {', '.join(update_fields)} WHERE id = ?", params)
+            db.commit()
         user_id = row['id']
-        nickname = row['nickname']
-        avatar_url = row['avatar_url']
 
     user_row = db.execute('SELECT * FROM user WHERE id = ?', (user_id,)).fetchone()
     return json_response(200, '微信登录成功', {'user': sanitize_user_row(user_row)})
