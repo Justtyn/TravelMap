@@ -31,6 +31,7 @@ import com.justyn.travelmap.profile.FavoritesActivity;
 import com.justyn.travelmap.profile.OrdersActivity;
 import com.justyn.travelmap.profile.UserInfoActivity;
 import com.justyn.travelmap.profile.VisitedActivity;
+import com.justyn.travelmap.wechat.WeChatShareHelper;
 import com.facebook.shimmer.ShimmerFrameLayout;
 
 import java.io.IOException;
@@ -50,6 +51,8 @@ public class MyFragment extends Fragment {
     private TextView tvUsername;
     private TextView tvEmail;
     private MaterialButton btnLogout;
+    private MaterialButton btnShareFriend;
+    private MaterialButton btnShareTimeline;
     private LinearLayout rowProfile;
     private LinearLayout rowFavorites;
     private LinearLayout rowVisited;
@@ -114,6 +117,8 @@ public class MyFragment extends Fragment {
         rowVisited = root.findViewById(R.id.rowVisited);
         rowOrders = root.findViewById(R.id.rowOrders);
         rowCart = root.findViewById(R.id.rowCart);
+        btnShareFriend = root.findViewById(R.id.btnShareFriend);
+        btnShareTimeline = root.findViewById(R.id.btnShareTimeline);
         skeletonLayout = root.findViewById(R.id.mySkeleton);
     }
 
@@ -124,6 +129,12 @@ public class MyFragment extends Fragment {
         rowVisited.setOnClickListener(v -> startActivity(new Intent(requireContext(), VisitedActivity.class)));
         rowOrders.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrdersActivity.class)));
         rowCart.setOnClickListener(v -> startActivity(new Intent(requireContext(), CartActivity.class)));
+        if (btnShareFriend != null) {
+            btnShareFriend.setOnClickListener(v -> WeChatShareHelper.shareProjectHomepage(requireContext(), false));
+        }
+        if (btnShareTimeline != null) {
+            btnShareTimeline.setOnClickListener(v -> WeChatShareHelper.shareProjectHomepage(requireContext(), true));
+        }
     }
 
     private void renderUserInfo() {
@@ -229,4 +240,5 @@ public class MyFragment extends Fragment {
             myScroll.setVisibility(View.VISIBLE);
         }
     }
+
 }

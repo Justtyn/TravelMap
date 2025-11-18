@@ -13,8 +13,7 @@
         android:fillViewport="true"
         android:paddingStart="24dp"
         android:paddingTop="32dp"
-        android:paddingEnd="24dp"
-        android:paddingBottom="32dp">
+        android:paddingEnd="24dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -244,6 +243,7 @@
                         android:alpha="0.2"
                         android:background="?attr/colorOutline" />
 
+
                     <LinearLayout
                         android:id="@+id/rowCart"
                         android:layout_width="match_parent"
@@ -275,6 +275,66 @@
                             android:contentDescription="@string/my_menu_cart"
                             android:src="@drawable/ic_chevron_right"
                             android:tint="?attr/colorOnSurfaceVariant" />
+
+
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardShare"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                app:cardCornerRadius="20dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        style="@style/TextAppearance.Material3.TitleMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/home_share_title" />
+
+                    <TextView
+                        style="@style/TextAppearance.Material3.BodyMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/home_share_subtitle" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnShareFriend"
+                            style="@style/Widget.Material3.Button"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:text="@string/home_share_friend"
+                            android:textAllCaps="false" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnShareTimeline"
+                            style="@style/Widget.Material3.Button"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/home_share_timeline"
+                            android:textAllCaps="false" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -286,8 +346,98 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:backgroundTint="@color/brand_primary"
-                android:textColor="@color/brand_on_primary"
-                android:text="@string/my_logout_button" />
+                android:text="@string/my_logout_button"
+                android:textColor="@color/brand_on_primary" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardProjectInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="20dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+
+                    <TextView
+                        style="@style/TextAppearance.Material3.TitleMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/my_project_info_title" />
+
+                    <TextView
+                        style="@style/TextAppearance.Material3.BodyMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/my_project_overview" />
+
+                    <TextView
+                        style="@style/TextAppearance.Material3.BodyMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/my_project_developer_line" />
+
+                    <TextView
+                        style="@style/TextAppearance.Material3.BodyMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/my_project_school_line" />
+
+                    <TextView
+                        style="@style/TextAppearance.Material3.BodySmall"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="@string/my_project_links_title" />
+
+                    <TextView
+                        android:id="@+id/tvLinkGithub"
+                        style="@style/TextAppearance.Material3.BodyMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:autoLink="web"
+                        android:text="@string/project_info_link_github_url" />
+
+                    <TextView
+                        android:id="@+id/tvLinkBlog"
+                        style="@style/TextAppearance.Material3.BodyMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:autoLink="web"
+                        android:text="@string/project_info_link_blog_url" />
+
+                    <TextView
+                        android:id="@+id/tvLinkRepo"
+                        style="@style/TextAppearance.Material3.BodyMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:autoLink="web"
+                        android:text="@string/project_info_link_repo_url" />
+
+                    <TextView
+                        android:id="@+id/tvLinkSite"
+                        style="@style/TextAppearance.Material3.BodyMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:autoLink="web"
+                        android:text="@string/project_info_link_site_url" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+
+
 
         </LinearLayout>
 

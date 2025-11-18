@@ -33,7 +33,6 @@
             android:exported="true"
             android:launchMode="singleTask"
             android:taskAffinity="${applicationId}" />
-
         <activity
             android:name=".RegisterActivity"
             android:exported="false" />

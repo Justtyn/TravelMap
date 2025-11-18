@@ -46,6 +46,8 @@
     <string name="toast_wechat_auth_error_with_reason">微信授权失败：%1$s</string>
     <string name="toast_wechat_state_mismatch">登录状态已失效，请重新尝试</string>
     <string name="toast_wechat_auth_canceled">已取消微信登录</string>
+    <string name="toast_wechat_share_success">已发送到微信</string>
+    <string name="toast_wechat_share_failed">分享失败，请稍后重试</string>
     <string name="toast_need_login">请先登录后再查看个人信息</string>
     <string name="toast_missing_user_info">服务器未返回用户信息，请稍后重试</string>
 
@@ -171,4 +173,36 @@
     <string name="order_detail_map_title">订单关联位置</string>
     <string name="order_detail_map_empty">暂无坐标信息</string>
     <string name="order_detail_load_error">订单详情获取失败：%1$s</string>
+    <string name="home_project_summary">TravelMap 是厦门大学嘉庚学院信息科学学院软件工程专业焦梓豪在安卓课程设计中打造的 Demo，持续记录需求、实践与迭代。</string>
+    <string name="home_project_info_button">查看软件与开发者说明</string>
+    <string name="home_project_log_button">查看项目开发日志</string>
+    <string name="home_share_title">分享 TravelMap</string>
+    <string name="home_share_subtitle">将项目官网 https://canulove.me/ 分享给同学或好友</string>
+    <string name="home_share_friend">分享给微信好友</string>
+    <string name="home_share_timeline">分享到朋友圈</string>
+    <string name="project_info_title">TravelMap · 项目说明</string>
+    <string name="project_info_developer_title">开发者说明</string>
+    <string name="project_info_developer_desc">焦梓豪，厦门大学嘉庚学院信息科学学院软件工程专业学生。个人安卓期末课程设计 Demo，由个人独立完成需求分析、界面设计、网络层、业务实现及后端联调。常驻 GitHub：https://github.com/Justtyn ，个人博客：https://justtyn.github.io/ 。</string>
+    <string name="project_info_software_title">软件说明</string>
+    <string name="project_info_software_desc">TravelMap 致力于提供景点推荐、商城、预订与个人行程管理体验，实现统一登录、收藏/去过、购物车、订单等核心流程。本 Demo 重点验证了 Android 端的 Material3 设计、Amap 地图、微信登录与分享链路。</string>
+    <string name="project_info_log_title">项目开发日志</string>
+    <string name="project_info_log_desc">• 2024-10：完成基础架构、Feed 列表与详情页；\n• 2024-11：打通购物车、订单、个人资料等“我的”模块；\n• 2024-12：接入微信登录/分享，补全课程汇报所需的项目说明与链接。\n\n更多细节可在仓库 DEV_LOG.md 中查看。</string>
+    <string name="project_info_links_title">相关链接</string>
+    <string name="project_info_link_repo_label">项目仓库</string>
+    <string name="project_info_link_repo_url">项目仓库：https://github.com/Justtyn/TravelMap</string>
+    <string name="project_info_link_site_label">项目官网</string>
+    <string name="project_info_link_site_url">TravelMap官网：https://canulove.me/</string>
+    <string name="project_info_link_github_label">开发者 GitHub</string>
+    <string name="project_info_link_github_url">Github主页：https://github.com/Justtyn</string>
+    <string name="project_info_link_blog_label">开发者博客</string>
+    <string name="project_info_link_blog_url">Blog：https://justtyn.github.io/</string>
+    <string name="project_info_section_label">当前章节：%1$s</string>
+    <string name="share_project_title">TravelMap 课程设计 Demo</string>
+    <string name="share_project_desc">厦门大学嘉庚学院软件工程焦梓豪的安卓课程设计，欢迎体验并反馈。</string>
+    <string name="share_project_url">TravelMap官网：https://canulove.me/</string>
+    <string name="my_project_info_title">项目与开发者说明</string>
+    <string name="my_project_overview">TravelMap 是厦门大学嘉庚学院信息科学学院软件工程专业焦梓豪为安卓期末课程设计打造的 Demo，涵盖景点、商城、预订及个人中心全链路。</string>
+    <string name="my_project_developer_line">开发者：焦梓豪（GitHub @Justtyn）</string>
+    <string name="my_project_school_line">学校：厦门大学嘉庚学院 · 信息科学学院 · 软件工程</string>
+    <string name="my_project_links_title">相关链接</string>
 </resources>

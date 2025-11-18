@@ -48,4 +48,5 @@ public class HomeFragment extends BaseFeedFragment {
     protected String getSearchHint() {
         return getString(R.string.feed_search_hint_home);
     }
+
 }
