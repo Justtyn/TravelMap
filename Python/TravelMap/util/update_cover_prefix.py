@@ -23,8 +23,8 @@ from urllib.parse import quote, unquote
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DB_PATH = PROJECT_ROOT / "db" / "TravelMap.db"
-OLD_PREFIX = "https://travelmap-1307490573.cos.ap-guangzhou.myqcloud.com/travelmap-coverimage"
-NEW_PREFIX = "https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/travelmap-coverimage"
+OLD_PREFIX = "https://travelmap-1307490573.cos.ap-guangzhou.myqcloud.com/audio/"
+NEW_PREFIX = "https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/audio/"
 
 
 def encode_path_component(path: str) -> str:

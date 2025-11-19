@@ -99,6 +99,12 @@ def parse_args() -> argparse.Namespace:
         help="只处理前 N 条记录，便于测试",
     )
     parser.add_argument(
+        "--scenic-id",
+        type=int,
+        default=None,
+        help="只处理指定 scenic.id，忽略其它记录",
+    )
+    parser.add_argument(
         "--skip-existing",
         action="store_true",
         help="若 scenic.audio_url 已存在则跳过该条，避免重复生成",
@@ -144,15 +150,19 @@ def load_scenic_records(
     conn: sqlite3.Connection,
     description_field: str,
     limit: Optional[int],
+    scenic_id: Optional[int],
 ) -> List[ScenicRecord]:
-    sql = (
-        f"SELECT id, name, {description_field}, audio_url "
-        "FROM scenic ORDER BY id"
-    )
-    params: Tuple[int, ...] = ()
-    if limit is not None:
-        sql += " LIMIT ?"
-        params = (limit,)
+    base_select = f"SELECT id, name, {description_field}, audio_url FROM scenic"
+    params: Tuple[int, ...]
+    if scenic_id is not None:
+        sql = f"{base_select} WHERE id = ?"
+        params = (scenic_id,)
+    else:
+        sql = f"{base_select} ORDER BY id"
+        params = ()
+        if limit is not None:
+            sql += " LIMIT ?"
+            params = (limit,)
 
     rows = conn.execute(sql, params).fetchall()
     records: List[ScenicRecord] = []
@@ -451,10 +461,20 @@ def main() -> None:
     if not db_path.exists():
         raise SystemExit(f"数据库文件不存在：{db_path}")
 
+    if args.scenic_id is not None and args.limit is not None:
+        raise SystemExit("--scenic-id 与 --limit 不能同时使用。")
+
     conn = sqlite3.connect(str(db_path))
     try:
         description_field = detect_description_column(conn.cursor())
-        records = load_scenic_records(conn, description_field, args.limit)
+        records = load_scenic_records(
+            conn,
+            description_field,
+            args.limit,
+            args.scenic_id,
+        )
+        if args.scenic_id is not None and not records:
+            raise SystemExit(f"未找到 scenic.id={args.scenic_id} 对应的记录。")
         success, skipped, errors = process_records(records, conn=conn, args=args)
     finally:
         conn.close()
