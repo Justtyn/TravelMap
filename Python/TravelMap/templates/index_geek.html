@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelMap - 重新定义本地游 | 焦梓豪的课程设计</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        // 结合了你 index.html 的 Sky Blue 和 Android src 中的 #2455F5
+                        primary: '#0ea5e9',
+                        brand: '#2455F5',
+                        dark: '#0f172a',
+                        darker: '#020617',
+                        accent: '#f59e0b',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans SC', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-delay': 'float 6s ease-in-out 2s infinite',
+                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'blob': 'blob 7s infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        }
+                    },
+                    backgroundImage: {
+                        'grid-pattern': "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%230ea5e9' fill-opacity='0.05' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E\")",
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+        }
+
+        /* Mac 窗口红绿灯样式组件 */
+        .mac-traffic-lights {
+            display: flex;
+            gap: 8px;
+        }
+        .mac-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .mac-red { background-color: #FF5F56; border: 1px solid #E0443E; }
+        .mac-yellow { background-color: #FFBD2E; border: 1px solid #DEA123; }
+        .mac-green { background-color: #27C93F; border: 1px solid #1AAB29; }
+
+        /* 隐藏滚动条 */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 文字渐变 */
+        .text-gradient {
+            background: linear-gradient(135deg, #0ea5e9 0%, #2455F5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 高级毛玻璃效果 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+        .dark .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        /* Nav 专用毛玻璃 */
+        .nav-glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .nav-glass {
+            background: rgba(2, 6, 23, 0.8);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* 时间轴线 */
+        .timeline-line {
+            position: absolute;
+            left: 24px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #e2e8f0 0%, #cbd5e1 50%, transparent 100%);
+        }
+        .dark .timeline-line {
+            background: linear-gradient(to bottom, #334155 0%, #475569 50%, transparent 100%);
+        }
+
+        /* 悬停发光 */
+        .hover-glow {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hover-glow:hover {
+            transform: translateY(-5px) scale(1.01);
+            box-shadow: 0 20px 40px -10px rgba(14, 165, 233, 0.15);
+            border-color: rgba(14, 165, 233, 0.4);
+        }
+        .dark .hover-glow:hover {
+            box-shadow: 0 20px 40px -10px rgba(14, 165, 233, 0.1);
+            border-color: rgba(14, 165, 233, 0.3);
+            background: rgba(15, 23, 42, 0.8);
+        }
+    </style>
+    <script>
+        if (localStorage.theme === 'light') {
+            document.documentElement.classList.remove('dark')
+        } else {
+            document.documentElement.classList.add('dark')
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-[#020617] dark:text-slate-200 transition-colors duration-500 antialiased selection:bg-brand selection:text-white">
+
+<!-- 导航栏 -->
+<nav class="fixed w-full z-50 nav-glass transition-all duration-300" id="navbar">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+            <!-- Logo 区域 -->
+            <div class="flex items-center gap-3 cursor-pointer group" onclick="window.scrollTo(0,0)">
+                <div class="relative">
+                    <div class="absolute -inset-1 bg-gradient-to-r from-primary to-brand rounded-xl blur opacity-25 group-hover:opacity-75 transition duration-200"></div>
+                    <img src="{{ url_for('static', filename='logo.png') }}"
+                         alt="TravelMap Logo"
+                         class="relative w-10 h-10 rounded-xl shadow-sm border border-white/50 dark:border-white/10 object-cover">
+                </div>
+                <span class="font-bold text-xl tracking-tight text-slate-900 dark:text-white">TravelMap</span>
+            </div>
+
+            <!-- 桌面菜单 -->
+            <div class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-600 dark:text-slate-400">
+                <a href="#home" class="hover:text-brand dark:hover:text-primary transition-colors">首页</a>
+                <a href="#gallery" class="hover:text-brand dark:hover:text-primary transition-colors">界面</a>
+                <a href="#onboarding" class="hover:text-brand dark:hover:text-primary transition-colors">设计</a>
+                <a href="#concept" class="hover:text-brand dark:hover:text-primary transition-colors">演示</a>
+                <a href="#features" class="hover:text-brand dark:hover:text-primary transition-colors">功能</a>
+                <a href="#timeline" class="hover:text-brand dark:hover:text-primary transition-colors">历程</a>
+
+                <button id="theme-toggle"
+                        class="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all focus:outline-none active:scale-95">
+                    <i class="fas fa-moon dark:hidden text-slate-600"></i>
+                    <i class="fas fa-sun hidden dark:block text-amber-400"></i>
+                </button>
+
+                <a href="#download"
+                   class="px-6 py-2.5 rounded-full text-white bg-slate-900 dark:bg-white dark:text-slate-900 hover:bg-brand dark:hover:bg-primary dark:hover:text-white transition-all shadow-lg shadow-slate-900/20 hover:shadow-brand/30 font-bold text-xs tracking-wide uppercase transform hover:-translate-y-0.5">
+                    下载 APK
+                </a>
+            </div>
+
+            <!-- 移动端菜单按钮 -->
+            <div class="md:hidden flex items-center gap-4">
+                <button id="theme-toggle-mobile"
+                        class="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:block"></i>
+                </button>
+                <button id="mobile-menu-btn" class="text-slate-600 dark:text-slate-300 focus:outline-none p-2">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- 移动端下拉菜单 -->
+    <div class="md:hidden hidden glass-card border-t dark:border-slate-800 absolute w-full" id="mobile-menu">
+        <div class="px-4 pt-2 pb-6 space-y-1">
+            <a href="#home" class="block px-3 py-3 rounded-xl font-medium hover:bg-slate-50 dark:hover:bg-slate-800">首页</a>
+            <a href="#gallery" class="block px-3 py-3 rounded-xl font-medium hover:bg-slate-50 dark:hover:bg-slate-800">界面展示</a>
+            <a href="#onboarding" class="block px-3 py-3 rounded-xl font-medium hover:bg-slate-50 dark:hover:bg-slate-800">设计理念</a>
+            <a href="#download" class="block mt-4 text-center px-3 py-3 rounded-xl font-bold bg-brand text-white shadow-lg shadow-brand/30">下载 APK</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero 区域 -->
+<section id="home" class="relative pt-32 pb-20 lg:pt-48 overflow-hidden min-h-screen flex items-center bg-grid-pattern bg-[length:40px_40px]">
+    <!-- 动态背景光球 -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-primary/20 dark:bg-brand/10 rounded-full blur-[120px] animate-blob"></div>
+        <div class="absolute top-[20%] right-[-10%] w-[500px] h-[500px] bg-purple-500/20 dark:bg-purple-600/10 rounded-full blur-[120px] animate-blob animation-delay-2000"></div>
+        <div class="absolute bottom-[-10%] left-[20%] w-[600px] h-[600px] bg-emerald-400/20 dark:bg-emerald-600/10 rounded-full blur-[120px] animate-blob animation-delay-4000"></div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative w-full">
+        <div class="grid lg:grid-cols-2 gap-16 items-center">
+            <!-- 左侧文案 -->
+            <div class="space-y-8 z-10 animate-fade-in-up">
+                <div class="inline-flex items-center px-4 py-1.5 rounded-full bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 backdrop-blur-sm shadow-sm">
+                    <span class="relative flex h-2 w-2 mr-3">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-brand"></span>
+                    </span>
+                    <span class="text-xs font-bold tracking-wide uppercase text-slate-600 dark:text-slate-300">安卓开发课程期末设计</span>
+                </div>
+
+                <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.1]">
+                    灵感 · 决策 · <br>
+                    <span class="text-gradient">一触即达</span>
+                </h1>
+
+                <p class="text-lg md:text-xl text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl font-light">
+                    TravelMap 不仅仅是地图。它是你的本地游智能伴侣，集成了高德 3D 视图、行程规划与电商闭环，让每一次出行都充满确定性。
+                </p>
+
+                <div class="flex flex-wrap gap-4 pt-2">
+                    <a href="#download"
+                       class="inline-flex items-center justify-center px-8 py-4 rounded-2xl text-white bg-slate-900 dark:bg-brand hover:bg-slate-800 dark:hover:bg-blue-600 transition-all shadow-xl shadow-slate-900/20 dark:shadow-brand/30 font-semibold text-base group">
+                        <i class="fab fa-android mr-2.5 text-xl group-hover:scale-110 transition-transform"></i>
+                        <span>下载演示版</span>
+                    </a>
+                    <a href="https://github.com/Justtyn/TravelMap" target="_blank"
+                       class="inline-flex items-center justify-center px-8 py-4 rounded-2xl text-slate-700 dark:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all font-medium glass-card group">
+                        <i class="fab fa-github mr-2.5 text-xl group-hover:rotate-12 transition-transform"></i>
+                        <span>源码仓库</span>
+                    </a>
+                </div>
+
+                <div class="pt-8 border-t border-slate-200/60 dark:border-slate-800 flex items-center gap-4">
+                    <div class="flex -space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 border-2 border-white dark:border-slate-900 flex items-center justify-center text-xs font-bold shadow-sm">
+                            <i class="fas fa-code text-slate-400"></i>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-brand dark:bg-brand border-2 border-white dark:border-slate-900 flex items-center justify-center text-xs font-bold text-white shadow-sm">
+                            J
+                        </div>
+                    </div>
+                    <div class="text-sm">
+                        <p class="font-semibold text-slate-900 dark:text-white">独立全栈开发</p>
+                        <p class="text-slate-500 dark:text-slate-500">Android Client + Flask Backend</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧 Mockup -->
+            <div class="relative flex justify-center lg:justify-end animate-float z-0">
+                <!-- 装饰背景圆环 -->
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] border border-slate-200 dark:border-slate-700 rounded-full opacity-50 animate-pulse-slow"></div>
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-slate-100 dark:border-slate-800 rounded-full opacity-30"></div>
+
+                <!-- 手机外壳 -->
+                <div class="relative w-[320px] h-[650px] bg-[#1e293b] rounded-[50px] border-[10px] border-[#0f172a] overflow-hidden shadow-2xl shadow-brand/20 ring-1 ring-white/10">
+                    <div class="absolute top-0 inset-x-0 h-7 bg-black z-20 flex justify-center rounded-b-2xl">
+                        <div class="w-24 h-5 bg-black rounded-b-xl"></div>
+                    </div>
+                    <!-- 屏幕内容模拟 -->
+                    <div class="w-full h-full bg-slate-50 dark:bg-slate-900 flex flex-col relative overflow-hidden">
+                        <!-- 模拟 App Header -->
+                        <div class="pt-12 pb-4 px-5 bg-white dark:bg-slate-900/90 backdrop-blur border-b border-slate-100 dark:border-slate-800 flex justify-between items-center z-10">
+                            <div class="flex flex-col">
+                                <span class="text-xs text-slate-400 font-medium">Current Location</span>
+                                <div class="flex items-center gap-1 text-slate-800 dark:text-white font-bold text-lg">
+                                    <i class="fas fa-map-marker-alt text-brand"></i>
+                                    <span>Xiamen, China</span>
+                                </div>
+                            </div>
+                            <div class="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                <img src="https://github.com/Justtyn.png" class="w-full h-full" alt="Avatar">
+                            </div>
+                        </div>
+
+                        <!-- 模拟地图区域 -->
+                        <div class="flex-1 relative bg-[#e5e7eb] dark:bg-[#1e293b]">
+                            <!-- 模拟地图块 -->
+                            <div class="absolute inset-0 opacity-60" style="background-image: radial-gradient(#94a3b8 1px, transparent 1px); background-size: 20px 20px;"></div>
+
+                            <!-- 模拟 POI 卡片 1 -->
+                            <div class="absolute top-1/4 left-8 w-10 h-10 bg-white dark:bg-slate-800 rounded-full shadow-lg flex items-center justify-center animate-bounce text-brand text-lg border-2 border-white dark:border-slate-700">
+                                <i class="fas fa-landmark"></i>
+                            </div>
+
+                            <!-- 模拟 POI 卡片 2 -->
+                            <div class="absolute bottom-1/3 right-8 w-10 h-10 bg-brand rounded-full shadow-lg flex items-center justify-center text-white text-lg border-2 border-white dark:border-slate-700">
+                                <i class="fas fa-hotel"></i>
+                            </div>
+
+                            <!-- 底部浮窗 -->
+                            <div class="absolute bottom-4 left-4 right-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur p-4 rounded-2xl shadow-xl border border-white/50 dark:border-slate-700/50">
+                                <div class="flex gap-3">
+                                    <div class="w-16 h-16 rounded-xl bg-slate-200 dark:bg-slate-700 shrink-0 overflow-hidden">
+                                        <img src="https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/index-image/景点-详情-1.jpg" class="w-full h-full object-cover opacity-80" alt="scenic">
+                                    </div>
+                                    <div class="flex flex-col justify-center">
+                                        <div class="h-4 w-32 bg-slate-200 dark:bg-slate-600 rounded mb-2"></div>
+                                        <div class="h-3 w-20 bg-slate-100 dark:bg-slate-700 rounded"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 模拟 App 底部导航 -->
+                        <div class="h-20 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex justify-around items-start pt-4 text-2xl">
+                            <i class="fas fa-compass text-brand"></i>
+                            <i class="fas fa-shopping-bag text-slate-300 dark:text-slate-600"></i>
+                            <i class="fas fa-map text-slate-300 dark:text-slate-600"></i>
+                            <i class="fas fa-user text-slate-300 dark:text-slate-600"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- App 界面截图展示区 -->
+<section id="gallery" class="py-20 bg-white dark:bg-[#0B1120] border-y border-slate-100 dark:border-slate-800/50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+        <div class="flex items-end justify-between">
+            <div>
+                <h2 class="text-3xl font-bold text-slate-900 dark:text-white">界面巡览</h2>
+                <p class="text-slate-500 dark:text-slate-400 mt-3 max-w-md">
+                    严格遵循 Material Design 3 规范，为您呈现 20+ 个精细打磨的页面。
+                </p>
+            </div>
+            <div class="hidden md:flex gap-3">
+                <button id="gallery-prev"
+                        class="w-12 h-12 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-all active:scale-95">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <button id="gallery-next"
+                        class="w-12 h-12 rounded-full bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200 flex items-center justify-center text-white dark:text-slate-900 transition-all shadow-lg active:scale-95">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="gallery-container"
+         class="flex overflow-x-auto gap-8 px-4 sm:px-6 lg:px-8 pb-12 scrollbar-hide snap-x snap-mandatory scroll-smooth">
+        <script>
+            const baseImageUrl = 'https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/index-image/';
+            const screenshotNames = [
+                'Tab-商城', 'Tab-地图', 'Tab-我的', 'Tab-景点', 'Tab-预订',
+                '商品-详情', '开屏-一站式行程预订', '开屏-发现未知风景', '我的-关于',
+                '我的-去过', '我的-收藏-商品', '我的-收藏-景点', '我的-订单',
+                '我的-订单详情', '我的-购物车', '景点-详情-1', '景点-详情-2',
+                '注册页', '登陆页', '预定-详情'
+            ];
+
+            const screens = screenshotNames.map(name => ({
+                title: name.replace(/-/g, ' '),
+                imgUrl: `${baseImageUrl}${encodeURIComponent(name)}.jpg`
+            }));
+
+            screens.forEach((screen, index) => {
+                const imgContent = screen.imgUrl
+                    ? `<img src="${screen.imgUrl}" loading="lazy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="${screen.title}">`
+                    : `<div class="w-full h-full flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-800"><i class="fas fa-image text-4xl opacity-20"></i></div>`;
+
+                document.write(`
+                    <div class="snap-center shrink-0 w-[280px] h-[600px] rounded-[40px] overflow-hidden relative group cursor-pointer shadow-xl shadow-slate-200/50 dark:shadow-black/50 border-[6px] border-slate-50 dark:border-slate-800">
+                        ${imgContent}
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
+                            <span class="text-white font-bold text-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">${screen.title}</span>
+                            <div class="h-1 w-8 bg-brand rounded-full mt-2 mb-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75"></div>
+                        </div>
+                    </div>
+                `);
+            });
+        </script>
+    </div>
+</section>
+
+<!-- 开屏设计展示 -->
+<section id="onboarding" class="py-24 bg-slate-50 dark:bg-[#020617]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-sm font-bold text-brand tracking-widest uppercase mb-3">Visual Identity</h2>
+            <h3 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">开屏引导页设计</h3>
+            <p class="mt-4 text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
+                采用扁平化插画风格与统一的色彩系统，在用户首次打开 App 时传递核心价值。
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            <!-- Card 1 -->
+            <div class="glass-card rounded-[32px] p-1 hover-glow group">
+                <div class="bg-white dark:bg-slate-800 rounded-[28px] h-full overflow-hidden flex flex-col relative">
+                    <div class="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-sky-50 dark:from-sky-900/20 to-transparent opacity-50"></div>
+                    <div class="flex-1 flex items-center justify-center p-8 relative z-10">
+                        <div class="w-32 h-32 rounded-full bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center text-5xl text-sky-500 group-hover:scale-110 transition-transform duration-500">
+                            <i class="fas fa-compass"></i>
+                        </div>
+                    </div>
+                    <div class="px-6 pb-8 text-center relative z-10">
+                        <h4 class="text-lg font-bold text-slate-900 dark:text-white mb-2">发现未知</h4>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">海量热门景点推荐，<br>让每一次出发都充满灵感。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="glass-card rounded-[32px] p-1 hover-glow group">
+                <div class="bg-white dark:bg-slate-800 rounded-[28px] h-full overflow-hidden flex flex-col relative">
+                    <div class="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-indigo-50 dark:from-indigo-900/20 to-transparent opacity-50"></div>
+                    <div class="flex-1 flex items-center justify-center p-8 relative z-10">
+                        <div class="w-32 h-32 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-5xl text-indigo-500 group-hover:scale-110 transition-transform duration-500">
+                            <i class="fas fa-route"></i>
+                        </div>
+                    </div>
+                    <div class="px-6 pb-8 text-center relative z-10">
+                        <h4 class="text-lg font-bold text-slate-900 dark:text-white mb-2">3D 导航</h4>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">集成高德地图 SDK，<br>3D 视角精准定位。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="glass-card rounded-[32px] p-1 hover-glow group">
+                <div class="bg-white dark:bg-slate-800 rounded-[28px] h-full overflow-hidden flex flex-col relative">
+                    <div class="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-amber-50 dark:from-amber-900/20 to-transparent opacity-50"></div>
+                    <div class="flex-1 flex items-center justify-center p-8 relative z-10">
+                        <div class="w-32 h-32 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-5xl text-amber-500 group-hover:scale-110 transition-transform duration-500">
+                            <i class="fas fa-ticket-alt"></i>
+                        </div>
+                    </div>
+                    <div class="px-6 pb-8 text-center relative z-10">
+                        <h4 class="text-lg font-bold text-slate-900 dark:text-white mb-2">一站式预订</h4>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">景点门票、酒店住宿，<br>安全支付极速出票。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="glass-card rounded-[32px] p-1 hover-glow group">
+                <div class="bg-white dark:bg-slate-800 rounded-[28px] h-full overflow-hidden flex flex-col relative">
+                    <div class="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-emerald-50 dark:from-emerald-900/20 to-transparent opacity-50"></div>
+                    <div class="flex-1 flex items-center justify-center p-8 relative z-10">
+                        <div class="w-32 h-32 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-5xl text-emerald-500 group-hover:scale-110 transition-transform duration-500">
+                            <i class="fas fa-camera-retro"></i>
+                        </div>
+                    </div>
+                    <div class="px-6 pb-8 text-center relative z-10">
+                        <h4 class="text-lg font-bold text-slate-900 dark:text-white mb-2">珍藏足迹</h4>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">打卡每一个目的地，<br>生成专属旅行回忆。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 核心功能与技术栈 (Mac 窗口风格容器) -->
+<section id="features" class="py-24 bg-white dark:bg-[#0B1120] relative overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Mac Window Container -->
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0f172a] shadow-2xl overflow-hidden">
+            <!-- Window Header -->
+            <div class="h-10 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center px-4 justify-between">
+                <div class="mac-traffic-lights">
+                    <div class="mac-dot mac-red"></div>
+                    <div class="mac-dot mac-yellow"></div>
+                    <div class="mac-dot mac-green"></div>
+                </div>
+                <div class="text-xs font-mono text-slate-400">features.json — read-only</div>
+                <div class="w-10"></div> <!-- Spacer -->
+            </div>
+
+            <!-- Content -->
+            <div class="p-8 md:p-12">
+                <div class="grid md:grid-cols-3 gap-10">
+                    <!-- Item 1 -->
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-brand">
+                            <i class="fas fa-map-marked-alt text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">LBS 位置服务</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed">
+                            集成高德地图 API，实现精准定位、POI 逆地理编码检索与 3D 楼块渲染，提供沉浸式导览体验。
+                        </p>
+                        <ul class="text-xs font-mono text-slate-400 space-y-1 pt-2">
+                            <li>• AMap Location SDK</li>
+                            <li>• 3D Marker Rendering</li>
+                        </ul>
+                    </div>
+
+                    <!-- Item 2 -->
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500">
+                            <i class="fas fa-adjust text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">深色模式适配</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed">
+                            基于 Material Components 的 DayNight 主题，所有 UI 元素自动适配系统外观，夜间使用更护眼。
+                        </p>
+                        <ul class="text-xs font-mono text-slate-400 space-y-1 pt-2">
+                            <li>• Theme.Material3.DayNight</li>
+                            <li>• values-night/colors.xml</li>
+                        </ul>
+                    </div>
+
+                    <!-- Item 3 -->
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500">
+                            <i class="fas fa-lock text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">安全闭环</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed">
+                            整合微信登录 SDK，实现 OAuth 授权流程；用户 Token 本地加密存储，订单与收藏数据云端同步。
+                        </p>
+                        <ul class="text-xs font-mono text-slate-400 space-y-1 pt-2">
+                            <li>• WeChat OpenSDK</li>
+                            <li>• SharedPreferences Encryption</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 交互动画演示 -->
+<section id="concept" class="py-24 bg-slate-50 dark:bg-[#020617] border-t border-slate-200 dark:border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid lg:grid-cols-2 gap-16 items-center">
+            <!-- Left Text -->
+            <div class="order-2 lg:order-1">
+                <h2 class="text-sm font-bold text-brand tracking-widest uppercase mb-2">Interactive Demo</h2>
+                <h3 class="text-3xl font-bold text-slate-900 dark:text-white mb-6">
+                    UI 概念动态演示
+                </h3>
+                <p class="text-lg text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
+                    我们追求极致的流畅度。这是一个基于 CSS Animation 构建的交互原型，展示了 TravelMap 理想中的卡片切换与路径导航体验。
+                </p>
+
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
+                            <i class="fas fa-bezier-curve"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 dark:text-white text-sm">动态路径绘制</h4>
+                            <p class="text-xs text-slate-500">SVG Stroke Animation</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 dark:text-white text-sm">智能卡片堆叠</h4>
+                            <p class="text-xs text-slate-500">Contextual Transitions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Iframe with Phone Frame -->
+            <div class="order-1 lg:order-2 flex justify-center">
+                <div class="relative w-[375px] h-[812px] bg-slate-900 rounded-[50px] border-[8px] border-slate-800 shadow-2xl overflow-hidden ring-4 ring-slate-200 dark:ring-slate-700 transform hover:scale-[1.02] transition-transform duration-500">
+                     <iframe
+                        src="/static/travelmap-concept-animation.html"
+                        class="w-full h-full rounded-[40px] border-none bg-white dark:bg-slate-900"
+                        title="Concept Animation"
+                        scrolling="no"
+                    ></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 开发时间线 -->
+<section id="timeline" class="py-24 bg-white dark:bg-[#0B1120]">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl font-bold text-slate-900 dark:text-white">开发历程</h2>
+            <p class="mt-4 text-slate-500 dark:text-slate-400">15 天极速冲刺，从零构建完整应用</p>
+        </div>
+
+        <div class="relative">
+            <div class="timeline-line"></div>
+            <div class="space-y-12 pl-12 md:pl-16">
+
+                <!-- 11.10 -->
+                <div class="relative group">
+                    <div class="absolute -left-[33px] md:-left-[49px] top-1 w-5 h-5 bg-white dark:bg-slate-900 border-4 border-slate-300 dark:border-slate-600 rounded-full group-hover:border-primary group-hover:scale-125 transition-all z-10"></div>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 hover-glow">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-2">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">项目启动 & 基础架构</h3>
+                            <span class="text-xs font-mono text-primary bg-primary/10 px-2 py-1 rounded">2025.11.10</span>
+                        </div>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm">
+                            确定 MVP 需求范围，搭建 Android 工程，配置 Gradle 依赖，设计 Activity + Fragment 基础容器。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 11.12 -->
+                <div class="relative group">
+                    <div class="absolute -left-[33px] md:-left-[49px] top-1 w-5 h-5 bg-white dark:bg-slate-900 border-4 border-slate-300 dark:border-slate-600 rounded-full group-hover:border-primary group-hover:scale-125 transition-all z-10"></div>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 hover-glow">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-2">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">用户认证体系</h3>
+                            <span class="text-xs font-mono text-slate-500 dark:text-slate-400">2025.11.12</span>
+                        </div>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm">
+                            完成 LoginActivity 与 RegisterActivity，封装 AuthRepository，实现 Token 本地加密存储与自动登录。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 11.15 -->
+                <div class="relative group">
+                    <div class="absolute -left-[33px] md:-left-[49px] top-1 w-5 h-5 bg-white dark:bg-slate-900 border-4 border-slate-300 dark:border-slate-600 rounded-full group-hover:border-primary group-hover:scale-125 transition-all z-10"></div>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 hover-glow">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-2">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">核心功能 & UI 框架</h3>
+                            <span class="text-xs font-mono text-slate-500 dark:text-slate-400">2025.11.15</span>
+                        </div>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm">
+                            实现首页 Feed 流，商城列表，引入 Skeleton 骨架屏优化加载体验，完成详情页跳转逻辑。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 11.18 -->
+                <div class="relative group">
+                    <div class="absolute -left-[33px] md:-left-[49px] top-1 w-5 h-5 bg-white dark:bg-slate-900 border-4 border-primary rounded-full animate-pulse z-10 shadow-[0_0_10px_rgba(14,165,233,0.5)]"></div>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 hover-glow">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-2">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">地图服务接入</h3>
+                            <span class="text-xs font-mono text-slate-500 dark:text-slate-400">2025.11.18</span>
+                        </div>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm">
+                            接入高德 3D SDK，实现定位蓝点、自定义 Marker 渲染、景点坐标可视化与隐私合规处理。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 11.22 -->
+                <div class="relative group">
+                    <div class="absolute -left-[33px] md:-left-[49px] top-1 w-5 h-5 bg-white dark:bg-slate-900 border-4 border-slate-300 dark:border-slate-600 rounded-full group-hover:border-primary group-hover:scale-125 transition-all z-10"></div>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 hover-glow">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-2">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">电商闭环构建</h3>
+                            <span class="text-xs font-mono text-slate-500 dark:text-slate-400">2025.11.22</span>
+                        </div>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm">
+                            完成购物车逻辑，订单提交与状态追踪，实现收藏夹与浏览历史记录功能。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 11.24 -->
+                <div class="relative group">
+                    <div class="absolute -left-[33px] md:-left-[49px] top-1 w-5 h-5 bg-white dark:bg-slate-900 border-4 border-slate-300 dark:border-slate-600 rounded-full group-hover:border-primary group-hover:scale-125 transition-all z-10"></div>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 hover-glow">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-2">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">UI 统一与深色适配</h3>
+                            <span class="text-xs font-mono text-slate-500 dark:text-slate-400">2025.11.24</span>
+                        </div>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm">
+                            全局应用 Material 3 设计规范，适配深色模式，优化 Safe Area 与交互动效。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 11.25 -->
+                <div class="relative group">
+                    <div class="absolute -left-[33px] md:-left-[49px] top-1 w-5 h-5 bg-green-500 border-4 border-white dark:border-slate-900 rounded-full z-10 shadow-lg"></div>
+                    <div class="bg-gradient-to-r from-sky-500/10 to-blue-600/10 border border-sky-200 dark:border-sky-800 p-6 rounded-2xl shadow-sm hover-glow">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-2">
+                            <h3 class="text-lg font-bold text-primary dark:text-sky-400">v1.0 正式发布</h3>
+                            <span class="text-xs font-mono text-slate-500 dark:text-slate-400 font-bold">2025.11.25</span>
+                        </div>
+                        <p class="text-slate-700 dark:text-slate-300 text-sm">
+                            核心功能验收完毕，Bug 修复，生成发布版 APK，整理开发文档。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Future -->
+                <div class="relative group opacity-80 hover:opacity-100 transition-opacity">
+                    <div class="absolute -left-[33px] md:-left-[49px] top-[-40px] bottom-0 w-[2px] border-l-2 border-dashed border-slate-300 dark:border-slate-600"></div>
+                    <div class="absolute -left-[33px] md:-left-[49px] top-1 w-5 h-5 bg-slate-200 dark:bg-slate-700 border-4 border-slate-300 dark:border-slate-600 rounded-full z-10"></div>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-300 dark:border-slate-600 p-6 rounded-2xl hover-glow">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-2">
+                            <h3 class="text-lg font-bold text-slate-500 dark:text-slate-400">Future Plans (v2.0)</h3>
+                            <span class="text-xs font-bold px-2 py-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded">待开发</span>
+                        </div>
+                        <ul class="space-y-2 text-sm text-slate-500 dark:text-slate-500 list-disc list-inside">
+                            <li>接入 DeepSeek / Gemini AI 实现智能对话</li>
+                            <li>景点语音导览功能 (TTS)</li>
+                            <li>智能行程规划助手</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 关于作者 (Mac Terminal 风格) -->
+<section id="author" class="py-24 bg-slate-50 dark:bg-[#020617] border-t border-slate-200 dark:border-slate-800">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Mac Window -->
+        <div class="rounded-xl bg-[#1e1e1e] shadow-2xl overflow-hidden font-mono text-sm border border-slate-800">
+            <!-- Window Header -->
+            <div class="h-8 bg-[#2d2d2d] flex items-center px-3 gap-2 border-b border-black/20">
+                <div class="mac-traffic-lights">
+                    <div class="mac-dot mac-red"></div>
+                    <div class="mac-dot mac-yellow"></div>
+                    <div class="mac-dot mac-green"></div>
+                </div>
+                <div class="flex-1 text-center text-[#999]">zsh — justyn@macbook-pro — 80x24</div>
+            </div>
+
+            <!-- Terminal Content -->
+            <div class="p-6 md:p-10 text-[#d4d4d4] space-y-4">
+                <div class="flex gap-4 items-start">
+                    <img src="https://github.com/Justtyn.png" alt="Justyn" class="w-20 h-20 rounded-full border-2 border-brand/50">
+                    <div class="space-y-2 flex-1">
+                        <p>
+                            <span class="text-green-400">➜</span>
+                            <span class="text-blue-400">~</span>
+                            <span class="text-white">whoami</span>
+                        </p>
+                        <p class="pl-4 text-slate-300">
+                            Name: 焦梓豪 (Justyn)<br>
+                            Role: Android Developer & Student<br>
+                            School: 厦门大学嘉庚学院 · 软件工程<br>
+                            Project: TravelMap (Course Design)
+                        </p>
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-4">
+                    <p>
+                        <span class="text-green-400">➜</span>
+                        <span class="text-blue-400">~</span>
+                        <span class="text-white">ls -la ./social-links/</span>
+                    </p>
+                    <div class="pl-4 grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                        <a href="https://github.com/Justtyn" target="_blank" class="flex items-center hover:text-brand transition-colors group">
+                            <span class="text-slate-500 mr-2">-rw-r--r--</span>
+                            <i class="fab fa-github mr-2"></i>
+                            <span class="group-hover:underline">GitHub</span>
+                        </a>
+                        <a href="https://justtyn.github.io/" target="_blank" class="flex items-center hover:text-brand transition-colors group">
+                            <span class="text-slate-500 mr-2">-rw-r--r--</span>
+                            <i class="fas fa-blog mr-2"></i>
+                            <span class="group-hover:underline">Blog</span>
+                        </a>
+                        <a href="mailto:togjustyn@gmail.com" class="flex items-center hover:text-brand transition-colors group">
+                            <span class="text-slate-500 mr-2">-rw-r--r--</span>
+                            <i class="fas fa-envelope mr-2"></i>
+                            <span class="group-hover:underline">Email</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <span class="text-green-400">➜</span>
+                    <span class="text-blue-400">~</span>
+                    <span class="animate-pulse">_</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 下载区域 (Pop-up Window 风格) -->
+<section id="download" class="py-24 relative overflow-hidden bg-white dark:bg-[#0B1120]">
+    <div class="max-w-3xl mx-auto px-4 relative z-10">
+        <div class="rounded-2xl bg-white dark:bg-slate-800 shadow-[0_0_50px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_0_50px_-12px_rgba(36,85,245,0.1)] border border-slate-200 dark:border-slate-700 overflow-hidden">
+             <!-- Header -->
+             <div class="h-12 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-700 flex items-center px-5">
+                <div class="mac-traffic-lights">
+                    <div class="mac-dot mac-red"></div>
+                    <div class="mac-dot mac-yellow"></div>
+                    <div class="mac-dot mac-green"></div>
+                </div>
+                <div class="ml-4 text-sm font-medium text-slate-500">Download Manager</div>
+            </div>
+
+            <div class="p-8 md:p-10">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">准备好出发了吗？</h2>
+                    <p class="text-slate-500 mt-2">TravelMap v1.0 • Android 8.0+</p>
+                </div>
+
+                <div class="flex flex-col md:flex-row items-center justify-center gap-10">
+                    <!-- QR Code -->
+                    <div class="relative group">
+                        <div class="absolute -inset-0.5 bg-gradient-to-r from-primary to-brand rounded-2xl blur opacity-30 group-hover:opacity-75 transition duration-500"></div>
+                        <div class="relative bg-white dark:bg-white p-2 rounded-xl">
+                            <img src="https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/index-image/TravelMapQRcode.png"
+                                 alt="QR Code" class="w-40 h-40 object-contain">
+                        </div>
+                        <p class="text-xs text-center text-slate-400 mt-3">扫码直接安装</p>
+                    </div>
+
+                    <div class="h-px w-full md:w-px md:h-40 bg-slate-200 dark:bg-slate-700"></div>
+
+                    <!-- Buttons -->
+                    <div class="space-y-4 w-full md:w-auto flex flex-col">
+                         <a href="{{ url_for('static', filename='TravelMap.apk') }}"
+                           class="flex items-center justify-center w-full md:w-56 px-6 py-3.5 rounded-xl bg-brand text-white font-bold hover:bg-blue-700 transition-all shadow-lg shadow-brand/30 active:scale-95">
+                            <i class="fas fa-download mr-2"></i> 直接下载 APK
+                        </a>
+                        <a href="https://github.com/Justtyn/TravelMap/releases" target="_blank"
+                           class="flex items-center justify-center w-full md:w-56 px-6 py-3.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all active:scale-95">
+                            <i class="fab fa-github mr-2"></i> Release 页
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 页脚 -->
+<footer class="bg-slate-50 dark:bg-[#020617] border-t border-slate-200 dark:border-slate-800 pt-12 pb-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity">
+                <img src="{{ url_for('static', filename='logo.png') }}" class="w-6 h-6 rounded-md" alt="Logo">
+                <span class="font-bold text-slate-700 dark:text-slate-300">TravelMap</span>
+            </div>
+            <p class="text-sm text-slate-400 dark:text-slate-600">
+                &copy; 2025 Justyn (Jiao Zihao). MIT License.
+            </p>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // 移动端菜单
+    const btn = document.getElementById('mobile-menu-btn');
+    const menu = document.getElementById('mobile-menu');
+    btn.addEventListener('click', () => menu.classList.toggle('hidden'));
+
+    // 主题切换
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeToggleMobile = document.getElementById('theme-toggle-mobile');
+
+    function toggleTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+        }
+    }
+    themeToggleBtn.addEventListener('click', toggleTheme);
+    themeToggleMobile.addEventListener('click', toggleTheme);
+
+    // 滚动观察者 (Reveal Animation)
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-fade-in-up');
+                entry.target.classList.remove('opacity-0');
+                observer.unobserve(entry.target);
+            }
+        });
+    });
+    document.querySelectorAll('h2, .group, .mac-window').forEach((el) => {
+        el.classList.add('opacity-0', 'transform', 'translate-y-4', 'transition-all', 'duration-700');
+        observer.observe(el);
+    });
+
+    // 画廊滚动控制
+    const galleryContainer = document.getElementById('gallery-container');
+    document.getElementById('gallery-prev').addEventListener('click', () => {
+        galleryContainer.scrollBy({ left: -320, behavior: 'smooth' });
+    });
+    document.getElementById('gallery-next').addEventListener('click', () => {
+        galleryContainer.scrollBy({ left: 320, behavior: 'smooth' });
+    });
+</script>
+</body>
+</html>
