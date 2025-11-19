@@ -66,6 +66,7 @@
     <string name="my_menu_coming_soon">功能开发中，敬请期待</string>
     <string name="my_menu_visited">我的去过</string>
     <string name="my_menu_cart">我的购物车</string>
+    <string name="my_menu_about">关于 TravelMap</string>
 
     <!-- 首页/商城/预订通用 -->
     <string name="feed_search_hint_default">搜索旅行灵感</string>
@@ -154,9 +155,11 @@
     <string name="order_item_quantity">数量 × %1$d</string>
     <string name="cart_breadcrumb">我的 / 购物车</string>
     <string name="profile_breadcrumb">我的 / 个人资料</string>
+    <string name="about_breadcrumb">我的 / 关于 TravelMap</string>
     <string name="detail_favorite_failed">收藏操作失败：%1$s</string>
     <string name="detail_visit_failed">操作失败：%1$s</string>
     <string name="title_product_detail">商品详情</string>
+    <string name="title_about">关于 TravelMap</string>
     <string name="order_success_title">下单成功</string>
     <string name="order_success_message">订单已提交</string>
     <string name="order_success_no">订单号：%1$s</string>

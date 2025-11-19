@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelMap - 您的本地游伴侣</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0ea5e9', // Sky 500
+                        secondary: '#0f172a', // Slate 900
+                        accent: '#f59e0b', // Amber 500
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Inter:wght@400;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+        }
+
+        /* 手机模型动画 */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .phone-mockup {
+            animation: float 6s ease-in-out infinite;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 隐藏滚动条但保持功能 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* 渐变文字 */
+        .text-gradient {
+            background: linear-gradient(to right, #0ea5e9, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased">
+
+    <!-- 导航栏 -->
+    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xl">T</div>
+                    <span class="font-bold text-xl tracking-tight text-slate-900">TravelMap</span>
+                </div>
+                <div class="hidden md:flex space-x-8 text-sm font-medium text-slate-600">
+                    <a href="#home" class="hover:text-primary transition-colors">首页</a>
+                    <a href="#features" class="hover:text-primary transition-colors">核心功能</a>
+                    <a href="#tech" class="hover:text-primary transition-colors">技术架构</a>
+                    <a href="#download" class="hover:text-primary transition-colors">下载 App</a>
+                </div>
+                <a href="#download" class="hidden md:inline-flex items-center justify-center px-5 py-2 border border-transparent text-sm font-medium rounded-full text-white bg-slate-900 hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl">
+                    立即下载 v1.0
+                </a>
+                <!-- 移动端菜单按钮 -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-slate-600 hover:text-slate-900 focus:outline-none">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- 移动端菜单 -->
+        <div class="md:hidden hidden bg-white border-t" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#home" class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-primary hover:bg-slate-50">首页</a>
+                <a href="#features" class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-primary hover:bg-slate-50">核心功能</a>
+                <a href="#tech" class="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-primary hover:bg-slate-50">技术架构</a>
+                <a href="#download" class="block px-3 py-2 rounded-md text-base font-medium text-primary font-bold bg-slate-50">下载 App</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero 区域 -->
+    <section id="home" class="relative pt-32 pb-20 lg:pt-40 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- 左侧文案 -->
+                <div class="space-y-8 z-10">
+                    <div class="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-semibold tracking-wide uppercase">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></span>
+                        v1.0.0 正式发布
+                    </div>
+                    <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
+                        灵感 · 决策 · <span class="text-gradient">到店</span><br>
+                        重新定义本地游
+                    </h1>
+                    <p class="text-lg text-slate-600 leading-relaxed max-w-xl">
+                        TravelMap 是集“目的地发现 + 地图导航 + 旅行电商”于一体的 App。浏览城市热门玩法、查看实时坐标、一键下单门票，让周末出行从未如此简单。
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="#download" class="inline-flex items-center justify-center px-8 py-3.5 border border-transparent text-base font-medium rounded-xl text-white bg-primary hover:bg-sky-600 transition-all shadow-lg shadow-sky-500/30">
+                            <i class="fab fa-android mr-2 text-lg"></i> 下载 APK
+                        </a>
+                        <a href="https://github.com/TravelMap/Android" target="_blank" class="inline-flex items-center justify-center px-8 py-3.5 border border-slate-300 text-base font-medium rounded-xl text-slate-700 bg-white hover:bg-slate-50 transition-all">
+                            <i class="fab fa-github mr-2 text-lg"></i> 查看源码
+                        </a>
+                    </div>
+                    <div class="flex items-center gap-4 text-sm text-slate-500">
+                        <div class="flex -space-x-2">
+                            <div class="w-8 h-8 rounded-full bg-gray-300 border-2 border-white"></div>
+                            <div class="w-8 h-8 rounded-full bg-gray-400 border-2 border-white"></div>
+                            <div class="w-8 h-8 rounded-full bg-gray-500 border-2 border-white"></div>
+                        </div>
+                        <p>TravelMap 团队诚意出品</p>
+                    </div>
+                </div>
+
+                <!-- 右侧手机模型演示 -->
+                <div class="relative flex justify-center lg:justify-end">
+                    <!-- 装饰背景 -->
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-100/50 rounded-full blur-3xl -z-10"></div>
+
+                    <!-- CSS 手机模型 -->
+                    <div class="phone-mockup relative w-[300px] h-[600px] bg-slate-900 rounded-[40px] border-[8px] border-slate-900 overflow-hidden ring-1 ring-slate-900/5">
+                        <!-- 顶部刘海 -->
+                        <div class="absolute top-0 inset-x-0 h-6 bg-slate-900 z-20 flex justify-center">
+                            <div class="w-32 h-4 bg-black rounded-b-xl"></div>
+                        </div>
+                        <!-- 屏幕内容 (模拟 App 界面) -->
+                        <div class="w-full h-full bg-slate-50 flex flex-col relative overflow-hidden">
+                            <!-- 模拟 Header -->
+                            <div class="pt-8 pb-2 px-4 bg-white border-b flex justify-between items-center">
+                                <div class="w-20 h-4 bg-slate-200 rounded"></div>
+                                <div class="flex gap-2">
+                                    <div class="w-6 h-6 bg-slate-200 rounded-full"></div>
+                                </div>
+                            </div>
+                            <!-- 模拟 Banner -->
+                            <div class="m-4 h-32 bg-gradient-to-r from-blue-400 to-blue-600 rounded-xl shadow-sm flex items-center justify-center text-white text-sm font-bold">
+                                周末去哪儿？
+                            </div>
+                            <!-- 模拟 Feed 列表 -->
+                            <div class="px-4 space-y-3 overflow-hidden">
+                                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex gap-3">
+                                    <div class="w-16 h-16 bg-slate-200 rounded-lg shrink-0"></div>
+                                    <div class="flex-1 space-y-2">
+                                        <div class="w-3/4 h-3 bg-slate-800 rounded"></div>
+                                        <div class="w-1/2 h-2 bg-slate-300 rounded"></div>
+                                        <div class="flex justify-between mt-2">
+                                            <div class="w-8 h-2 bg-yellow-400 rounded"></div>
+                                            <div class="w-10 h-4 bg-blue-100 rounded text-[8px] text-blue-600 flex items-center justify-center">去过</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex gap-3">
+                                    <div class="w-16 h-16 bg-slate-200 rounded-lg shrink-0"></div>
+                                    <div class="flex-1 space-y-2">
+                                        <div class="w-2/3 h-3 bg-slate-800 rounded"></div>
+                                        <div class="w-full h-2 bg-slate-300 rounded"></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex gap-3">
+                                    <div class="w-16 h-16 bg-slate-200 rounded-lg shrink-0"></div>
+                                    <div class="flex-1 space-y-2">
+                                        <div class="w-3/4 h-3 bg-slate-800 rounded"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 模拟底部导航 -->
+                            <div class="absolute bottom-0 w-full h-14 bg-white border-t flex justify-around items-center px-2">
+                                <div class="flex flex-col items-center gap-1"><div class="w-5 h-5 bg-blue-500 rounded"></div></div>
+                                <div class="flex flex-col items-center gap-1"><div class="w-5 h-5 bg-slate-300 rounded"></div></div>
+                                <div class="flex flex-col items-center gap-1"><div class="w-5 h-5 bg-slate-300 rounded"></div></div>
+                                <div class="flex flex-col items-center gap-1"><div class="w-5 h-5 bg-slate-300 rounded"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 核心功能板块 -->
+    <section id="features" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-base font-semibold text-primary tracking-wide uppercase">Features</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+                    全链路旅行体验
+                </p>
+                <p class="mt-4 max-w-2xl text-xl text-slate-500 mx-auto">
+                    从发现灵感到支付订单，我们提供了一站式解决方案，整合了地图、内容与电商功能。
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="relative p-8 bg-slate-50 rounded-2xl border border-slate-100 hover:shadow-lg transition-shadow group">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-compass text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">智能推荐首页</h3>
+                    <p class="text-slate-600">
+                        BaseFeedFragment 提供统一的浏览体验。下拉刷新获取最新景点，骨架屏加载让等待不再枯燥，支持关键词快速检索。
+                    </p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="relative p-8 bg-slate-50 rounded-2xl border border-slate-100 hover:shadow-lg transition-shadow group">
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-green-600 mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-map-marked-alt text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">高德 3D 地图</h3>
+                    <p class="text-slate-600">
+                        内置高德地图 SDK，实时显示用户定位与周边景点 Marker。点击地图标记即可查看详情，所见即所得。
+                    </p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="relative p-8 bg-slate-50 rounded-2xl border border-slate-100 hover:shadow-lg transition-shadow group">
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-shopping-bag text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">闭环电商系统</h3>
+                    <p class="text-slate-600">
+                        支持门票、酒店预订。完整的购物车逻辑、订单提交与状态追踪，真正实现“决策即购买”。
+                    </p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="relative p-8 bg-slate-50 rounded-2xl border border-slate-100 hover:shadow-lg transition-shadow group">
+                    <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600 mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-user-circle text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">个人中心</h3>
+                    <p class="text-slate-600">
+                        管理收藏、去过记录与个人资料。所有二级页面均支持面包屑导航与安全区避让，体验丝滑。
+                    </p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="relative p-8 bg-slate-50 rounded-2xl border border-slate-100 hover:shadow-lg transition-shadow group">
+                    <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-red-600 mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-layer-group text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">UI/UX 统一</h3>
+                    <p class="text-slate-600">
+                        Material 3 设计语言，统一的骨架屏 (Skeleton)、空态页与错误提示，适配深色模式与全面屏。
+                    </p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="relative p-8 bg-slate-50 rounded-2xl border border-slate-100 hover:shadow-lg transition-shadow group">
+                    <div class="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center text-slate-700 mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-shield-alt text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">安全合规</h3>
+                    <p class="text-slate-600">
+                        完整的 MapPrivacyHelper 隐私合规处理，Token 登录态本地加密存储，保障用户信息安全。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 技术展示区域 -->
+    <section id="tech" class="py-20 bg-slate-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h2 class="text-3xl font-bold mb-6">构建于现代技术栈之上</h2>
+                    <p class="text-slate-400 text-lg mb-8">
+                        TravelMap 是一个标准的本科课程示范项目，代码结构清晰，分层明确。使用了 Android 原生开发与轻量级后端服务。
+                    </p>
+
+                    <div class="space-y-6">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full border-2 border-primary text-primary font-bold text-xs mt-0.5">A</div>
+                            <div class="ml-4">
+                                <h4 class="text-lg font-bold text-white">Android Native</h4>
+                                <p class="mt-1 text-slate-400 text-sm">Java 11, Android SDK 36, Activity + Fragment 架构</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full border-2 border-green-500 text-green-500 font-bold text-xs mt-0.5">M</div>
+                            <div class="ml-4">
+                                <h4 class="text-lg font-bold text-white">Material Design 3</h4>
+                                <p class="mt-1 text-slate-400 text-sm">CircularProgressIndicator, SwipeRefresh, Skeleton Screen</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full border-2 border-yellow-500 text-yellow-500 font-bold text-xs mt-0.5">B</div>
+                            <div class="ml-4">
+                                <h4 class="text-lg font-bold text-white">Backend (Flask)</h4>
+                                <p class="mt-1 text-slate-400 text-sm">Python Flask API, SQLite, HttpURLConnection 通信</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full border-2 border-red-500 text-red-500 font-bold text-xs mt-0.5">L</div>
+                            <div class="ml-4">
+                                <h4 class="text-lg font-bold text-white">LBS 服务</h4>
+                                <p class="mt-1 text-slate-400 text-sm">高德地图 SDK (3D Map), AMapLocationClient 定位</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800 rounded-2xl p-6 font-mono text-sm text-slate-300 shadow-2xl border border-slate-700 overflow-hidden">
+                    <div class="flex space-x-2 mb-4">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                    <div class="space-y-2">
+                        <p><span class="text-purple-400">public class</span> <span class="text-yellow-300">TravelRepository</span> {</p>
+                        <p class="pl-4"><span class="text-purple-400">public void</span> <span class="text-blue-400">fetchScenicFeed</span>(Callback cb) {</p>
+                        <p class="pl-8 text-slate-500">// Base URL from BuildConfig</p>
+                        <p class="pl-8">String url = <span class="text-green-400">"/api/scenic/feed"</span>;</p>
+                        <p class="pl-8">ApiClient.get(url, <span class="text-purple-400">new</span> ApiCallback() {</p>
+                        <p class="pl-12">@Override</p>
+                        <p class="pl-12"><span class="text-purple-400">public void</span> <span class="text-blue-400">onSuccess</span>(String res) {</p>
+                        <p class="pl-16 text-slate-500">// Parse JSON to Models</p>
+                        <p class="pl-16">cb.onDataLoaded(parser.parse(res));</p>
+                        <p class="pl-12">}</p>
+                        <p class="pl-8">});</p>
+                        <p class="pl-4">}</p>
+                        <p>}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 下载区域 -->
+    <section id="download" class="py-24 bg-primary/5 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+            <div class="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-primary/20 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-accent/20 rounded-full blur-3xl"></div>
+        </div>
+
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <h2 class="text-4xl font-bold text-slate-900 mb-4">即刻开启您的旅程</h2>
+            <p class="text-xl text-slate-600 mb-10">
+                TravelMap v1.0.0 现已发布。支持 Android 8.0+ 设备。<br>
+                <span class="text-sm text-slate-500">*本应用为课程项目演示版，不涉及真实支付。</span>
+            </p>
+
+            <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 inline-block">
+                <div class="flex flex-col md:flex-row gap-8 items-center">
+                    <!-- 模拟二维码 -->
+                    <div class="flex flex-col items-center">
+                        <div class="w-40 h-40 bg-slate-900 rounded-xl flex items-center justify-center text-white mb-4">
+                            <i class="fas fa-qrcode text-6xl"></i>
+                        </div>
+                        <span class="text-sm text-slate-500 font-medium">扫描下载 APK</span>
+                    </div>
+
+                    <div class="text-left space-y-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-900">Android Debug Build</h3>
+                            <p class="text-sm text-slate-500">Version 1.0.0 | Size: 25MB | 2025-11-15</p>
+                        </div>
+
+                        <button onclick="alert('演示项目：请从 GitHub Release 或 CI 构建产物中获取 APK 文件。')" class="w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-slate-900 hover:bg-slate-800 transition-all shadow-lg">
+                            <i class="fas fa-download mr-2"></i> 直接下载 APK
+                        </button>
+
+                        <a href="#" class="block text-center text-sm text-primary hover:underline">查看安装与权限说明 ></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-slate-200 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+                <div class="col-span-2 md:col-span-1">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-6 h-6 bg-primary rounded flex items-center justify-center text-white font-bold text-xs">T</div>
+                        <span class="font-bold text-lg text-slate-900">TravelMap</span>
+                    </div>
+                    <p class="text-slate-500 text-sm">
+                        TravelMap 学生创新小组出品。致力于提供无缝的本地旅行与电商体验。
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-900 mb-4">导航</h4>
+                    <ul class="space-y-2 text-sm text-slate-500">
+                        <li><a href="#home" class="hover:text-primary">首页</a></li>
+                        <li><a href="#features" class="hover:text-primary">功能</a></li>
+                        <li><a href="#download" class="hover:text-primary">下载</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-900 mb-4">资源</h4>
+                    <ul class="space-y-2 text-sm text-slate-500">
+                        <li><a href="#" class="hover:text-primary">API 文档</a></li>
+                        <li><a href="#" class="hover:text-primary">隐私政策</a></li>
+                        <li><a href="#" class="hover:text-primary">开发日志</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-900 mb-4">联系我们</h4>
+                    <ul class="space-y-2 text-sm text-slate-500">
+                        <li>GitHub Issues</li>
+                        <li>support@travelmap.app</li>
+                        <li>Team: Justyn & Friends</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-slate-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-slate-400 text-sm">© 2025 TravelMap. All rights reserved.</p>
+                <div class="flex space-x-4 text-slate-400">
+                    <a href="#" class="hover:text-slate-600"><i class="fab fa-github text-xl"></i></a>
+                    <a href="#" class="hover:text-slate-600"><i class="fab fa-weixin text-xl"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 移动端菜单切换
+        const btn = document.getElementById('mobile-menu-btn');
+        const menu = document.getElementById('mobile-menu');
+
+        btn.addEventListener('click', () => {
+            menu.classList.toggle('hidden');
+        });
+
+        // 导航栏滚动效果
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 10) {
+                navbar.classList.add('shadow-sm');
+            } else {
+                navbar.classList.remove('shadow-sm');
+            }
+        });
+
+        // 简单的平滑滚动处理（兼容性增强）
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                menu.classList.add('hidden'); // 点击后关闭移动菜单
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>

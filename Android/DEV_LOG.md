@@ -42,6 +42,7 @@
    - `VisitedActivity`：展示 `/api/visited` 返回的历史景点，点击可进入景点详情；Toolbar 副标题“我的 / 去过”。
    - `OrdersActivity`：展示 `/api/orders` 列表，下一步需支持订单详情与更多字段；Toolbar 副标题“我的 / 订单”。
    - `CartActivity`：展示购物车条目、下单按钮（调用 `/api/orders`），支持骨架屏；Toolbar 副标题“我的 / 购物车”。后续需支持删除/修改数量、丰富提交字段。
+   - `AboutActivity`：位于“我的”页“我的购物车”条目下方，集中展示微信分享按钮与项目/开发者说明，Toolbar 副标题“我的 / 关于 TravelMap”。
 3. **收藏/去过页面点击行为**
    - 收藏页面根据当前 Tab 跳转到 Scenic/Product 详情；去过页面点击进入景点详情。
 

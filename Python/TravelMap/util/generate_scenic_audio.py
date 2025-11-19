@@ -15,6 +15,9 @@ import os
 import re
 import sqlite3
 import sys
+import tempfile
+import time
+import wave
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
@@ -176,6 +179,87 @@ def count_dashscope_chars(text: str) -> int:
     return total
 
 
+def split_text_by_limit(text: str, max_chars: int) -> List[str]:
+    """按照 DashScope 计费逻辑切分文本，确保每块不超过 max_chars。"""
+    if max_chars <= 0:
+        raise ValueError("max_chars 必须为正数")
+
+    chunks: List[str] = []
+    current: List[str] = []
+    current_count = 0
+
+    for ch in text:
+        ch_len = 1 if ch.isascii() else 2
+        if current and current_count + ch_len > max_chars:
+            chunks.append("".join(current))
+            current = [ch]
+            current_count = ch_len
+        else:
+            current.append(ch)
+            current_count += ch_len
+
+    if current:
+        chunks.append("".join(current))
+
+    return chunks or [""]
+
+
+def ensure_audio_path(base_path: Path, audio_format: str) -> Path:
+    fmt = (audio_format or "wav").lower()
+    expected_suffix = f".{fmt}"
+    if base_path.suffix.lower() != expected_suffix:
+        base_path = base_path.with_suffix(expected_suffix)
+    return base_path
+
+
+def build_cdn_url(file_path: Path) -> str:
+    return f"{DEFAULT_CDN_PREFIX}/{file_path.name}"
+
+
+def merge_wav_files(chunk_paths: List[Path], target_path: Path) -> None:
+    params = None
+    core_signature: Optional[Tuple[int, int, int, str]] = None
+    with wave.open(str(target_path), "wb") as out_wav:
+        for chunk_path in chunk_paths:
+            with wave.open(str(chunk_path), "rb") as chunk_wav:
+                chunk_params = chunk_wav.getparams()
+                if params is None:
+                    params = chunk_params
+                    out_wav.setparams(chunk_params)
+                    core_signature = (
+                        chunk_params.nchannels,
+                        chunk_params.sampwidth,
+                        chunk_params.framerate,
+                        chunk_params.comptype,
+                    )
+                else:
+                    new_signature = (
+                        chunk_params.nchannels,
+                        chunk_params.sampwidth,
+                        chunk_params.framerate,
+                        chunk_params.comptype,
+                    )
+                    if new_signature != core_signature:
+                        raise ValueError("分段 WAV 参数不一致，无法拼接。")
+                out_wav.writeframes(chunk_wav.readframes(chunk_wav.getnframes()))
+
+
+def merge_pcm_files(chunk_paths: List[Path], target_path: Path) -> None:
+    with target_path.open("wb") as merged:
+        for chunk_path in chunk_paths:
+            merged.write(chunk_path.read_bytes())
+
+
+def merge_audio_chunks(chunk_paths: List[Path], target_path: Path, audio_format: str) -> None:
+    fmt = (audio_format or "wav").lower()
+    if fmt == "wav":
+        merge_wav_files(chunk_paths, target_path)
+    elif fmt == "pcm":
+        merge_pcm_files(chunk_paths, target_path)
+    else:
+        raise ValueError(f"暂不支持拼接 {fmt} 音频格式，请改用 wav/pcm。")
+
+
 def safe_filename(name: str, extension: str) -> str:
     sanitized = name.strip()
     for char in INVALID_FILENAME_CHARS:
@@ -225,10 +309,20 @@ def request_tts_audio(
     return {"url": audio_url, "format": audio_format or "wav"}
 
 
-def download_audio_file(url: str, target_path: Path) -> None:
-    response = requests.get(url, timeout=120)
-    response.raise_for_status()
-    target_path.write_bytes(response.content)
+def download_audio_file(url: str, target_path: Path, retries: int = 3) -> None:
+    last_error: Optional[Exception] = None
+    for attempt in range(1, max(retries, 1) + 1):
+        try:
+            response = requests.get(url, timeout=120)
+            response.raise_for_status()
+            target_path.write_bytes(response.content)
+            return
+        except Exception as exc:  # noqa: BLE001 - 网络异常重试
+            last_error = exc
+            if attempt >= retries:
+                break
+            time.sleep(min(2 * attempt, 5))
+    raise RuntimeError(f"下载音频失败（尝试 {retries} 次）：{last_error}")
 
 
 def update_audio_url(
@@ -273,42 +367,72 @@ def process_records(
                 skipped += 1
                 progress.update(f"{hint}（清理后为空）")
                 continue
-            if char_count > args.max_chars:
-                raise ValueError(
-                    f"文本字符数 {char_count} 超出阈值 {args.max_chars}，"
-                    "请手动缩短描述内容或修改 --max-chars 参数。"
-                )
+            text_chunks = split_text_by_limit(cleaned_text, args.max_chars)
+            chunk_count = len(text_chunks)
 
             filename = safe_filename(record.name, "wav")
-            local_path = output_dir / filename
-            cdn_url = f"{DEFAULT_CDN_PREFIX}/{filename}"
+            base_path = output_dir / filename
 
             if args.dry_run:
                 print(
                     f"[DryRun] Would process scenic_id={record.scenic_id}, "
-                    f"chars={char_count}, file={local_path}"
+                    f"chars={char_count}, chunks={chunk_count}, file={base_path}"
                 )
                 skipped += 1
                 progress.update(f"{hint}（DryRun）")
                 continue
 
-            audio_meta = request_tts_audio(
-                text=cleaned_text,
-                api_key=api_key,
-                model=args.model,
-                voice=args.voice,
-                language=args.language,
-            )
+            local_path = base_path
+            cdn_url = build_cdn_url(local_path)
+            audio_format: Optional[str] = None
 
-            audio_format = audio_meta.get("format", "wav").lower()
-            if audio_format not in ("wav", "mp3", "pcm"):
-                audio_format = "wav"
+            if chunk_count == 1:
+                audio_meta = request_tts_audio(
+                    text=text_chunks[0],
+                    api_key=api_key,
+                    model=args.model,
+                    voice=args.voice,
+                    language=args.language,
+                )
+                audio_format = (audio_meta.get("format", "wav") or "wav").lower()
+                if audio_format not in ("wav", "mp3", "pcm"):
+                    audio_format = "wav"
+                local_path = ensure_audio_path(base_path, audio_format)
+                cdn_url = build_cdn_url(local_path)
+                download_audio_file(audio_meta["url"], local_path)
+            else:
+                with tempfile.TemporaryDirectory(prefix="scenic_audio_", dir=str(output_dir)) as tmpdir:
+                    tmpdir_path = Path(tmpdir)
+                    chunk_paths: List[Path] = []
+                    for idx, chunk_text in enumerate(text_chunks):
+                        audio_meta = request_tts_audio(
+                            text=chunk_text,
+                            api_key=api_key,
+                            model=args.model,
+                            voice=args.voice,
+                            language=args.language,
+                        )
+                        chunk_format = (audio_meta.get("format", "wav") or "wav").lower()
+                        if chunk_format not in ("wav", "pcm"):
+                            raise ValueError(
+                                "分段拼接仅支持 wav/pcm，请调整模型或参数以获得可拼接格式。"
+                            )
+                        if audio_format is None:
+                            audio_format = chunk_format
+                        elif chunk_format != audio_format:
+                            raise ValueError(
+                                f"分段音频格式不一致：{audio_format} vs {chunk_format}"
+                            )
+                        chunk_path = tmpdir_path / f"chunk_{idx}.{chunk_format}"
+                        download_audio_file(audio_meta["url"], chunk_path)
+                        chunk_paths.append(chunk_path)
 
-            if not local_path.suffix.lower().endswith(audio_format):
-                local_path = local_path.with_suffix(f".{audio_format}")
-                cdn_url = f"{DEFAULT_CDN_PREFIX}/{local_path.name}"
+                    if audio_format is None:
+                        raise RuntimeError("未能确定音频格式，无法拼接。")
 
-            download_audio_file(audio_meta["url"], local_path)
+                    local_path = ensure_audio_path(base_path, audio_format)
+                    cdn_url = build_cdn_url(local_path)
+                    merge_audio_chunks(chunk_paths, local_path, audio_format)
             update_audio_url(conn, record.scenic_id, cdn_url)
             conn.commit()
             success += 1

@@ -17,22 +17,22 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import androidx.core.widget.NestedScrollView;
+import androidx.fragment.app.Fragment;
 
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.justyn.travelmap.LoginActivity;
 import com.justyn.travelmap.R;
 import com.justyn.travelmap.data.local.UserPreferences;
 import com.justyn.travelmap.data.local.UserProfile;
+import com.justyn.travelmap.profile.AboutActivity;
 import com.justyn.travelmap.profile.CartActivity;
 import com.justyn.travelmap.profile.FavoritesActivity;
 import com.justyn.travelmap.profile.OrdersActivity;
 import com.justyn.travelmap.profile.UserInfoActivity;
 import com.justyn.travelmap.profile.VisitedActivity;
-import com.justyn.travelmap.wechat.WeChatShareHelper;
-import com.facebook.shimmer.ShimmerFrameLayout;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,13 +51,12 @@ public class MyFragment extends Fragment {
     private TextView tvUsername;
     private TextView tvEmail;
     private MaterialButton btnLogout;
-    private MaterialButton btnShareFriend;
-    private MaterialButton btnShareTimeline;
     private LinearLayout rowProfile;
     private LinearLayout rowFavorites;
     private LinearLayout rowVisited;
     private LinearLayout rowOrders;
     private LinearLayout rowCart;
+    private LinearLayout rowAbout;
     private NestedScrollView myScroll;
     private ShimmerFrameLayout skeletonLayout;
     private ExecutorService avatarExecutor;
@@ -117,8 +116,7 @@ public class MyFragment extends Fragment {
         rowVisited = root.findViewById(R.id.rowVisited);
         rowOrders = root.findViewById(R.id.rowOrders);
         rowCart = root.findViewById(R.id.rowCart);
-        btnShareFriend = root.findViewById(R.id.btnShareFriend);
-        btnShareTimeline = root.findViewById(R.id.btnShareTimeline);
+        rowAbout = root.findViewById(R.id.rowAbout);
         skeletonLayout = root.findViewById(R.id.mySkeleton);
     }
 
@@ -129,11 +127,8 @@ public class MyFragment extends Fragment {
         rowVisited.setOnClickListener(v -> startActivity(new Intent(requireContext(), VisitedActivity.class)));
         rowOrders.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrdersActivity.class)));
         rowCart.setOnClickListener(v -> startActivity(new Intent(requireContext(), CartActivity.class)));
-        if (btnShareFriend != null) {
-            btnShareFriend.setOnClickListener(v -> WeChatShareHelper.shareProjectHomepage(requireContext(), false));
-        }
-        if (btnShareTimeline != null) {
-            btnShareTimeline.setOnClickListener(v -> WeChatShareHelper.shareProjectHomepage(requireContext(), true));
+        if (rowAbout != null) {
+            rowAbout.setOnClickListener(v -> startActivity(new Intent(requireContext(), AboutActivity.class)));
         }
     }
 

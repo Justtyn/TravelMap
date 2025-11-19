@@ -58,6 +58,9 @@
             android:name=".profile.CartActivity"
             android:exported="false" />
         <activity
+            android:name=".profile.AboutActivity"
+            android:exported="false" />
+        <activity
             android:name=".detail.ScenicDetailActivity"
             android:exported="false" />
         <activity
