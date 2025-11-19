@@ -166,6 +166,17 @@
     <string name="about_breadcrumb">我的 / 关于 TravelMap</string>
     <string name="detail_favorite_failed">收藏操作失败：%1$s</string>
     <string name="detail_visit_failed">操作失败：%1$s</string>
+    <string name="onboarding_skip">跳过</string>
+    <string name="onboarding_next">下一步</string>
+    <string name="onboarding_start">开始探索</string>
+    <string name="onboarding_title_discover">发现未知风景</string>
+    <string name="onboarding_desc_discover">海量热门景点推荐，精选本地游玩攻略。\n让每一次出发都充满灵感。</string>
+    <string name="onboarding_title_navigation">沉浸式 3D 导航</string>
+    <string name="onboarding_desc_navigation">集成高德地图 SDK，3D 视角呈现。\n精准定位，带您轻松抵达每一个目的地。</string>
+    <string name="onboarding_title_booking">一站式行程预订</string>
+    <string name="onboarding_desc_booking">景点门票、酒店住宿在线选购。\n安全支付，极速出票，省心省力。</string>
+    <string name="onboarding_title_memory">珍藏美好足迹</string>
+    <string name="onboarding_desc_memory">记录打卡过的每一个地点。\n收藏回忆，分享您的旅行故事。</string>
     <string name="title_product_detail">商品详情</string>
     <string name="title_about">关于 TravelMap</string>
     <string name="order_success_title">下单成功</string>

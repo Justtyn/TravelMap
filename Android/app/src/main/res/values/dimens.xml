@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="onboarding_indicator_active_width">24dp</dimen>
+    <dimen name="onboarding_indicator_inactive_width">8dp</dimen>
+    <dimen name="onboarding_indicator_height">8dp</dimen>
+    <dimen name="onboarding_indicator_spacing">6dp</dimen>
+</resources>

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旅行地图 App 概念动画</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自定义字体和动画 */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: transparent; /* 背景透明，由父页面控制 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* 手机外壳阴影 */
+        .phone-shadow {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 地图路径动画 */
+        .path-line {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            transition: stroke-dashoffset 0.1s linear;
+        }
+
+        /* 脉冲动画 (用于地点标记) */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.33); opacity: 0.8; }
+            80%, 100% { opacity: 0; transform: scale(2.5); }
+        }
+        .pulse-circle {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+            transform-origin: center;
+        }
+
+        /* UI 卡片进出动画 */
+        .card-enter {
+            transform: translateY(0%);
+            opacity: 1;
+        }
+        .card-exit {
+            transform: translateY(110%);
+            opacity: 0;
+        }
+
+        /* 飞机平滑旋转 */
+        #plane-group {
+            transition: transform 0.1s linear;
+        }
+
+        /* 玻璃拟态效果 */
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* 浮动动画 */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .floating-ui {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        /* 滚动条隐藏 */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 手机容器 --><div class="relative w-[375px] h-[812px] bg-white rounded-[40px] overflow-hidden phone-shadow border-8 border-gray-900">
+
+        <!-- 状态栏 (模拟) --><div class="absolute top-0 left-0 w-full h-12 z-50 flex justify-between items-end px-6 pb-2 text-xs font-bold text-gray-800 pointer-events-none">
+            <span>9:41</span>
+            <div class="flex space-x-1.5 items-center">
+                <div class="w-4 h-4 bg-gray-800 rounded-full opacity-20"></div>
+                <div class="w-4 h-4 bg-gray-800 rounded-full opacity-20"></div>
+                <div class="w-6 h-3 border-2 border-gray-800 rounded-md relative">
+                    <div class="absolute inset-0.5 bg-gray-800 rounded-sm"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 顶部 UI --><div class="absolute top-14 left-0 w-full px-6 z-40 flex justify-between items-center">
+            <div class="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 transition-transform text-gray-600">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </div>
+            <div class="glass px-4 py-2 rounded-full shadow-sm text-sm font-semibold text-gray-700 floating-ui">
+                我的旅程 · 2024
+            </div>
+            <div class="w-10 h-10 bg-blue-500 rounded-full shadow-lg flex items-center justify-center overflow-hidden border-2 border-white cursor-pointer">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Avatar" class="w-full h-full">
+            </div>
+        </div>
+
+        <!-- 搜索浮窗 --><div class="absolute top-28 left-6 right-6 z-30">
+            <div class="glass rounded-xl p-3 shadow-sm flex items-center gap-3 transform transition-all hover:scale-[1.02]">
+                <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <span class="text-gray-500 text-sm flex-1">搜索目的地...</span>
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+        </div>
+
+        <!-- SVG 地图画布 --><div class="w-full h-full bg-[#bfe4ff] relative overflow-hidden">
+            <!-- 背景装饰：云彩 --><div class="absolute top-20 left-10 opacity-40 animate-[float_8s_ease-in-out_infinite]">
+                <svg width="60" height="30" viewBox="0 0 60 30" fill="white"><path d="M10 20 Q20 5 30 20 T50 20" stroke="white" stroke-width="20" stroke-linecap="round"/></svg>
+            </div>
+            <div class="absolute bottom-40 right-[-20px] opacity-30 animate-[float_10s_ease-in-out_infinite_reverse]">
+                <svg width="80" height="40" viewBox="0 0 80 40" fill="white"><path d="M10 30 Q30 10 50 30 T90 30" stroke="white" stroke-width="25" stroke-linecap="round"/></svg>
+            </div>
+
+            <svg id="map-svg" class="w-full h-full" viewBox="0 0 375 812" preserveAspectRatio="xMidYMid slice">
+                <defs>
+                    <linearGradient id="landGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#e2e8f0" />
+                        <stop offset="100%" stop-color="#cbd5e1" />
+                    </linearGradient>
+                    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="2" dy="4" stdDeviation="3" flood-opacity="0.1"/>
+                    </filter>
+                    <!-- 飞机图标定义 --><symbol id="plane-icon" viewBox="0 0 24 24">
+                        <path fill="#3b82f6" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                        <path fill="#60a5fa" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" opacity="0.5"/>
+                    </symbol>
+                </defs>
+
+                <!-- 抽象地图大陆 --><g filter="url(#shadow)">
+                    <!-- 大陆块 1 --><path d="M-50 200 C 50 150, 150 250, 200 150 S 350 100, 450 200 V 900 H -50 Z" fill="url(#landGradient)" stroke="white" stroke-width="2"/>
+                    <!-- 岛屿 --><path d="M250 500 C 230 480, 280 450, 320 480 S 350 550, 300 550 S 270 520, 250 500 Z" fill="#d1fae5" stroke="white" stroke-width="2"/>
+                </g>
+
+                <!-- 路线路径 (背景灰线) --><path id="route-bg" d="M80 250 C 150 250, 120 400, 200 450 S 300 500, 300 520 S 200 600, 100 650"
+                      fill="none" stroke="#94a3b8" stroke-width="3" stroke-dasharray="8 8" stroke-opacity="0.5"/>
+
+                <!-- 路线路径 (进度实线) --><path id="route-progress" class="path-line" d="M80 250 C 150 250, 120 400, 200 450 S 300 500, 300 520 S 200 600, 100 650"
+                      fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round"/>
+
+                <!-- 站点标记组 --><g id="markers">
+                    <!-- Stop 1 --><g transform="translate(80, 250)">
+                        <circle r="15" fill="#bfdbfe" class="pulse-circle" opacity="0"/>
+                        <circle r="6" fill="#3b82f6" stroke="white" stroke-width="2"/>
+                    </g>
+                    <!-- Stop 2 --><g transform="translate(300, 520)">
+                        <circle r="15" fill="#bfdbfe" class="pulse-circle" opacity="0"/>
+                        <circle r="6" fill="#3b82f6" stroke="white" stroke-width="2"/>
+                    </g>
+                    <!-- Stop 3 --><g transform="translate(100, 650)">
+                        <circle r="15" fill="#bfdbfe" class="pulse-circle" opacity="0"/>
+                        <circle r="6" fill="#3b82f6" stroke="white" stroke-width="2"/>
+                    </g>
+                </g>
+
+                <!-- 飞机组 --><g id="plane-group">
+                    <circle r="20" fill="white" fill-opacity="0.2"/>
+                    <use href="#plane-icon" x="-12" y="-12" width="24" height="24" transform="rotate(90)"/>
+                </g>
+            </svg>
+        </div>
+
+        <!-- 底部动态详情卡片 --><div id="info-card" class="absolute bottom-6 left-6 right-6 bg-white rounded-2xl p-5 shadow-2xl transition-all duration-500 ease-out card-exit z-50">
+            <div class="flex items-start justify-between mb-3">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="px-2 py-0.5 bg-blue-100 text-blue-600 text-[10px] font-bold rounded uppercase tracking-wider">目的地</span>
+                        <div class="flex text-yellow-400 text-xs">★★★★★</div>
+                    </div>
+                    <h2 id="location-title" class="text-xl font-bold text-gray-800">阿尔卑斯山</h2>
+                </div>
+                <div id="weather-icon" class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-xl">
+                    🏔️
+                </div>
+            </div>
+
+            <div class="flex gap-3 overflow-x-auto pb-2 mb-2 scrollbar-hide">
+                <div class="flex-shrink-0 w-20 h-14 bg-gray-200 rounded-lg overflow-hidden relative">
+                    <img id="thumb-1" src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=100&q=80" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-shrink-0 w-20 h-14 bg-gray-200 rounded-lg overflow-hidden relative">
+                    <img id="thumb-2" src="https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=100&q=80" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-shrink-0 w-20 h-14 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs font-bold border border-dashed border-gray-300">
+                    +4
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mt-4">
+                <div class="text-xs text-gray-500">
+                    <span class="block font-semibold text-gray-800">距离</span>
+                    1,240 km
+                </div>
+                <div class="text-xs text-gray-500">
+                    <span class="block font-semibold text-gray-800">飞行时间</span>
+                    2h 15m
+                </div>
+                <button class="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg font-semibold shadow-lg shadow-blue-600/30 active:scale-95 transition-transform">
+                    查看详情
+                </button>
+            </div>
+        </div>
+
+        <!-- 底部导航条 --><div class="absolute bottom-0 w-full h-20 bg-white/90 backdrop-blur-md border-t border-gray-100 flex justify-around items-center pb-4 z-40 rounded-b-[32px]">
+            <div class="flex flex-col items-center text-blue-600 gap-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0121 18.382V7.618a1 1 0 01-.806-.98l-4.553-2.276M15 7l-6 3m6-3v13"></path></svg>
+                <span class="text-[10px] font-bold">地图</span>
+            </div>
+            <div class="flex flex-col items-center text-gray-400 gap-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                <span class="text-[10px] font-medium">收藏</span>
+            </div>
+            <div class="flex flex-col items-center text-gray-400 gap-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                <span class="text-[10px] font-medium">我的</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 动画配置
+        const config = {
+            speed: 0.3, // 基础移动速度
+            pauseDuration: 2500, // 到达站点停留时间
+            stops: [
+                { percent: 0, title: "出发：北境营地", icon: "🏕️", img1: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=100", img2: "https://images.unsplash.com/photo-1517824806704-9040b037703b?w=100" },
+                { percent: 0.48, title: "中转：阳光岛屿", icon: "🏝️", img1: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=100", img2: "https://images.unsplash.com/photo-1540541338287-41700207dee6?w=100" },
+                { percent: 1.0, title: "终点：繁华都市", icon: "🏙️", img1: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=100", img2: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=100" }
+            ]
+        };
+
+        const planeGroup = document.getElementById('plane-group');
+        const routePath = document.getElementById('route-bg'); // 用来计算路径坐标
+        const routeProgress = document.getElementById('route-progress'); // 用来显示绘制进度
+        const pathLength = routePath.getTotalLength();
+        const card = document.getElementById('info-card');
+        const markers = document.querySelectorAll('#markers > g');
+
+        // 初始化路径样式
+        routeProgress.style.strokeDasharray = pathLength;
+        routeProgress.style.strokeDashoffset = pathLength;
+
+        let currentProgress = 0;
+        let targetStopIndex = 1; // 从第0个去第1个
+        let isPaused = false;
+        let animationId;
+
+        // 初始化飞机位置
+        updatePlanePosition(0);
+        showCard(0);
+
+        function updatePlanePosition(progress) {
+            // 1. 计算路径上的点
+            const point = routePath.getPointAtLength(progress * pathLength);
+
+            // 2. 计算角度 (为了让飞机头朝前)
+            // 取当前点和稍微前面一点的点来计算切线角度
+            const nextPoint = routePath.getPointAtLength(Math.min((progress + 0.01) * pathLength, pathLength));
+            const angle = Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x) * 180 / Math.PI;
+
+            // 3. 应用变换
+            planeGroup.setAttribute('transform', `translate(${point.x}, ${point.y}) rotate(${angle})`);
+
+            // 4. 更新路径绘制进度
+            routeProgress.style.strokeDashoffset = pathLength - (progress * pathLength);
+        }
+
+        function showCard(index) {
+            const data = config.stops[index];
+
+            // 先隐藏
+            card.classList.add('card-exit');
+            card.classList.remove('card-enter');
+
+            setTimeout(() => {
+                // 更新内容
+                document.getElementById('location-title').innerText = data.title;
+                document.getElementById('weather-icon').innerText = data.icon;
+                document.getElementById('thumb-1').src = data.img1;
+                document.getElementById('thumb-2').src = data.img2;
+
+                // 再显示
+                card.classList.remove('card-exit');
+                card.classList.add('card-enter');
+
+                // 触发脉冲动画
+                const markerPulse = markers[index].querySelector('.pulse-circle');
+                if(markerPulse) {
+                    // Reset animation by re-adding it
+                    markerPulse.style.animation = 'none';
+                    void markerPulse.offsetWidth; // Trigger reflow
+                    markerPulse.style.animation = 'pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite';
+                    markerPulse.style.opacity = 1;
+                }
+
+            }, 500);
+        }
+
+        function animate() {
+            if (isPaused) {
+                animationId = requestAnimationFrame(animate); // Keep requesting to resume after pause
+                return;
+            }
+
+            const targetPercent = config.stops[targetStopIndex].percent;
+            const direction = targetPercent > currentProgress ? 1 : -1;
+
+            // 移动一点点
+            currentProgress += 0.002 * direction;
+
+            // 检查是否到达或超过目标
+            const hasArrived = direction === 1
+                ? currentProgress >= targetPercent
+                : currentProgress <= targetPercent;
+
+            if (hasArrived) {
+                currentProgress = targetPercent; // 修正位置
+                updatePlanePosition(currentProgress);
+
+                // 到达站点逻辑
+                isPaused = true;
+                showCard(targetStopIndex);
+
+                // 停留后继续
+                setTimeout(() => {
+                    isPaused = false;
+                    targetStopIndex++;
+
+                    // 如果到了终点，重置回起点
+                    if (targetStopIndex >= config.stops.length) {
+                        targetStopIndex = 0; // 回到第一个站点
+                        currentProgress = 0;
+                        showCard(0); // 显示起点卡片
+                        updatePlanePosition(0);
+                    }
+                    requestAnimationFrame(animate); // 继续动画
+                }, config.pauseDuration);
+
+            } else {
+                updatePlanePosition(currentProgress);
+                animationId = requestAnimationFrame(animate);
+            }
+        }
+
+        // 启动动画
+        setTimeout(() => {
+            animate();
+        }, 1000); // 初始延迟
+    </script>
+</body>
+</html>

@@ -49,6 +49,7 @@ dependencies {
     implementation libs.swiperefreshlayout
     implementation libs.glide
     implementation libs.shimmer
+    implementation libs.viewpager2
     annotationProcessor libs.glideCompiler
     implementation 'com.amap.api:3dmap:latest.integration'
     implementation 'com.tencent.mm.opensdk:wechat-sdk-android:6.8.0'

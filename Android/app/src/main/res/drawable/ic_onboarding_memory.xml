@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="240"
+    android:viewportHeight="240">
+    <path
+        android:fillColor="#ECFCCB"
+        android:pathData="M120,8a112,112 0 1,1 0,224a112,112 0 1,1 0,-224" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M70,60h100a8,8 0,0 1,8 8v96a8,8 0,0 1,-8 8h-100a8,8 0,0 1,-8 -8v-96a8,8 0,0 1,8 -8z"
+        android:strokeColor="#E2E8F0"
+        android:strokeWidth="2"
+        android:rotation="-5"
+        android:pivotX="120"
+        android:pivotY="116" />
+    <path
+        android:fillColor="#F1F5F9"
+        android:pathData="M85,80h70v60h-70z"
+        android:rotation="-5"
+        android:pivotX="120"
+        android:pivotY="110" />
+    <path
+        android:fillColor="#CBD5E1"
+        android:pathData="M95,125l20,-30l20,30z"
+        android:rotation="-5"
+        android:pivotX="120"
+        android:pivotY="110" />
+    <path
+        android:fillColor="#94A3B8"
+        android:pathData="M120,100l15,-20l25,30l-40,0z"
+        android:rotation="-5"
+        android:pivotX="140"
+        android:pivotY="110" />
+    <path
+        android:fillColor="#F43F5E"
+        android:pathData="M170,60c0,0 -10,-10 -20,0c-10,-10 -20,0 -20,10c0,20 40,40 40,40s40,-20 40,-40c0,-10 -10,-20 -20,-10c-10,-10 -20,0 -20,0z"
+        android:scaleX="0.5"
+        android:scaleY="0.5"
+        android:translateX="120"
+        android:translateY="40" />
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M72,184l4,-10l4,10h10l-8,6l3,10l-9,-5l-9,5l3,-10l-8,-6z" />
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M108,190l4,-8l4,8h9l-7,5l2,9l-8,-5l-8,5l2,-9l-7,-5z" />
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M150,184l4,-8l4,8h9l-7,5l2,9l-8,-5l-8,5l2,-9l-7,-5z" />
+</vector>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="240"
+    android:viewportHeight="240">
+    <path
+        android:fillColor="#FFF4E6"
+        android:pathData="M120,8a112,112 0 1,1 0,224a112,112 0 1,1 0,-224" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M90,50h60a10,10 0,0 1,10 10v120a10,10 0,0 1,-10 10h-60a10,10 0,0 1,-10 -10v-120a10,10 0,0 1,10 -10z"
+        android:strokeColor="#1E293B"
+        android:strokeWidth="4" />
+    <path
+        android:fillColor="#F1F5F9"
+        android:pathData="M98,60h44a4,4 0,0 1,4 4v72a4,4 0,0 1,-4 4h-44a4,4 0,0 1,-4 -4v-72a4,4 0,0 1,4 -4z" />
+    <path
+        android:fillColor="#0EA5E9"
+        android:pathData="M100,148h40a4,4 0,0 1,4 4v6a4,4 0,0 1,-4 4h-40a4,4 0,0 1,-4 -4v-6a4,4 0,0 1,4 -4z" />
+    <path
+        android:fillColor="#CBD5F5"
+        android:pathData="M100,164h30a4,4 0,0 1,4 4v4a4,4 0,0 1,-4 4h-30a4,4 0,0 1,-4 -4v-4a4,4 0,0 1,4 -4z" />
+    <path
+        android:fillColor="#F97316"
+        android:pathData="M150,80l60,16l-8,30l-60,-16z"
+        android:rotation="-15"
+        android:pivotX="180"
+        android:pivotY="100" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M188,92a6,6 0 1,1 0,12a6,6 0 1,1 0,-12" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M156,92a6,6 0 1,1 0,12a6,6 0 1,1 0,-12" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:pathData="M172,84v40" />
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M44,140l74,20l-4,16l-74,-20z"
+        android:rotation="10"
+        android:pivotX="81"
+        android:pivotY="160" />
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M60,150a6,6 0 1,1 0,12a6,6 0 1,1 0,-12" />
+    <path
+        android:fillColor="#475569"
+        android:pathData="M70,166h30a2,2 0,0 1,2 2v2a2,2 0,0 1,-2 2h-30a2,2 0,0 1,-2 -2v-2a2,2 0,0 1,2 -2z" />
+</vector>

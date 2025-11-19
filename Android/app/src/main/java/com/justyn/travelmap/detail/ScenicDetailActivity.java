@@ -115,6 +115,7 @@ public class ScenicDetailActivity extends AppCompatActivity {
     };
     private static final float[] AUDIO_SPEEDS = new float[]{0.75f, 1f, 1.25f, 1.5f};
     private int audioSpeedIndex = 1;
+    private boolean shouldStartWhenPrepared;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -259,6 +260,9 @@ public class ScenicDetailActivity extends AppCompatActivity {
             if (tvAudioUnavailable != null) {
                 tvAudioUnavailable.setVisibility(View.VISIBLE);
             }
+            if (btnAudioPlayPause != null) {
+                btnAudioPlayPause.setEnabled(false);
+            }
             releaseAudioPlayer();
             return;
         }
@@ -269,16 +273,16 @@ public class ScenicDetailActivity extends AppCompatActivity {
         if (tvAudioUnavailable != null) {
             tvAudioUnavailable.setVisibility(View.GONE);
         }
+        shouldStartWhenPrepared = false;
         tvAudioTime.setText(getString(R.string.detail_audio_time_default));
         audioSlider.setEnabled(false);
         audioSlider.setValueFrom(0f);
         audioSlider.setValueTo(1f);
         audioSlider.setValue(0f);
-        btnAudioPlayPause.setEnabled(false);
+        btnAudioPlayPause.setEnabled(true);
         updateAudioPlayPauseUi(false);
         audioSpeedIndex = 1;
         updateAudioSpeedLabel();
-        prepareAudioPlayer(sanitizedUrl);
     }
 
     private String formatDouble(Double value) {
@@ -300,14 +304,18 @@ public class ScenicDetailActivity extends AppCompatActivity {
         return trimmed;
     }
 
-    private void prepareAudioPlayer(String audioUrl) {
+    private void prepareAudioPlayer(String audioUrl, boolean autoStart) {
         scenicAudioUrl = audioUrl;
         releaseAudioPlayer();
         if (TextUtils.isEmpty(audioUrl)) {
             return;
         }
+        shouldStartWhenPrepared = autoStart;
         showAudioLoading(true);
         audioPlayer = new MediaPlayer();
+        if (btnAudioPlayPause != null) {
+            btnAudioPlayPause.setEnabled(false);
+        }
         try {
             audioPlayer.setAudioAttributes(new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -329,6 +337,9 @@ public class ScenicDetailActivity extends AppCompatActivity {
                 }
                 updateAudioProgress(0, mp.getDuration());
                 applyAudioSpeed();
+                if (shouldStartWhenPrepared) {
+                    startAudioPlayback();
+                }
             });
             audioPlayer.setOnCompletionListener(mp -> {
                 stopAudioProgressUpdates();
@@ -340,7 +351,7 @@ public class ScenicDetailActivity extends AppCompatActivity {
                 Log.w(TAG, "prepareAudioPlayer onError: what=" + what + ", extra=" + extra);
                 showAudioLoading(false);
                 if (btnAudioPlayPause != null) {
-                    btnAudioPlayPause.setEnabled(false);
+                    btnAudioPlayPause.setEnabled(true);
                 }
                 if (audioSlider != null) {
                     audioSlider.setEnabled(false);
@@ -362,10 +373,15 @@ public class ScenicDetailActivity extends AppCompatActivity {
     }
 
     private void toggleAudioPlayback() {
-        if (audioPlayer == null || !isAudioPrepared) {
-            if (!TextUtils.isEmpty(scenicAudioUrl)) {
-                prepareAudioPlayer(scenicAudioUrl);
-            }
+        if (TextUtils.isEmpty(scenicAudioUrl)) {
+            return;
+        }
+        if (audioPlayer == null) {
+            prepareAudioPlayer(scenicAudioUrl, true);
+            return;
+        }
+        if (!isAudioPrepared) {
+            shouldStartWhenPrepared = true;
             return;
         }
         if (audioPlayer.isPlaying()) {
@@ -415,6 +431,7 @@ public class ScenicDetailActivity extends AppCompatActivity {
             audioSlider.setValue(0f);
         }
         showAudioLoading(false);
+        shouldStartWhenPrepared = false;
     }
 
     private void cycleAudioSpeed() {

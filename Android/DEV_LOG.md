@@ -4,6 +4,7 @@
 1. **登录/注册体系**
    - `LoginActivity` 调用 `AuthRepository` 完成账号登录，成功后通过 `UserPreferences` 缓存用户 JSON，并跳转 `MainActivity`。
    - `RegisterActivity` 对接注册接口，遵循 `app/API_DOC.md` 中的参数规范。注册成功后可直接使用刚创建的账号登录。
+   - 首次启动会优先检查 `IntroPreferences`；若未完成首登引导，则进入 `OnboardingActivity` 展示 4 张 Banner（跳过/下一步/开始探索），完成后写入 `onboarding_completed` 标记以避免重复展示。
 2. **用户会话管理**
    - `UserPreferences`/`UserProfile` 封装 SharedPreferences 读写，提供 `saveUser()`、`getUserProfile()`、`clear()` 等方法。
    - `MainActivity` 启动时校验登录态，若无有效用户信息则跳转 `LoginActivity`。
@@ -25,7 +26,7 @@
 
 ## 三、景点/商品详情
 1. **数据展示**
-   - `ScenicDetailActivity`：展示名称、城市、地址、经纬度、描述，骨架屏加载，支持收藏与“去过”切换（含评分弹窗）；顶部 Toolbar 副标题显示“首页 / 景点详情”。
+   - `ScenicDetailActivity`：展示名称、城市、地址、经纬度、描述，骨架屏加载，支持收藏与“去过”切换（含评分弹窗）；顶部 Toolbar 副标题显示“首页 / 景点详情”。若后端返回 `audio_url`，会渲染语音讲解卡片，内置播放/暂停、拖动、倍速切换、加载指示，并在页面暂停/销毁时自动停止播放。
    - `ProductDetailActivity`：展示名称、类型（TICKET/TRAVEL/HOTEL 等）、价格、库存、地址、描述，骨架屏加载，支持收藏与加入购物车；若类型为 HOTEL，则 Toolbar 副标题显示“预订 / 商品详情”，否则显示“商城 / 商品详情”。后续需在经纬度下方加地图组件。
 2. **交互**
    - 收藏/去过/加入购物车操作均调用 `UserCenterRepository` 对应接口，并在按钮右侧显示小型 `CircularProgressIndicator`。

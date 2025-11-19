@@ -18,9 +18,11 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.justyn.travelmap.data.local.IntroPreferences;
 import com.justyn.travelmap.data.local.UserPreferences;
 import com.justyn.travelmap.data.remote.ApiResponse;
 import com.justyn.travelmap.data.remote.AuthRepository;
+import com.justyn.travelmap.onboarding.OnboardingActivity;
 import com.justyn.travelmap.wechat.WeChatLoginManager;
 
 import org.json.JSONException;
@@ -45,11 +47,18 @@ public class LoginActivity extends AppCompatActivity implements WeChatLoginManag
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final AuthRepository authRepository = new AuthRepository();
     private UserPreferences userPreferences;
+    private IntroPreferences introPreferences;
     private WeChatLoginManager weChatLoginManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        introPreferences = new IntroPreferences(this);
+        if (!introPreferences.isOnboardingCompleted()) {
+            startActivity(new Intent(this, OnboardingActivity.class));
+            finish();
+            return;
+        }
         userPreferences = new UserPreferences(this);
         if (userPreferences.hasLoggedInUser()) {
             navigateToMain();

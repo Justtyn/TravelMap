@@ -160,11 +160,12 @@
         "address": "北京市东城区景山前街4号",
         "latitude": 39.9163,
         "longitude": 116.3972,
-        "audio_url": null
+        "audio_url": "https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/audio/example.wav"
       }
     ]
   }
   ```
+> `audio_url` 为可选字段（WAV/MP3 等音频地址），用于 App 景点详情页的语音讲解播放。若后端暂未配置，可返回 `null`。
 
 ### GET /api/scenics/{id}
 - 返回单个景点的完整字段；无记录 → `404 / "景点不存在"`。
