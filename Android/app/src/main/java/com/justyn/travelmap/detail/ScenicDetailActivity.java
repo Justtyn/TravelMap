@@ -79,6 +79,8 @@ public class ScenicDetailActivity extends AppCompatActivity {
     private Slider audioSlider;
     private TextView tvAudioTime;
     private LinearProgressIndicator audioLoadingBar;
+    private View audioControlsGroup;
+    private TextView tvAudioUnavailable;
     private MapView detailMapView;
     private AMap scenicMap;
     private Marker scenicMarker;
@@ -160,6 +162,8 @@ public class ScenicDetailActivity extends AppCompatActivity {
         audioSlider = findViewById(R.id.audioSlider);
         tvAudioTime = findViewById(R.id.tvAudioTime);
         audioLoadingBar = findViewById(R.id.audioLoadingBar);
+        audioControlsGroup = findViewById(R.id.audioControlsGroup);
+        tvAudioUnavailable = findViewById(R.id.tvAudioUnavailable);
         favoriteProgress = findViewById(R.id.favoriteProgress);
         visitedProgress = findViewById(R.id.visitedProgress);
         skeletonLayout = findViewById(R.id.scenicSkeleton);
@@ -244,14 +248,27 @@ public class ScenicDetailActivity extends AppCompatActivity {
         if (audioGuideCard == null || btnAudioPlayPause == null || audioSlider == null || tvAudioTime == null) {
             return;
         }
-        if (TextUtils.isEmpty(audioUrl)) {
+        String sanitizedUrl = sanitizeAudioUrl(audioUrl);
+        audioGuideCard.setVisibility(View.VISIBLE);
+        boolean hasAudio = !TextUtils.isEmpty(sanitizedUrl);
+        if (!hasAudio) {
             scenicAudioUrl = null;
-            audioGuideCard.setVisibility(View.GONE);
+            if (audioControlsGroup != null) {
+                audioControlsGroup.setVisibility(View.GONE);
+            }
+            if (tvAudioUnavailable != null) {
+                tvAudioUnavailable.setVisibility(View.VISIBLE);
+            }
             releaseAudioPlayer();
             return;
         }
-        scenicAudioUrl = audioUrl;
-        audioGuideCard.setVisibility(View.VISIBLE);
+        scenicAudioUrl = sanitizedUrl;
+        if (audioControlsGroup != null) {
+            audioControlsGroup.setVisibility(View.VISIBLE);
+        }
+        if (tvAudioUnavailable != null) {
+            tvAudioUnavailable.setVisibility(View.GONE);
+        }
         tvAudioTime.setText(getString(R.string.detail_audio_time_default));
         audioSlider.setEnabled(false);
         audioSlider.setValueFrom(0f);
@@ -261,7 +278,7 @@ public class ScenicDetailActivity extends AppCompatActivity {
         updateAudioPlayPauseUi(false);
         audioSpeedIndex = 1;
         updateAudioSpeedLabel();
-        prepareAudioPlayer(audioUrl);
+        prepareAudioPlayer(sanitizedUrl);
     }
 
     private String formatDouble(Double value) {
@@ -269,6 +286,18 @@ public class ScenicDetailActivity extends AppCompatActivity {
             return "";
         }
         return String.format("%.4f", value);
+    }
+
+    @Nullable
+    private String sanitizeAudioUrl(@Nullable String audioUrl) {
+        if (audioUrl == null) {
+            return null;
+        }
+        String trimmed = audioUrl.trim();
+        if (trimmed.isEmpty() || "null".equalsIgnoreCase(trimmed)) {
+            return null;
+        }
+        return trimmed;
     }
 
     private void prepareAudioPlayer(String audioUrl) {

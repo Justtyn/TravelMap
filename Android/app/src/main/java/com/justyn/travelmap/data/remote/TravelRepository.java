@@ -134,7 +134,12 @@ public class TravelRepository {
         Double lng = (scenic.has("longitude") && !scenic.isNull("longitude"))
                 ? scenic.optDouble("longitude") : null;
         String audioUrl = scenic.optString("audio_url");
-        if (TextUtils.isEmpty(audioUrl)) {
+        if (!TextUtils.isEmpty(audioUrl)) {
+            audioUrl = audioUrl.trim();
+            if (audioUrl.isEmpty() || "null".equalsIgnoreCase(audioUrl)) {
+                audioUrl = null;
+            }
+        } else {
             audioUrl = null;
         }
         return new FeedItem(id, title, description, imageUrl, null,

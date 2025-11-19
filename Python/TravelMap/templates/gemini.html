@@ -258,13 +258,17 @@
                     <p class="text-slate-500 dark:text-slate-400 mt-2">10 个关键页面，还原真实交互逻辑</p>
                 </div>
                 <div class="hidden md:flex gap-2">
-                    <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400"><i class="fas fa-arrow-left"></i></div>
-                    <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400"><i class="fas fa-arrow-right"></i></div>
+                    <button id="gallery-prev" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors focus:outline-none">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <button id="gallery-next" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors focus:outline-none">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div class="flex overflow-x-auto gap-6 px-4 sm:px-6 lg:px-8 pb-8 scrollbar-hide snap-x snap-mandatory">
+        <div id="gallery-container" class="flex overflow-x-auto gap-6 px-4 sm:px-6 lg:px-8 pb-8 scrollbar-hide snap-x snap-mandatory scroll-smooth">
             <!-- 动态生成 10 个带悬停效果的截图位 -->
             <script>
                 const screens = [
@@ -602,6 +606,19 @@
         document.querySelectorAll('h2, .group').forEach((el) => {
             el.classList.add('opacity-0');
             observer.observe(el);
+        });
+
+        // 截图画廊滚动控制
+        const galleryContainer = document.getElementById('gallery-container');
+        const galleryPrev = document.getElementById('gallery-prev');
+        const galleryNext = document.getElementById('gallery-next');
+
+        galleryPrev.addEventListener('click', () => {
+            galleryContainer.scrollBy({ left: -300, behavior: 'smooth' });
+        });
+
+        galleryNext.addEventListener('click', () => {
+            galleryContainer.scrollBy({ left: 300, behavior: 'smooth' });
         });
     </script>
 </body>
