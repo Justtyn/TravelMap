@@ -170,7 +170,7 @@
             <!-- Logo -->
             <div class="flex items-center gap-4 cursor-pointer group" onclick="window.scrollTo(0,0)">
                 <div class="relative w-10 h-10 flex items-center justify-center bg-slate-900 border border-white/10 rounded-lg overflow-hidden group-hover:border-primary/50 transition-colors">
-                     <i class="fas fa-map-marked-alt text-primary text-lg group-hover:scale-110 transition-transform"></i>
+                     <img src="http://139.59.227.54:5001/static/logo.png" alt="TravelMap Logo" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
                      <!-- 扫描线效果 -->
                      <div class="absolute inset-0 bg-gradient-to-b from-transparent via-primary/10 to-transparent translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-700"></div>
                 </div>
@@ -187,6 +187,31 @@
                 <a href="#features" class="text-slate-400 hover:text-primary transition-colors hover:underline decoration-primary decoration-2 underline-offset-4">~/MODULES</a>
                 <a href="#timeline" class="text-slate-400 hover:text-primary transition-colors hover:underline decoration-primary decoration-2 underline-offset-4">~/LOGS</a>
 
+                <div class="relative">
+                    <button id="style-switcher"
+                            class="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 text-slate-200 hover:bg-white/5 transition-all font-mono text-xs tracking-widest">
+                        <i class="fas fa-layer-group text-primary"></i>
+                        STYLE
+                        <i class="fas fa-chevron-down text-[10px] text-slate-500"></i>
+                    </button>
+                    <div id="style-switcher-menu"
+                         class="hidden absolute right-0 mt-2 w-52 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
+                        <a href="{{ url_for('home_page') }}"
+                           class="flex items-center justify-between px-4 py-2.5 text-xs text-slate-300 hover:bg-white/5">
+                            <span>默认风格</span>
+                        </a>
+                        <a href="{{ url_for('geek_style_page') }}"
+                           class="flex items-center justify-between px-4 py-2.5 text-xs text-slate-300 hover:bg-white/5">
+                            <span>Geek 风格</span>
+                        </a>
+                        <a href="{{ url_for('cyber_style_page') }}"
+                           class="flex items-center justify-between px-4 py-2.5 text-xs text-slate-100 bg-white/5">
+                            <span>Cyber 风格</span>
+                            <span class="text-[10px] text-primary font-bold">当前</span>
+                        </a>
+                    </div>
+                </div>
+
                 <a href="#download"
                    class="group relative px-6 py-2 overflow-hidden rounded bg-transparent border border-primary/30 hover:border-primary text-primary font-bold transition-all">
                     <div class="absolute inset-0 w-0 bg-primary/10 transition-all duration-[250ms] ease-out group-hover:w-full"></div>
@@ -196,13 +221,26 @@
                 </a>
             </div>
 
-            <!-- Mobile Menu Button -->
-            <div class="md:hidden flex items-center">
+            <!-- Mobile Controls -->
+            <div class="md:hidden flex items-center gap-3">
+                <button id="style-switcher-mobile"
+                        class="px-3 py-1.5 rounded-full border border-white/10 text-xs font-mono tracking-widest text-slate-200 hover:text-black hover:bg-primary transition-all">
+                    STYLE
+                </button>
                 <button id="mobile-menu-btn" class="text-slate-300 hover:text-primary transition-colors p-2">
                     <i class="fas fa-terminal text-xl"></i>
                 </button>
             </div>
         </div>
+    </div>
+    <div id="style-switcher-menu-mobile"
+         class="md:hidden hidden absolute right-4 top-20 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl w-48 z-50">
+        <a href="{{ url_for('home_page') }}"
+           class="block px-4 py-2.5 text-xs text-slate-300 hover:bg-white/5">默认风格</a>
+        <a href="{{ url_for('geek_style_page') }}"
+           class="block px-4 py-2.5 text-xs text-slate-300 hover:bg-white/5">Geek 风格</a>
+        <a href="{{ url_for('cyber_style_page') }}"
+           class="block px-4 py-2.5 text-xs text-slate-100 bg-white/5">Cyber 风格（当前）</a>
     </div>
     <!-- Mobile Menu Overlay would go here -->
 </nav>
@@ -606,7 +644,7 @@
                     <a href="mailto:togjustyn@gmail.com" class="w-10 h-10 flex items-center justify-center rounded bg-white/5 hover:bg-secondary hover:text-white transition-all border border-white/10">
                         <i class="fas fa-envelope"></i>
                     </a>
-                    <a href="#" class="w-10 h-10 flex items-center justify-center rounded bg-white/5 hover:bg-accent hover:text-black transition-all border border-white/10">
+                    <a href="https://justtyn.github.io/" target="_blank" class="w-10 h-10 flex items-center justify-center rounded bg-white/5 hover:bg-accent hover:text-black transition-all border border-white/10">
                         <i class="fas fa-globe"></i>
                     </a>
                 </div>
@@ -662,6 +700,29 @@
 </section>
 
 <script>
+    const desktopStyleSwitcher = document.getElementById('style-switcher');
+    const desktopStyleMenu = document.getElementById('style-switcher-menu');
+    const mobileStyleSwitcher = document.getElementById('style-switcher-mobile');
+    const mobileStyleMenu = document.getElementById('style-switcher-menu-mobile');
+
+    function bindStyleMenu(trigger, menu) {
+        if (!trigger || !menu) return;
+        trigger.addEventListener('click', (event) => {
+            event.stopPropagation();
+            menu.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (event) => {
+            if (!menu.classList.contains('hidden') &&
+                !menu.contains(event.target) &&
+                !trigger.contains(event.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+    }
+
+    bindStyleMenu(desktopStyleSwitcher, desktopStyleMenu);
+    bindStyleMenu(mobileStyleSwitcher, mobileStyleMenu);
+
     // Smooth scroll for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {

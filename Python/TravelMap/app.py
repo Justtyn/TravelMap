@@ -593,6 +593,16 @@ def home_page():
     return render_template('index.html')
 
 
+@app.route('/style/geek')
+def geek_style_page():
+    return render_template('index_geek.html')
+
+
+@app.route('/style/cyber')
+def cyber_style_page():
+    return render_template('index_cyber.html')
+
+
 @app.route('/docs')
 def docs_page():
     return render_template('docs.html', github_url=GITHUB_URL, active='docs', title='TravelMap · 文档中心')
