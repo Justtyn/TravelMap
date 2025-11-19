@@ -94,7 +94,7 @@ public class UserCenterRepository {
             double totalPrice = order.optDouble("total_price", Double.NaN);
             String priceLabel = Double.isNaN(totalPrice) ? null : String.format(Locale.getDefault(), "¥%.2f", totalPrice);
             items.add(new FeedItem(orderId, title, description, imageUrl, priceLabel,
-                    order.optString("create_time"), null, null, null, null, null, null));
+                    order.optString("create_time"), null, null, null, null, null, null, null));
         }
         return items;
     }
@@ -178,7 +178,7 @@ public class UserCenterRepository {
                     ? String.format(Locale.getDefault(), "评分：%d/5", ratingValue)
                     : null;
             result.add(new FeedItem(scenicId, title, description, imageUrl, null,
-                    scenic.optString("city"), address, lat, lng, null, visitTime, ratingLabel));
+                    scenic.optString("city"), address, lat, lng, null, visitTime, ratingLabel, null));
         }
         return result;
     }
@@ -344,7 +344,7 @@ public class UserCenterRepository {
                     ? target.optInt("stock") : null;
             items.add(new FeedItem(id, title, description, imageUrl, priceLabel, extra,
                     TextUtils.isEmpty(address) ? null : address,
-                    lat, lng, stock, null, null));
+                    lat, lng, stock, null, null, null));
         }
         return items;
     }
@@ -370,7 +370,7 @@ public class UserCenterRepository {
                 ? productJson.optInt("stock") : null;
         return new FeedItem(id, title, description, imageUrl, priceLabel,
                 productJson.optString("type"), TextUtils.isEmpty(address) ? null : address,
-                lat, lng, stock, null, null);
+                lat, lng, stock, null, null, null);
     }
 
     private OrderDetail buildOrderDetail(JSONObject orderJson) {

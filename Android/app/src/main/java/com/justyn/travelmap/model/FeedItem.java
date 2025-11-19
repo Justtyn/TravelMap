@@ -16,9 +16,10 @@ public class FeedItem {
     private final Integer stock;
     private final String visitTime;
     private final String ratingLabel;
+    private final String audioUrl;
 
     public FeedItem(long id, String title, String description, String imageUrl) {
-        this(id, title, description, imageUrl, null, null, null, null, null, null, null, null);
+        this(id, title, description, imageUrl, null, null, null, null, null, null, null, null, null);
     }
 
     public FeedItem(long id,
@@ -32,7 +33,8 @@ public class FeedItem {
                     Double longitude,
                     Integer stock,
                     String visitTime,
-                    String ratingLabel) {
+                    String ratingLabel,
+                    String audioUrl) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -45,6 +47,7 @@ public class FeedItem {
         this.stock = stock;
         this.visitTime = visitTime;
         this.ratingLabel = ratingLabel;
+        this.audioUrl = audioUrl;
     }
 
     public long getId() {
@@ -93,5 +96,9 @@ public class FeedItem {
 
     public String getRatingLabel() {
         return ratingLabel;
+    }
+
+    public String getAudioUrl() {
+        return audioUrl;
     }
 }

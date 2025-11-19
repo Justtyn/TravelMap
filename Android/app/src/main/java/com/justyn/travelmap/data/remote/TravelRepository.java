@@ -133,10 +133,14 @@ public class TravelRepository {
                 ? scenic.optDouble("latitude") : null;
         Double lng = (scenic.has("longitude") && !scenic.isNull("longitude"))
                 ? scenic.optDouble("longitude") : null;
+        String audioUrl = scenic.optString("audio_url");
+        if (TextUtils.isEmpty(audioUrl)) {
+            audioUrl = null;
+        }
         return new FeedItem(id, title, description, imageUrl, null,
                 scenic.optString("city"),
                 TextUtils.isEmpty(address) ? null : address,
-                lat, lng, null, null, null);
+                lat, lng, null, null, null, audioUrl);
     }
 
     private List<FeedItem> parseScenicArray(JSONArray array) {
@@ -171,7 +175,7 @@ public class TravelRepository {
         return new FeedItem(id, title, description, imageUrl, priceLabel, actualType,
                 TextUtils.isEmpty(address) ? null : address,
                 null, null,
-                stock, null, null);
+                stock, null, null, null);
     }
 
     private boolean typeMatches(String actualType, String expectedType) {

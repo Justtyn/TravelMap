@@ -2,7 +2,13 @@ package com.justyn.travelmap.detail;
 
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.media.AudioAttributes;
+import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,8 +30,11 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.slider.Slider;
 import com.justyn.travelmap.R;
 import com.justyn.travelmap.data.local.UserPreferences;
 import com.justyn.travelmap.data.local.UserProfile;
@@ -39,6 +48,7 @@ import com.justyn.travelmap.ui.map.MapPrivacyHelper;
 import com.facebook.shimmer.ShimmerFrameLayout;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -47,6 +57,7 @@ import org.json.JSONException;
 public class ScenicDetailActivity extends AppCompatActivity {
 
     public static final String EXTRA_SCENIC_ID = "extra_scenic_id";
+    private static final String TAG = "ScenicDetail";
 
     private ShapeableImageView ivBanner;
     private TextView tvTitle;
@@ -57,11 +68,17 @@ public class ScenicDetailActivity extends AppCompatActivity {
     private TextView tvDescription;
     private MaterialButton btnFavorite;
     private MaterialButton btnVisited;
+    private MaterialButton btnAudioPlayPause;
+    private MaterialButton btnAudioSpeed;
     private CircularProgressIndicator favoriteProgress;
     private CircularProgressIndicator visitedProgress;
     private ShimmerFrameLayout skeletonLayout;
     private View contentContainer;
     private View scenicMapCard;
+    private MaterialCardView audioGuideCard;
+    private Slider audioSlider;
+    private TextView tvAudioTime;
+    private LinearProgressIndicator audioLoadingBar;
     private MapView detailMapView;
     private AMap scenicMap;
     private Marker scenicMarker;
@@ -77,6 +94,25 @@ public class ScenicDetailActivity extends AppCompatActivity {
     private boolean isFavorited;
     private VisitedRecord visitedRecord;
     private long scenicId;
+    private MediaPlayer audioPlayer;
+    private boolean isAudioPrepared;
+    private String scenicAudioUrl;
+    private final Handler audioHandler = new Handler(Looper.getMainLooper());
+    // 负责定期读取 MediaPlayer 的进度，推动播放条更新
+    private final Runnable audioProgressUpdater = new Runnable() {
+        @Override
+        public void run() {
+            if (audioPlayer == null || !isAudioPrepared) {
+                return;
+            }
+            int position = audioPlayer.getCurrentPosition();
+            int duration = audioPlayer.getDuration();
+            updateAudioProgress(position, duration);
+            audioHandler.postDelayed(this, 500);
+        }
+    };
+    private static final float[] AUDIO_SPEEDS = new float[]{0.75f, 1f, 1.25f, 1.5f};
+    private int audioSpeedIndex = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,6 +146,7 @@ public class ScenicDetailActivity extends AppCompatActivity {
         tvLatLng = findViewById(R.id.tvLatLng);
         tvMapTitle = findViewById(R.id.tvMapTitle);
         scenicMapCard = findViewById(R.id.scenicMapCard);
+        audioGuideCard = findViewById(R.id.cardAudioGuide);
         detailMapView = findViewById(R.id.detailMapView);
         if (detailMapView != null) {
             detailMapView.onCreate(savedInstanceState);
@@ -118,6 +155,11 @@ public class ScenicDetailActivity extends AppCompatActivity {
         tvDescription = findViewById(R.id.tvDescription);
         btnFavorite = findViewById(R.id.btnFavorite);
         btnVisited = findViewById(R.id.btnVisited);
+        btnAudioPlayPause = findViewById(R.id.btnAudioPlayPause);
+        btnAudioSpeed = findViewById(R.id.btnAudioSpeed);
+        audioSlider = findViewById(R.id.audioSlider);
+        tvAudioTime = findViewById(R.id.tvAudioTime);
+        audioLoadingBar = findViewById(R.id.audioLoadingBar);
         favoriteProgress = findViewById(R.id.favoriteProgress);
         visitedProgress = findViewById(R.id.visitedProgress);
         skeletonLayout = findViewById(R.id.scenicSkeleton);
@@ -125,6 +167,22 @@ public class ScenicDetailActivity extends AppCompatActivity {
 
         btnFavorite.setOnClickListener(v -> toggleFavorite());
         btnVisited.setOnClickListener(v -> toggleVisited());
+        if (btnAudioPlayPause != null) {
+            btnAudioPlayPause.setOnClickListener(v -> toggleAudioPlayback());
+        }
+        if (btnAudioSpeed != null) {
+            btnAudioSpeed.setOnClickListener(v -> cycleAudioSpeed());
+        }
+        if (audioSlider != null) {
+            audioSlider.setEnabled(false);
+            audioSlider.addOnChangeListener((slider, value, fromUser) -> {
+                if (!fromUser || audioPlayer == null || !isAudioPrepared) {
+                    return;
+                }
+                audioPlayer.seekTo((int) value);
+                updateAudioProgress((int) value, audioPlayer.getDuration());
+            });
+        }
     }
 
     private void loadDetail() {
@@ -179,6 +237,31 @@ public class ScenicDetailActivity extends AppCompatActivity {
         }
         tvDescription.setText(detail.getDescription());
         ImageLoader.load(ivBanner, detail.getImageUrl());
+        setupAudioSection(detail.getAudioUrl());
+    }
+
+    private void setupAudioSection(@Nullable String audioUrl) {
+        if (audioGuideCard == null || btnAudioPlayPause == null || audioSlider == null || tvAudioTime == null) {
+            return;
+        }
+        if (TextUtils.isEmpty(audioUrl)) {
+            scenicAudioUrl = null;
+            audioGuideCard.setVisibility(View.GONE);
+            releaseAudioPlayer();
+            return;
+        }
+        scenicAudioUrl = audioUrl;
+        audioGuideCard.setVisibility(View.VISIBLE);
+        tvAudioTime.setText(getString(R.string.detail_audio_time_default));
+        audioSlider.setEnabled(false);
+        audioSlider.setValueFrom(0f);
+        audioSlider.setValueTo(1f);
+        audioSlider.setValue(0f);
+        btnAudioPlayPause.setEnabled(false);
+        updateAudioPlayPauseUi(false);
+        audioSpeedIndex = 1;
+        updateAudioSpeedLabel();
+        prepareAudioPlayer(audioUrl);
     }
 
     private String formatDouble(Double value) {
@@ -186,6 +269,199 @@ public class ScenicDetailActivity extends AppCompatActivity {
             return "";
         }
         return String.format("%.4f", value);
+    }
+
+    private void prepareAudioPlayer(String audioUrl) {
+        scenicAudioUrl = audioUrl;
+        releaseAudioPlayer();
+        if (TextUtils.isEmpty(audioUrl)) {
+            return;
+        }
+        showAudioLoading(true);
+        audioPlayer = new MediaPlayer();
+        try {
+            audioPlayer.setAudioAttributes(new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                    .build());
+            audioPlayer.setDataSource(audioUrl);
+            audioPlayer.setOnPreparedListener(mp -> {
+                isAudioPrepared = true;
+                showAudioLoading(false);
+                if (btnAudioPlayPause != null) {
+                    btnAudioPlayPause.setEnabled(true);
+                }
+                if (audioSlider != null) {
+                    audioSlider.setEnabled(true);
+                    audioSlider.setValueFrom(0f);
+                    float duration = Math.max(mp.getDuration(), 1);
+                    audioSlider.setValueTo(duration);
+                    audioSlider.setValue(0f);
+                }
+                updateAudioProgress(0, mp.getDuration());
+                applyAudioSpeed();
+            });
+            audioPlayer.setOnCompletionListener(mp -> {
+                stopAudioProgressUpdates();
+                mp.seekTo(0);
+                updateAudioProgress(0, mp.getDuration());
+                updateAudioPlayPauseUi(false);
+            });
+            audioPlayer.setOnErrorListener((mp, what, extra) -> {
+                Log.w(TAG, "prepareAudioPlayer onError: what=" + what + ", extra=" + extra);
+                showAudioLoading(false);
+                if (btnAudioPlayPause != null) {
+                    btnAudioPlayPause.setEnabled(false);
+                }
+                if (audioSlider != null) {
+                    audioSlider.setEnabled(false);
+                }
+                Toast.makeText(this, getString(R.string.detail_audio_error, getString(R.string.toast_network_error)), Toast.LENGTH_SHORT).show();
+                return true;
+            });
+            // 异步准备音频，避免阻塞主线程
+            audioPlayer.prepareAsync();
+        } catch (IOException e) {
+            Log.e(TAG, "prepareAudioPlayer: ", e);
+            showAudioLoading(false);
+            String reason = TextUtils.isEmpty(e.getMessage())
+                    ? getString(R.string.toast_network_error)
+                    : e.getMessage();
+            Toast.makeText(this, getString(R.string.detail_audio_error, reason), Toast.LENGTH_SHORT).show();
+            releaseAudioPlayer();
+        }
+    }
+
+    private void toggleAudioPlayback() {
+        if (audioPlayer == null || !isAudioPrepared) {
+            if (!TextUtils.isEmpty(scenicAudioUrl)) {
+                prepareAudioPlayer(scenicAudioUrl);
+            }
+            return;
+        }
+        if (audioPlayer.isPlaying()) {
+            pauseAudioPlayback();
+        } else {
+            startAudioPlayback();
+        }
+    }
+
+    private void startAudioPlayback() {
+        if (audioPlayer == null || !isAudioPrepared) {
+            return;
+        }
+        audioPlayer.start();
+        startAudioProgressUpdates();
+        updateAudioPlayPauseUi(true);
+    }
+
+    private void pauseAudioPlayback() {
+        if (audioPlayer == null || !isAudioPrepared) {
+            return;
+        }
+        if (audioPlayer.isPlaying()) {
+            audioPlayer.pause();
+        }
+        stopAudioProgressUpdates();
+        updateAudioPlayPauseUi(false);
+    }
+
+    private void releaseAudioPlayer() {
+        stopAudioProgressUpdates();
+        if (audioPlayer != null) {
+            try {
+                audioPlayer.stop();
+            } catch (IllegalStateException ignored) {
+            }
+            audioPlayer.release();
+            audioPlayer = null;
+        }
+        isAudioPrepared = false;
+        if (btnAudioPlayPause != null) {
+            btnAudioPlayPause.setEnabled(false);
+            updateAudioPlayPauseUi(false);
+        }
+        if (audioSlider != null) {
+            audioSlider.setEnabled(false);
+            audioSlider.setValue(0f);
+        }
+        showAudioLoading(false);
+    }
+
+    private void cycleAudioSpeed() {
+        if (btnAudioSpeed == null) {
+            return;
+        }
+        audioSpeedIndex = (audioSpeedIndex + 1) % AUDIO_SPEEDS.length;
+        updateAudioSpeedLabel();
+        applyAudioSpeed();
+    }
+
+    private void applyAudioSpeed() {
+        if (audioPlayer == null || !isAudioPrepared) {
+            return;
+        }
+        try {
+            audioPlayer.setPlaybackParams(audioPlayer.getPlaybackParams().setSpeed(AUDIO_SPEEDS[audioSpeedIndex]));
+        } catch (Exception e) {
+            Log.w(TAG, "applyAudioSpeed failed", e);
+        }
+    }
+
+    private void updateAudioSpeedLabel() {
+        if (btnAudioSpeed != null) {
+            btnAudioSpeed.setText(getString(R.string.detail_audio_speed_template, AUDIO_SPEEDS[audioSpeedIndex]));
+        }
+    }
+
+    private void updateAudioPlayPauseUi(boolean playing) {
+        if (btnAudioPlayPause == null) {
+            return;
+        }
+        btnAudioPlayPause.setIconResource(playing ? R.drawable.ic_audio_pause : R.drawable.ic_audio_play);
+        btnAudioPlayPause.setText(playing ? R.string.detail_audio_pause : R.string.detail_audio_play);
+    }
+
+    // 通过 Handler 定时刷新播放进度，保证播放条与音频保持同步
+    private void startAudioProgressUpdates() {
+        audioHandler.removeCallbacks(audioProgressUpdater);
+        audioHandler.post(audioProgressUpdater);
+    }
+
+    private void stopAudioProgressUpdates() {
+        audioHandler.removeCallbacks(audioProgressUpdater);
+    }
+
+    private void updateAudioProgress(int position, int duration) {
+        if (audioSlider != null) {
+            float max = Math.max(duration, 1);
+            if (audioSlider.getValueTo() != max) {
+                audioSlider.setValueTo(max);
+            }
+            audioSlider.setValue(Math.min(position, duration));
+        }
+        if (tvAudioTime != null) {
+            tvAudioTime.setText(formatAudioTime(position, duration));
+        }
+    }
+
+    private String formatAudioTime(int currentMs, int totalMs) {
+        return String.format(Locale.getDefault(), "%s / %s",
+                formatAudioDuration(currentMs),
+                formatAudioDuration(totalMs));
+    }
+
+    private String formatAudioDuration(int milliseconds) {
+        int totalSeconds = Math.max(milliseconds, 0) / 1000;
+        int minutes = totalSeconds / 60;
+        int seconds = totalSeconds % 60;
+        return String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
+    }
+
+    private void showAudioLoading(boolean loading) {
+        if (audioLoadingBar != null) {
+            audioLoadingBar.setVisibility(loading ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void showScenicOnMap(FeedItem detail) {
@@ -405,6 +681,7 @@ public class ScenicDetailActivity extends AppCompatActivity {
         if (detailMapView != null) {
             detailMapView.onPause();
         }
+        pauseAudioPlayback();
     }
 
     @Override
@@ -435,6 +712,7 @@ public class ScenicDetailActivity extends AppCompatActivity {
             Glide.with(getApplicationContext()).clear(scenicMarkerTarget);
             scenicMarkerTarget = null;
         }
+        releaseAudioPlayer();
         executor.shutdownNow();
         super.onDestroy();
     }
