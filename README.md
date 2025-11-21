@@ -1,3 +1,12 @@
+<div align="center">
+  <a href="https://github.com/Justtyn/TravelMap">
+    <img alt="TravelMap Logo" width="215" src="https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/logo.png">
+  </a>
+  <br>
+  <br>
+
+[![license](https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/mit.svg)](LICENSE)
+
 # TravelMap
 
 面向课程设计与展示的智慧文旅解决方案，涵盖 Material Design Android 客户端、Flask/SQLite REST 后端、可在线访问的文档中心与静态官网。线上体验环境部署在 <https://canulove.me>，可直接安装 APK 或调试 API。
@@ -7,7 +16,7 @@
 | Android 工程 | `Android/` |
 | Flask 后端 | `Python/TravelMap/app.py` |
 | API 文档（Markdown） | `Android/app/API_DOC.md` / `Python/TravelMap/doc/API_DOC.md` |
-| 生产站点 & API Explorer | <https://canulove.me> / <https://canulove.me/api-explorer> |
+| 生产站点 | <https://canulove.me> |
 | APK（本地） | `Python/TravelMap/static/TravelMap.apk` |
 
 ## 核心亮点
@@ -157,7 +166,7 @@ python app.py                   # 默认监听 0.0.0.0:5001
    server {
        listen 80;
        server_name canulove.me;
-
+   
        location /static/ { alias /srv/TravelMap/Python/TravelMap/static/; }
        location /docs/file/ { try_files $uri @app; }
        location / {
