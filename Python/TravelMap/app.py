@@ -54,7 +54,7 @@ STYLE_TEMPLATE_MAP = {
     'geek': 'index_geek.html',
     'cyber': 'index_cyber.html'
 }
-DEFAULT_STYLE = 'geek' # normal / geek / cyber
+DEFAULT_STYLE = 'geek'  # normal / geek / cyber
 
 WECHAT_APP_ID = 'wxb47bc8f618cc1b59'
 WECHAT_APP_SECRET = '84ae2dde3996c26339ad06c7c55345a8'
@@ -124,7 +124,7 @@ API_SECTIONS = [
                     {'name': 'phone', 'type': 'string', 'required': False, 'desc': '手机号，可选'},
                     {'name': 'email', 'type': 'string', 'required': False, 'desc': '邮箱，可选'}
                 ],
-                'response': {'code': 200, 'msg': 'OK', 'data': {'id': 1, 'username': 'demo'}} ,
+                'response': {'code': 200, 'msg': 'OK', 'data': {'id': 1, 'username': 'demo'}},
                 'sample_body': {'username': 'demo_user', 'password': '123456'}
             },
             {
