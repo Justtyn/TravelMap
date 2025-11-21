@@ -1,5 +1,199 @@
 # 开发说明（Dev Log）
 
+## 项目结构（完整开发文件）
+- 由 `rg --files` 导出，涵盖当前所有开发文件（编译产物已被 .gitignore 过滤），括号内为中文注释便于快速定位。
+```
+.
+|-- AGENTS.md（代理使用说明）
+|-- API_DOC.md（后端接口文档）
+|-- DEV_LOG.md（当前开发日志）
+|-- app（Android 模块根目录）
+|   |-- build.gradle（app 模块构建脚本）
+|   |-- proguard-rules.pro（混淆配置）
+|   `-- src（源码目录）
+|       |-- androidTest（仪器测试）
+|       |   `-- java
+|       |       `-- com
+|       |           `-- justyn
+|       |               `-- travelmap
+|       |                   `-- ExampleInstrumentedTest.java（示例 UI 测试）
+|       |-- main（主代码与资源）
+|       |   |-- AndroidManifest.xml（清单文件）
+|       |   |-- java
+|       |   |   `-- com
+|       |   |       `-- justyn
+|       |   |           `-- travelmap
+|       |   |               |-- LoginActivity.java（登录页）
+|       |   |               |-- MainActivity.java（主容器含底部导航）
+|       |   |               |-- RegisterActivity.java（注册页）
+|       |   |               |-- data（数据层）
+|       |   |               |   |-- local（本地存储）
+|       |   |               |   |   |-- IntroPreferences.java（引导页偏好）
+|       |   |               |   |   |-- UserPreferences.java（用户 SharedPreferences）
+|       |   |               |   |   `-- UserProfile.java（用户模型解析）
+|       |   |               |   `-- remote（网络层）
+|       |   |               |       |-- ApiClient.java（HTTP 客户端封装）
+|       |   |               |       |-- ApiResponse.java（通用响应模型）
+|       |   |               |       |-- AuthRepository.java（认证仓库）
+|       |   |               |       |-- TravelRepository.java（景点/商品仓库）
+|       |   |               |       `-- UserCenterRepository.java（用户中心仓库）
+|       |   |               |-- detail（详情页相关）
+|       |   |               |   |-- ProductDetailActivity.java（商品详情）
+|       |   |               |   `-- ScenicDetailActivity.java（景点详情）
+|       |   |               |-- fragment（Tab Fragment）
+|       |   |               |   |-- BaseFeedFragment.java（Feed 基类）
+|       |   |               |   |-- BookingFragment.java（预订 Tab）
+|       |   |               |   |-- HomeFragment.java（首页 Tab）
+|       |   |               |   |-- MallFragment.java（商城 Tab）
+|       |   |               |   |-- MapFragment.java（地图/行程 Tab）
+|       |   |               |   `-- MyFragment.java（我的 Tab）
+|       |   |               |-- model（数据模型）
+|       |   |               |   |-- CartItem.java（购物车项数据）
+|       |   |               |   |-- FeedItem.java（Feed 列表项）
+|       |   |               |   |-- OrderDetail.java（订单详情模型）
+|       |   |               |   |-- OrderItemDetail.java（订单子项模型）
+|       |   |               |   `-- VisitedRecord.java（去过记录模型）
+|       |   |               |-- onboarding（首登引导）
+|       |   |               |   |-- OnboardingActivity.java（引导页容器）
+|       |   |               |   |-- OnboardingAdapter.java（引导 pager 适配器）
+|       |   |               |   `-- OnboardingPage.java（引导数据模型）
+|       |   |               |-- profile（我的中心二级页）
+|       |   |               |   |-- AboutActivity.java（关于页）
+|       |   |               |   |-- CartActivity.java（购物车页）
+|       |   |               |   |-- FavoritesActivity.java（收藏列表）
+|       |   |               |   |-- OrderDetailActivity.java（订单详情页）
+|       |   |               |   |-- OrderSuccessActivity.java（下单成功页）
+|       |   |               |   |-- OrdersActivity.java（订单列表）
+|       |   |               |   |-- UserInfoActivity.java（个人资料）
+|       |   |               |   |-- VisitedActivity.java（去过列表）
+|       |   |               |   `-- adapter（个人中心适配器）
+|       |   |               |       |-- CartAdapter.java（购物车列表适配器）
+|       |   |               |       `-- OrderItemAdapter.java（订单子项适配器）
+|       |   |               |-- ui（通用 UI 工具）
+|       |   |               |   |-- common
+|       |   |               |   |   `-- ImageLoader.java（Glide 封装）
+|       |   |               |   |-- feed
+|       |   |               |   |   `-- FeedAdapter.java（Feed RecyclerView 适配器）
+|       |   |               |   `-- map
+|       |   |               |       |-- MapMarkerRenderer.java（自定义 Marker 渲染）
+|       |   |               |       `-- MapPrivacyHelper.java（高德隐私合规弹窗）
+|       |   |               |-- wechat（微信相关）
+|       |   |               |   |-- WeChatLoginManager.java（微信登录封装）
+|       |   |               |   `-- WeChatShareHelper.java（微信分享封装）
+|       |   |               `-- wxapi
+|       |   |                   `-- WXEntryActivity.java（微信回调入口）
+|       |   `-- res（UI 资源）
+|       |       |-- color
+|       |       |   `-- selector_nav_item.xml（底部导航色选择）
+|       |       |-- drawable（矢量/shape 资源）
+|       |       |   |-- banner_placeholder.xml（Banner 占位）
+|       |       |   |-- bg_indicator_active.xml（引导指示器选中）
+|       |       |   |-- bg_indicator_inactive.xml（引导指示器未选）
+|       |       |   |-- bg_marker_card.xml（地图 Marker 背景）
+|       |       |   |-- bg_quantity_button.xml（数量按钮背景）
+|       |       |   |-- bg_skeleton_rect.xml（骨架占位）
+|       |       |   |-- divider_vertical.xml（纵向分割线）
+|       |       |   |-- ic_add.xml（加号图标）
+|       |       |   |-- ic_arrow_back.xml（返回图标）
+|       |       |   |-- ic_audio_pause.xml（音频暂停图标）
+|       |       |   |-- ic_audio_play.xml（音频播放图标）
+|       |       |   |-- ic_calendar.xml（日历图标）
+|       |       |   |-- ic_cart.xml（购物车图标）
+|       |       |   |-- ic_chevron_right.xml（箭头图标）
+|       |       |   |-- ic_image_placeholder.xml（图片占位）
+|       |       |   |-- ic_info.xml（信息提示）
+|       |       |   |-- ic_inventory.xml（库存图标）
+|       |       |   |-- ic_launcher_background.xml（启动图背景）
+|       |       |   |-- ic_launcher_foreground.xml（启动图前景）
+|       |       |   |-- ic_location.xml（定位图标）
+|       |       |   |-- ic_logo_travelmap.xml（Logo 矢量）
+|       |       |   |-- ic_minus.xml（减号图标）
+|       |       |   |-- ic_nav_booking.xml（底栏预订图标）
+|       |       |   |-- ic_nav_home.xml（底栏首页图标）
+|       |       |   |-- ic_nav_mall.xml（底栏商城图标）
+|       |       |   |-- ic_nav_my.xml（底栏我的图标）
+|       |       |   |-- ic_nav_plan.xml（底栏行程图标）
+|       |       |   |-- ic_onboarding_booking.xml（引导插画-预订）
+|       |       |   |-- ic_onboarding_discover.xml（引导插画-发现）
+|       |       |   |-- ic_onboarding_memory.xml（引导插画-记忆）
+|       |       |   |-- ic_onboarding_navigation.xml（引导插画-导航）
+|       |       |   |-- ic_place.xml（地点图标）
+|       |       |   |-- ic_search.xml（搜索图标）
+|       |       |   |-- ic_star.xml（评分星星）
+|       |       |   `-- shape_circle.xml（圆形 shape）
+|       |       |-- layout（布局文件）
+|       |       |   |-- activity_about.xml（关于页布局）
+|       |       |   |-- activity_cart.xml（购物车布局）
+|       |       |   |-- activity_favorites.xml（收藏页布局）
+|       |       |   |-- activity_login.xml（登录页布局）
+|       |       |   |-- activity_main.xml（主 Activity 布局）
+|       |       |   |-- activity_onboarding.xml（引导页布局）
+|       |       |   |-- activity_order_detail.xml（订单详情布局）
+|       |       |   |-- activity_order_success.xml（下单成功布局）
+|       |       |   |-- activity_orders.xml（订单列表布局）
+|       |       |   |-- activity_product_detail.xml（商品详情布局）
+|       |       |   |-- activity_register.xml（注册页布局）
+|       |       |   |-- activity_scenic_detail.xml（景点详情布局）
+|       |       |   |-- activity_user_info.xml（个人资料布局）
+|       |       |   |-- activity_visited.xml（去过列表布局）
+|       |       |   |-- fragment_feed.xml（Feed 基础布局）
+|       |       |   |-- fragment_map.xml（地图页布局）
+|       |       |   |-- fragment_my.xml（我的页布局）
+|       |       |   |-- item_cart_entry.xml（购物车条目）
+|       |       |   |-- item_feed_card.xml（Feed 卡片项）
+|       |       |   |-- item_onboarding_page.xml（引导页 item）
+|       |       |   |-- item_order_product.xml（订单商品 item）
+|       |       |   `-- view_map_marker.xml（自定义 Marker 视图）
+|       |       |-- logo.svg（品牌 Logo）
+|       |       |-- menu
+|       |       |   `-- menu_main_navigation.xml（底部导航菜单）
+|       |       |-- mipmap-anydpi
+|       |       |   |-- ic_launcher.xml（启动图适配）
+|       |       |   `-- ic_launcher_round.xml（圆形启动图）
+|       |       |-- mipmap-hdpi（HDPI 启动图）
+|       |       |   |-- ic_launcher.webp
+|       |       |   `-- ic_launcher_round.webp
+|       |       |-- mipmap-mdpi（MDPI 启动图）
+|       |       |   |-- ic_launcher.webp
+|       |       |   `-- ic_launcher_round.webp
+|       |       |-- mipmap-xhdpi（XHDPI 启动图）
+|       |       |   |-- ic_launcher.webp
+|       |       |   `-- ic_launcher_round.webp
+|       |       |-- mipmap-xxhdpi（XXHDPI 启动图）
+|       |       |   |-- ic_launcher.webp
+|       |       |   `-- ic_launcher_round.webp
+|       |       |-- mipmap-xxxhdpi（XXXHDPI 启动图）
+|       |       |   |-- ic_launcher.webp
+|       |       |   `-- ic_launcher_round.webp
+|       |       |-- values
+|       |       |   |-- colors.xml（颜色定义）
+|       |       |   |-- dimens.xml（尺寸定义）
+|       |       |   |-- strings.xml（多语言字符串）
+|       |       |   `-- themes.xml（主题样式）
+|       |       |-- values-night
+|       |       |   |-- colors.xml（夜间颜色）
+|       |       |   `-- themes.xml（夜间主题）
+|       |       `-- xml
+|       |           |-- backup_rules.xml（备份规则）
+|       |           `-- data_extraction_rules.xml（数据提取规则）
+|       `-- test（单元测试）
+|           `-- java
+|               `-- com
+|                   `-- justyn
+|                       `-- travelmap
+|                           `-- ExampleUnitTest.java（示例单测）
+|-- build.gradle（根构建脚本）
+|-- gradle
+|   |-- libs.versions.toml（版本集中管理）
+|   `-- wrapper
+|       |-- gradle-wrapper.jar（Gradle 包装器二进制）
+|       `-- gradle-wrapper.properties（Wrapper 配置）
+|-- gradle.properties（全局 Gradle 配置）
+|-- gradlew（Unix 可执行 Wrapper）
+|-- gradlew.bat（Windows Wrapper）
+`-- settings.gradle（项目包含模块声明）
+```
+
 ## 一、整体架构与基础设施
 1. **登录/注册体系**
    - `LoginActivity` 调用 `AuthRepository` 完成账号登录，成功后通过 `UserPreferences` 缓存用户 JSON，并跳转 `MainActivity`。

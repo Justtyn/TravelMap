@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App 截图展示生成器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Lucide 图标 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* 隐藏滚动条但保留功能 */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* 手机外壳样式模拟 */
+        .phone-frame {
+            box-shadow:
+                0 0 0 12px #1f2937, /* 边框 */
+                0 0 0 13px #000, /* 外细边 */
+                20px 20px 40px -5px rgba(0,0,0,0.3); /* 投影 */
+            transition: all 0.3s ease;
+        }
+
+        .phone-frame:hover {
+            transform: translateY(-10px);
+            box-shadow:
+                0 0 0 12px #1f2937,
+                0 0 0 13px #000,
+                25px 35px 50px -10px rgba(0,0,0,0.4);
+        }
+
+        /* 灵动岛/刘海模拟 */
+        .notch {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30%;
+            height: 24px;
+            background: #000;
+            border-radius: 12px;
+            z-index: 20;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col transition-colors duration-500" id="mainBody" style="background-color: #f3f4f6;">
+
+    <!-- 控制栏 -->
+    <nav class="fixed top-6 left-1/2 -translate-x-1/2 z-50">
+        <div class="glass-panel px-6 py-3 rounded-full shadow-lg flex items-center gap-6 transition-all hover:scale-105">
+
+            <!-- 上传按钮 -->
+            <label class="cursor-pointer group flex items-center gap-2 text-gray-700 hover:text-blue-600 font-medium">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+                <span>上传图片 (最多5张)</span>
+                <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
+            </label>
+
+            <div class="w-px h-6 bg-gray-300"></div>
+
+            <!-- 间距控制 -->
+            <div class="flex items-center gap-2 text-sm text-gray-600">
+                <span>间距</span>
+                <input type="range" id="gapControl" min="-50" max="100" value="40" class="w-24 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-600">
+            </div>
+
+            <div class="w-px h-6 bg-gray-300"></div>
+
+            <!-- 背景颜色 -->
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-full border border-gray-300 cursor-pointer shadow-sm" style="background: #f3f4f6;" onclick="changeBg('#f3f4f6')" title="默认灰"></div>
+                <div class="w-6 h-6 rounded-full border border-gray-300 cursor-pointer shadow-sm" style="background: #ffffff;" onclick="changeBg('#ffffff')" title="纯白"></div>
+                <div class="w-6 h-6 rounded-full border border-gray-300 cursor-pointer shadow-sm" style="background: #111827;" onclick="changeBg('#111827')" title="暗黑"></div>
+                <div class="w-6 h-6 rounded-full border border-gray-300 cursor-pointer shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" onclick="changeBg('linear-gradient(135deg, #667eea 0%, #764ba2 100%)')" title="渐变紫"></div>
+                <div class="w-6 h-6 rounded-full border border-gray-300 cursor-pointer shadow-sm" style="background: linear-gradient(to right, #ffecd2 0%, #fcb69f 100%);" onclick="changeBg('linear-gradient(to right, #ffecd2 0%, #fcb69f 100%)')" title="渐变橙"></div>
+
+                <!-- 自定义取色器 -->
+                <div class="relative w-6 h-6 overflow-hidden rounded-full border border-gray-300 shadow-sm cursor-pointer">
+                    <input type="color" id="colorPicker" class="absolute -top-2 -left-2 w-10 h-10 cursor-pointer p-0 border-0" oninput="changeBg(this.value)">
+                </div>
+            </div>
+
+            <div class="w-px h-6 bg-gray-300"></div>
+
+            <!-- 清空 -->
+             <button onclick="clearAll()" class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors" title="清空画布">
+                <i data-lucide="trash-2" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 主展示区域 -->
+    <main class="flex-1 flex items-center justify-center w-full overflow-hidden relative p-10 mt-16">
+
+        <!-- 提示文字 -->
+        <div id="emptyState" class="absolute text-center text-gray-400 pointer-events-none animate-pulse">
+            <i data-lucide="image-plus" class="w-16 h-16 mx-auto mb-4 opacity-50"></i>
+            <p class="text-xl font-light">点击上方按钮或拖拽图片到此处</p>
+        </div>
+
+        <!-- 手机容器 -->
+        <div id="phonesContainer" class="flex items-center transition-all duration-500" style="gap: 40px;">
+            <!-- Slots will be generated here -->
+        </div>
+
+    </main>
+
+    <script>
+        // 初始化图标
+        lucide.createIcons();
+
+        const phonesContainer = document.getElementById('phonesContainer');
+        const fileInput = document.getElementById('fileInput');
+        const emptyState = document.getElementById('emptyState');
+        const gapControl = document.getElementById('gapControl');
+        const mainBody = document.getElementById('mainBody');
+
+        // 状态：保存5个位置的图片URL，null表示空
+        let slots = [null, null, null, null, null];
+
+        // 初始化渲染
+        renderSlots();
+
+        // 监听文件上传
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+            fileInput.value = ''; // 重置input以便重复上传
+        });
+
+        // 监听拖拽
+        document.body.addEventListener('dragover', (e) => e.preventDefault());
+        document.body.addEventListener('drop', (e) => {
+            e.preventDefault();
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // 监听间距调整
+        gapControl.addEventListener('input', (e) => {
+            phonesContainer.style.gap = `${e.target.value}px`;
+        });
+
+        // 处理文件逻辑
+        function handleFiles(files) {
+            const validFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+
+            if (validFiles.length === 0) return;
+
+            let fileIndex = 0;
+
+            // 寻找空位并填入
+            for (let i = 0; i < slots.length; i++) {
+                if (slots[i] === null && fileIndex < validFiles.length) {
+                    const reader = new FileReader();
+                    const currentFile = validFiles[fileIndex];
+                    const currentSlotIndex = i; // 闭包保存索引
+
+                    reader.onload = (e) => {
+                        slots[currentSlotIndex] = e.target.result;
+                        renderSlots();
+                    };
+                    reader.readAsDataURL(currentFile);
+                    fileIndex++;
+                }
+            }
+        }
+
+        // 渲染逻辑
+        function renderSlots() {
+            phonesContainer.innerHTML = '';
+
+            // 检查是否全是空的
+            const isEmpty = slots.every(s => s === null);
+            emptyState.style.display = isEmpty ? 'block' : 'none';
+
+            slots.forEach((imgSrc, index) => {
+                // 创建手机外壳DOM
+                const phoneDiv = document.createElement('div');
+
+                // 如果有图片，显示手机；如果没有，暂不显示（或者是显示虚线框，这里选择仅显示已上传的）
+                if (!imgSrc) return;
+
+                phoneDiv.className = 'phone-frame relative bg-gray-900 rounded-[3rem] overflow-hidden shrink-0 group/phone';
+                // 设置默认宽高比 9:19.5 (常见全面屏手机比例)
+                // 高度固定，宽度自适应
+                phoneDiv.style.height = '600px';
+                phoneDiv.style.aspectRatio = '9/19.5';
+
+                phoneDiv.innerHTML = `
+                    <!-- 灵动岛 -->
+                    <div class="notch"></div>
+
+                    <!-- 屏幕内容 -->
+                    <div class="w-full h-full bg-gray-800 relative">
+                        <img src="${imgSrc}" class="w-full h-full object-cover" alt="App Screenshot">
+
+                        <!-- 悬浮删除按钮 -->
+                        <button onclick="removeImage(${index})" class="absolute top-4 right-4 bg-red-500 text-white p-2 rounded-full shadow-lg opacity-0 group-hover/phone:opacity-100 transition-opacity z-30 hover:bg-red-600">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <!-- 屏幕高光反射 (美化) -->
+                    <div class="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none z-10"></div>
+                `;
+
+                phonesContainer.appendChild(phoneDiv);
+            });
+
+            // 重新渲染新插入的图标
+            lucide.createIcons();
+        }
+
+        // 删除单张图片
+        window.removeImage = function(index) {
+            slots[index] = null;
+            // 整理数组，让后面的补上来 (可选，这里选择不补位，或者重新排序)
+            // 如果希望删除中间的，后面的自动前移，取消下面注释：
+             slots = slots.filter(s => s !== null);
+             while(slots.length < 5) slots.push(null);
+
+            renderSlots();
+        }
+
+        // 清空所有
+        window.clearAll = function() {
+            slots = [null, null, null, null, null];
+            renderSlots();
+        }
+
+        // 更改背景
+        window.changeBg = function(color) {
+            mainBody.style.background = color;
+            // 如果背景太深，可能需要反转文字颜色（这里暂简化为不处理，因为控制栏是白底）
+        }
+
+    </script>
+</body>
+</html>

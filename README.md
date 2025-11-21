@@ -4,10 +4,9 @@
   </a>
   <br>
   <br>
-
 [![license](https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/mit.svg)](LICENSE)
 
-# TravelMap
+# TravelMap APP
 
 面向课程设计与展示的智慧文旅解决方案，涵盖 Material Design Android 客户端、Flask/SQLite REST 后端、可在线访问的文档中心与静态官网。线上体验环境部署在 <https://canulove.me>，可直接安装 APK 或调试 API。
 
@@ -25,6 +24,10 @@
 - **跨端账号体验**：`LoginActivity` 支持本地注册、用户名密码登录、微信授权（`com.justyn.travelmap.wechat.WeChatLoginManager` + `WXEntryActivity`），后端 `/api/auth/wechat` 同步维护 openid。
 - **自托管官网 & 文档**：`templates/index.html` + `/docs` + `/features` + `/api-explorer` 展示产品定位、FAQ、接口示例，可在线下载 APK、查看 Markdown 文档（`/docs/view/<file>`）。
 - **富静态资源仓库**：`Python/TravelMap/static/` 包含 logo、封面、截图、音频讲解、`TravelMap.apk`；`util/` 下脚本如 `generate_scenic_audio.py`、`update_scenic_covers.py` 可自动化生成素材。
+
+## 界面一览
+
+[![APP_INTRO](https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/app_intro.png)](LICENSE)
 
 ## 系统架构
 
