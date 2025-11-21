@@ -48,6 +48,14 @@ GITHUB_URL = 'https://github.com/Justtyn/TravelMap'
 APK_FILENAME = 'TravelMap.apk'
 ANDROID_VERSION = '0.9.2-beta'
 
+STYLE_TEMPLATE_MAP = {
+    'normal': 'index.html',
+    'default': 'index.html',  # 兼容旧链接
+    'geek': 'index_geek.html',
+    'cyber': 'index_cyber.html'
+}
+DEFAULT_STYLE = 'cyber' # normal / geek / cyber
+
 WECHAT_APP_ID = 'wxb47bc8f618cc1b59'
 WECHAT_APP_SECRET = '84ae2dde3996c26339ad06c7c55345a8'
 WECHAT_OAUTH_URL = os.environ.get(
@@ -589,19 +597,36 @@ def ping():
 
 
 # -------------------- 官网页面 --------------------
+def render_style_page(style_key):
+    """
+    根据样式 key 渲染首页，current_style 用于下拉菜单标记“当前”，
+    default_style 由环境变量 DEFAULT_STYLE 控制，便于切换默认风格。
+    """
+    style = style_key if style_key in STYLE_TEMPLATE_MAP else 'normal'
+    template_name = STYLE_TEMPLATE_MAP[style]
+    return render_template(template_name,
+                           current_style=style,
+                           default_style=DEFAULT_STYLE)
+
+
 @app.route('/')
 def home_page():
-    return render_template('index.html')
+    return render_style_page(DEFAULT_STYLE)
+
+
+@app.route('/style/normal')
+def normal_style_page():
+    return render_style_page('normal')
 
 
 @app.route('/style/geek')
 def geek_style_page():
-    return render_template('index_geek.html')
+    return render_style_page('geek')
 
 
 @app.route('/style/cyber')
 def cyber_style_page():
-    return render_template('index_cyber.html')
+    return render_style_page('cyber')
 
 
 @app.route('/docs')

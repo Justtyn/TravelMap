@@ -155,6 +155,8 @@
     </style>
 </head>
 <body class="text-slate-300 selection:bg-primary selection:text-black antialiased">
+{% set current_style = current_style or 'cyber' %}
+{% set default_style = default_style or 'cyber' %}
 
 <!-- 极客网格背景 -->
 <div class="bg-grid bg-grid-pattern"></div>
@@ -198,18 +200,29 @@
                     </button>
                     <div id="style-switcher-menu"
                          class="hidden absolute right-0 mt-2 w-52 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
-                        <a href="{{ url_for('home_page') }}"
-                           class="flex items-center justify-between px-4 py-2.5 text-xs text-slate-300 hover:bg-white/5">
-                            <span>默认风格</span>
+                        <a href="{{ url_for('normal_style_page') }}"
+                           class="flex items-center justify-between px-4 py-2.5 text-xs {{ 'text-slate-100 bg-white/5' if current_style == 'normal' else 'text-slate-300 hover:bg-white/5' }}">
+                            <span>Normal 风格</span>
+                            <span class="flex items-center gap-1 text-[10px] font-bold text-primary">
+                                {% if default_style == 'normal' %}<span>默认</span>{% endif %}
+                                {% if current_style == 'normal' %}<span>当前</span>{% endif %}
+                            </span>
                         </a>
                         <a href="{{ url_for('geek_style_page') }}"
-                           class="flex items-center justify-between px-4 py-2.5 text-xs text-slate-300 hover:bg-white/5">
+                           class="flex items-center justify-between px-4 py-2.5 text-xs {{ 'text-slate-100 bg-white/5' if current_style == 'geek' else 'text-slate-300 hover:bg-white/5' }}">
                             <span>Geek 风格</span>
+                            <span class="flex items-center gap-1 text-[10px] font-bold text-primary">
+                                {% if default_style == 'geek' %}<span>默认</span>{% endif %}
+                                {% if current_style == 'geek' %}<span>当前</span>{% endif %}
+                            </span>
                         </a>
                         <a href="{{ url_for('cyber_style_page') }}"
-                           class="flex items-center justify-between px-4 py-2.5 text-xs text-slate-100 bg-white/5">
+                           class="flex items-center justify-between px-4 py-2.5 text-xs {{ 'text-slate-100 bg-white/5' if current_style == 'cyber' else 'text-slate-300 hover:bg-white/5' }}">
                             <span>Cyber 风格</span>
-                            <span class="text-[10px] text-primary font-bold">当前</span>
+                            <span class="flex items-center gap-1 text-[10px] font-bold text-primary">
+                                {% if default_style == 'cyber' %}<span>默认</span>{% endif %}
+                                {% if current_style == 'cyber' %}<span>当前</span>{% endif %}
+                            </span>
                         </a>
                     </div>
                 </div>
@@ -237,12 +250,30 @@
     </div>
     <div id="style-switcher-menu-mobile"
          class="md:hidden hidden absolute right-4 top-20 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl w-48 z-50">
-        <a href="{{ url_for('home_page') }}"
-           class="block px-4 py-2.5 text-xs text-slate-300 hover:bg-white/5">默认风格</a>
+        <a href="{{ url_for('normal_style_page') }}"
+           class="flex items-center justify-between px-4 py-2.5 text-xs {{ 'text-slate-100 bg-white/5' if current_style == 'normal' else 'text-slate-300 hover:bg-white/5' }}">
+            <span>Normal 风格</span>
+            <span class="flex items-center gap-1 text-[10px] font-bold text-primary">
+                {% if default_style == 'normal' %}<span>默认</span>{% endif %}
+                {% if current_style == 'normal' %}<span>当前</span>{% endif %}
+            </span>
+        </a>
         <a href="{{ url_for('geek_style_page') }}"
-           class="block px-4 py-2.5 text-xs text-slate-300 hover:bg-white/5">Geek 风格</a>
+           class="flex items-center justify-between px-4 py-2.5 text-xs {{ 'text-slate-100 bg-white/5' if current_style == 'geek' else 'text-slate-300 hover:bg-white/5' }}">
+            <span>Geek 风格</span>
+            <span class="flex items-center gap-1 text-[10px] font-bold text-primary">
+                {% if default_style == 'geek' %}<span>默认</span>{% endif %}
+                {% if current_style == 'geek' %}<span>当前</span>{% endif %}
+            </span>
+        </a>
         <a href="{{ url_for('cyber_style_page') }}"
-           class="block px-4 py-2.5 text-xs text-slate-100 bg-white/5">Cyber 风格（当前）</a>
+           class="flex items-center justify-between px-4 py-2.5 text-xs {{ 'text-slate-100 bg-white/5' if current_style == 'cyber' else 'text-slate-300 hover:bg-white/5' }}">
+            <span>Cyber 风格</span>
+            <span class="flex items-center gap-1 text-[10px] font-bold text-primary">
+                {% if default_style == 'cyber' %}<span>默认</span>{% endif %}
+                {% if current_style == 'cyber' %}<span>当前</span>{% endif %}
+            </span>
+        </a>
     </div>
     <!-- Mobile Menu Overlay would go here -->
 </nav>
