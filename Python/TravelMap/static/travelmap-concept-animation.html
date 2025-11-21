@@ -9,15 +9,28 @@
         /* 自定义字体和动画 */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: #000;
+            overflow: hidden;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: transparent; /* 背景透明，由父页面控制 */
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100%;
-            margin: 0;
-            overflow: hidden;
+        }
+
+        .root {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         /* 手机外壳阴影 */
@@ -86,7 +99,8 @@
 </head>
 <body>
 
-    <!-- 手机容器 --><div class="relative w-[375px] h-[812px] bg-white rounded-[40px] overflow-hidden phone-shadow border-8 border-gray-900">
+    <div class="root">
+    <!-- 手机容器 --><div class="relative w-full h-full max-w-[375px] max-h-[812px] bg-white rounded-[32px] overflow-hidden phone-shadow border-6 border-gray-900">
 
         <!-- 状态栏 (模拟) --><div class="absolute top-0 left-0 w-full h-12 z-50 flex justify-between items-end px-6 pb-2 text-xs font-bold text-gray-800 pointer-events-none">
             <span>9:41</span>
@@ -233,6 +247,7 @@
             </div>
         </div>
 
+    </div>
     </div>
 
     <script>

@@ -9,7 +9,8 @@
     <!-- Google Fonts: Space Grotesk (未来感标题) & JetBrains Mono (极客代码感) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Space+Grotesk:wght@300;500;700&display=swap"
+          rel="stylesheet">
 
     <script>
         tailwind.config = {
@@ -172,24 +173,32 @@
             <!-- Logo -->
             <div class="flex items-center gap-4 cursor-pointer group" onclick="window.scrollTo(0,0)">
                 <div class="relative w-10 h-10 flex items-center justify-center bg-slate-900 border border-white/10 rounded-lg overflow-hidden group-hover:border-primary/50 transition-colors">
-                     <img src="https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/logo.png" alt="TravelMap Logo" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
-                     <!-- 扫描线效果 -->
-                     <div class="absolute inset-0 bg-gradient-to-b from-transparent via-primary/10 to-transparent translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-700"></div>
+                    <img src="https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/logo.png" alt="TravelMap Logo"
+                         class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
+                    <!-- 扫描线效果 -->
+                    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-primary/10 to-transparent translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-700"></div>
                 </div>
                 <div class="flex flex-col">
-                    <span class="font-bold text-xl tracking-tighter text-white font-sans">TravelMap<span class="text-primary">.apk</span></span>
+                    <span class="font-bold text-xl tracking-tighter text-white font-sans">TravelMap<span
+                            class="text-primary">.apk</span></span>
                     <span class="text-[10px] font-mono text-slate-500 tracking-widest">V1.0.0 STABLE</span>
                 </div>
             </div>
 
             <!-- Desktop Menu -->
             <div class="hidden md:flex items-center space-x-8 text-sm font-mono">
-                <a href="#gallery" class="text-slate-400 hover:text-primary transition-colors hover:underline decoration-primary decoration-2 underline-offset-4">~/UI_GALLERY</a>
-                <a href="#onboarding" class="text-slate-400 hover:text-primary transition-colors hover:underline decoration-primary decoration-2 underline-offset-4">~/DESIGN</a>
-                <a href="#features" class="text-slate-400 hover:text-primary transition-colors hover:underline decoration-primary decoration-2 underline-offset-4">~/MODULES</a>
-                <a href="#timeline" class="text-slate-400 hover:text-primary transition-colors hover:underline decoration-primary decoration-2 underline-offset-4">~/LOGS</a>
-                <a href="{{ url_for('doc_library_page') }}" class="text-slate-400 hover:text-primary transition-colors hover:underline decoration-primary decoration-2 underline-offset-4">~/DOCS</a>
-                <a href="{{ url_for('game_library_page') }}" class="text-slate-400 hover:text-primary transition-colors hover:underline decoration-primary decoration-2 underline-offset-4">~/GAMES</a>
+                <a href="#gallery"
+                   class="text-slate-400 hover:text-primary transition-colors hover:underline decoration-primary decoration-2 underline-offset-4">~/UI_GALLERY</a>
+                <a href="#concept"
+                   class="text-slate-400 hover:text-primary transition-colors hover:underline decoration-primary decoration-2 underline-offset-4">~/DESIGN</a>
+                <a href="#features"
+                   class="text-slate-400 hover:text-primary transition-colors hover:underline decoration-primary decoration-2 underline-offset-4">~/MODULES</a>
+                <a href="#timeline"
+                   class="text-slate-400 hover:text-primary transition-colors hover:underline decoration-primary decoration-2 underline-offset-4">~/LOGS</a>
+                <a href="{{ url_for('doc_library_page') }}"
+                   class="text-slate-400 hover:text-primary transition-colors hover:underline decoration-primary decoration-2 underline-offset-4">~/DOCS</a>
+                <a href="{{ url_for('game_library_page') }}"
+                   class="text-slate-400 hover:text-primary transition-colors hover:underline decoration-primary decoration-2 underline-offset-4">~/GAMES</a>
 
                 <div class="relative">
                     <button id="style-switcher"
@@ -393,49 +402,126 @@
                 <h3 class="text-3xl md:text-4xl font-bold text-white">Interface Visualization</h3>
             </div>
             <div class="flex gap-4 font-mono text-xs">
-                <button id="gallery-prev" class="w-12 h-12 border border-white/10 hover:border-primary hover:text-primary hover:bg-primary/10 transition-all flex items-center justify-center rounded-full">
+                <button id="gallery-prev"
+                        class="w-12 h-12 border border-white/10 hover:border-primary hover:text-primary hover:bg-primary/10 transition-all flex items-center justify-center rounded-full">
                     &lt; PREV
                 </button>
-                <button id="gallery-next" class="w-12 h-12 border border-white/10 hover:border-primary hover:text-primary hover:bg-primary/10 transition-all flex items-center justify-center rounded-full">
+                <button id="gallery-next"
+                        class="w-12 h-12 border border-white/10 hover:border-primary hover:text-primary hover:bg-primary/10 transition-all flex items-center justify-center rounded-full">
                     NEXT &gt;
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="gallery-container" class="flex overflow-x-auto gap-8 px-4 sm:px-6 lg:px-8 pb-12 scrollbar-hide snap-x snap-mandatory">
+    <div id="gallery-container"
+         class="flex overflow-x-auto gap-8 px-4 sm:px-6 lg:px-8 pb-12 scrollbar-hide snap-x snap-mandatory">
         <script>
-            const baseImageUrl = 'https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/index-image/';
-            const screenshotNames = [
-                'Tab-商城', 'Tab-地图', 'Tab-我的', '商品-详情',
-                '开屏-一站式行程预订', '开屏-发现未知风景', '我的-订单', '景点-详情-1'
-            ];
+        const baseImageUrl = 'https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/index-image/Dark-';
+        const screenshotNames = [
+            '开屏-珍藏美好足迹',
+            '开屏-发现未知风景',
+            '注册页',
+            '登录页',
+            'Tab-商城',
+            'Tab-地图',
+            'Tab-我的',
+            'Tab-景点',
+            'Tab-预定',
+            '预定-详情',
+            '景点-详情-1',
+            '景点-详情-2',
+            '商品-详情',
+            '我的-关于',
+            '我的-去过',
+            '我的-收藏-商品',
+            '我的-收藏-景点',
+            '我的-订单',
+            '我的-订单详情',
+            '我的-购物车'
+        ];
 
-            screenshotNames.forEach((name, index) => {
-                const imgUrl = `${baseImageUrl}${encodeURIComponent(name)}.jpg`;
-                document.write(`
-                    <div class="snap-center shrink-0 w-[280px] h-[580px] relative group cursor-pointer">
-                        <!-- Frame -->
-                        <div class="absolute inset-0 bg-surface rounded-[30px] border border-white/10 z-0 group-hover:border-primary/50 transition-colors duration-300"></div>
+        screenshotNames.forEach((name, index) => {
+            const imgUrl = `${baseImageUrl}${encodeURIComponent(name)}.jpg`;
+            document.write(`
+                <div class="snap-center shrink-0 w-[280px] h-[580px] relative group cursor-pointer">
+                    <!-- Frame -->
+                    <div class="absolute inset-0 bg-surface rounded-[30px] border border-white/10 z-0 group-hover:border-primary/50 transition-colors duration-300"></div>
 
-                        <!-- Image Wrapper -->
-                        <div class="absolute inset-3 rounded-[24px] overflow-hidden z-10 grayscale group-hover:grayscale-0 transition-all duration-500">
-                            <img src="${imgUrl}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" alt="${name}" onerror="this.src='https://placehold.co/280x580/111/444?text=Missing+IMG'">
+                    <!-- Image Wrapper -->
+                    <div class="absolute inset-3 rounded-[24px] overflow-hidden z-10 grayscale group-hover:grayscale-0 transition-all duration-500">
+                        <img src="${imgUrl}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" alt="${name}" onerror="this.src='https://placehold.co/280x580/111/444?text=Missing+IMG'">
 
-                            <!-- Overlay Info -->
-                            <div class="absolute bottom-0 w-full bg-black/80 backdrop-blur-sm p-4 border-t border-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                                <h4 class="text-white font-mono text-xs font-bold text-primary mb-1">IMG_0${index+1}</h4>
-                                <p class="text-slate-400 text-[10px] tracking-wider uppercase">${name}</p>
-                            </div>
+                        <!-- Overlay Info -->
+                        <div class="absolute bottom-0 w-full bg-black/80 backdrop-blur-sm p-4 border-t border-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                            <h4 class="text-white font-mono text-xs font-bold text-primary mb-1">IMG_0${index+1}</h4>
+                            <p class="text-slate-400 text-[10px] tracking-wider uppercase">${name}</p>
                         </div>
-
-                        <!-- Corner Decorations -->
-                        <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-white/20 rounded-tl-xl group-hover:border-primary transition-colors"></div>
-                        <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-white/20 rounded-br-xl group-hover:border-primary transition-colors"></div>
                     </div>
-                `);
-            });
-        </script>
+
+                    <!-- Corner Decorations -->
+                    <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-white/20 rounded-tl-xl group-hover:border-primary transition-colors"></div>
+                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-white/20 rounded-br-xl group-hover:border-primary transition-colors"></div>
+                </div>
+            `);
+        });
+    </script>
+
+    </div>
+</section>
+
+<!-- Interactive Demo -->
+<section id="concept"
+         class="py-24 relative border-t border-white/5 bg-gradient-to-b from-black/40 via-surface/60 to-black/80 overflow-hidden"
+         aria-label="Interactive Demo / DESIGN">
+    <div id="design" class="absolute -top-20"></div>
+    <div class="absolute inset-0 bg-grid-pattern opacity-10"></div>
+    <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute -left-20 top-10 w-72 h-72 bg-primary/15 blur-[120px]"></div>
+        <div class="absolute right-0 bottom-0 w-80 h-80 bg-secondary/15 blur-[140px]"></div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="grid lg:grid-cols-2 gap-14 items-center">
+            <div class="order-2 lg:order-1 space-y-6">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/40 text-primary font-mono text-xs tracking-[0.3em] bg-primary/5">
+                    <span class="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
+                    INTERACTIVE DEMO
+                </div>
+                <h3 class="text-3xl md:text-4xl font-bold text-white font-sans">UI Concept Motion Demo</h3>
+                <p class="text-slate-400 font-mono text-sm leading-relaxed">
+                    A cyber-styled prototype driven by pure SVG + CSS motion, showcasing the ideal TravelMap flow:
+                    illuminated routes, linked cards, and fluid day-night transitions.
+                </p>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3 text-slate-300 font-mono text-sm">
+                        <i class="fas fa-bolt text-primary"></i>
+                        <span>Dynamic path drawing with real-time trajectory and waypoint activation.</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-slate-300 font-mono text-sm">
+                        <i class="fas fa-layer-group text-secondary"></i>
+                        <span>Cascading card animations that surface destination details on arrival.</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-slate-300 font-mono text-sm">
+                        <i class="fas fa-moon text-accent"></i>
+                        <span>Adaptive day/night visuals with high-contrast, dark-first styling.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="order-1 lg:order-2 flex justify-center">
+                <div class="relative w-full max-w-[380px] aspect-[360/760] rounded-[38px] overflow-hidden cyber-border shadow-[0_0_40px_rgba(0,242,255,0.2)]">
+                    <div class="absolute -inset-[1px] bg-gradient-to-b from-primary/40 via-secondary/40 to-primary/40 opacity-40 blur-sm"></div>
+                    <iframe
+                            src="/static/travelmap-concept-animation.html"
+                            class="absolute inset-0 w-full h-full rounded-[36px] bg-black"
+                            title="Concept Animation"
+                            scrolling="no">
+                    </iframe>
+                    <div class="absolute -inset-6 rounded-[46px] bg-gradient-to-r from-primary/10 via-transparent to-secondary/10 blur-2xl -z-10"></div>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -457,7 +543,8 @@
                     <i class="fas fa-map-marked-alt text-4xl text-primary mb-6"></i>
                     <h4 class="text-2xl font-bold text-white mb-3 font-sans">AMap 3D Integration</h4>
                     <p class="text-slate-400 font-mono text-sm leading-relaxed">
-                        High-precision LBS service integration. Supporting 3D architectural rendering, real-time positioning simulation, and custom POI markers rendering with privacy compliance.
+                        High-precision LBS service integration. Supporting 3D architectural rendering, real-time
+                        positioning simulation, and custom POI markers rendering with privacy compliance.
                     </p>
                     <div class="absolute bottom-6 right-6 text-xs font-mono text-slate-600 group-hover:text-primary transition-colors">
                         STATUS: ACTIVE
@@ -467,30 +554,31 @@
 
             <!-- Card 2: Dark Mode -->
             <div class="cyber-border rounded-2xl p-[1px] group">
-                 <div class="h-full w-full bg-surface/90 backdrop-blur rounded-2xl p-8 flex flex-col justify-center relative overflow-hidden">
+                <div class="h-full w-full bg-surface/90 backdrop-blur rounded-2xl p-8 flex flex-col justify-center relative overflow-hidden">
                     <i class="fas fa-moon text-4xl text-secondary mb-6"></i>
                     <h4 class="text-xl font-bold text-white mb-3">Dark Mode Native</h4>
                     <p class="text-slate-400 text-sm font-mono">
                         Material Design 3 adaptation. Deep contrast for OLED displays.
                     </p>
-                 </div>
+                </div>
             </div>
 
             <!-- Card 3: E-Commerce -->
             <div class="cyber-border rounded-2xl p-[1px] group">
-                 <div class="h-full w-full bg-surface/90 backdrop-blur rounded-2xl p-8 flex flex-col justify-center relative overflow-hidden">
+                <div class="h-full w-full bg-surface/90 backdrop-blur rounded-2xl p-8 flex flex-col justify-center relative overflow-hidden">
                     <i class="fas fa-shopping-cart text-4xl text-accent mb-6"></i>
                     <h4 class="text-xl font-bold text-white mb-3">Transaction Loop</h4>
                     <p class="text-slate-400 text-sm font-mono">
                         Full e-commerce stack: Cart, Orders, and Mock Payment Gateway.
                     </p>
-                 </div>
+                </div>
             </div>
 
-             <!-- Card 4: Stack (Wide) -->
-             <div class="md:col-span-2 cyber-border rounded-2xl p-[1px] group">
+            <!-- Card 4: Stack (Wide) -->
+            <div class="md:col-span-2 cyber-border rounded-2xl p-[1px] group">
                 <div class="h-full w-full bg-surface/90 backdrop-blur rounded-2xl p-8 flex flex-col justify-center relative overflow-hidden">
-                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 animate-border-flow" style="background-size: 200% 100%;"></div>
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 animate-border-flow"
+                         style="background-size: 200% 100%;"></div>
 
                     <h4 class="text-xl font-bold text-white mb-4">Tech Stack</h4>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 font-mono text-xs text-slate-300">
@@ -522,7 +610,8 @@
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center gap-4 mb-12 border-b border-white/10 pb-4">
             <i class="fas fa-code-branch text-primary text-xl"></i>
-            <h2 class="text-xl font-mono text-white">Commit History <span class="text-slate-600 text-sm">// master branch · 15 Day Sprint</span></h2>
+            <h2 class="text-xl font-mono text-white">Commit History <span class="text-slate-600 text-sm">// master branch · 15 Day Sprint</span>
+            </h2>
         </div>
 
         <div class="relative border-l border-white/10 ml-3 space-y-10">
@@ -534,7 +623,8 @@
                     <span class="font-mono text-primary text-xs">[INIT]</span>
                     <span class="text-slate-500 font-mono text-xs">f3a29c0 · 2025.11.10</span>
                 </div>
-                <h3 class="text-white font-bold mb-2 group-hover:text-primary transition-colors">Project Startup & Architecture</h3>
+                <h3 class="text-white font-bold mb-2 group-hover:text-primary transition-colors">Project Startup &
+                    Architecture</h3>
                 <p class="text-slate-400 text-sm font-mono bg-surface p-3 rounded border border-white/5">
                     > Defined MVP scope<br>
                     > Configured Gradle & Android Activity/Fragment containers
@@ -548,7 +638,8 @@
                     <span class="font-mono text-secondary text-xs">[AUTH]</span>
                     <span class="text-slate-500 font-mono text-xs">b7d8e9f · 2025.11.12</span>
                 </div>
-                <h3 class="text-white font-bold mb-2 group-hover:text-secondary transition-colors">User Authentication System</h3>
+                <h3 class="text-white font-bold mb-2 group-hover:text-secondary transition-colors">User Authentication
+                    System</h3>
                 <p class="text-slate-400 text-sm font-mono bg-surface p-3 rounded border border-white/5">
                     > LoginActivity & RegisterActivity implementation<br>
                     > AuthRepository with encrypted Token storage
@@ -562,7 +653,8 @@
                     <span class="font-mono text-accent text-xs">[FEAT]</span>
                     <span class="text-slate-500 font-mono text-xs">c4b5a1d · 2025.11.15</span>
                 </div>
-                <h3 class="text-white font-bold mb-2 group-hover:text-accent transition-colors">Core UI & Skeleton Loading</h3>
+                <h3 class="text-white font-bold mb-2 group-hover:text-accent transition-colors">Core UI & Skeleton
+                    Loading</h3>
                 <p class="text-slate-400 text-sm font-mono bg-surface p-3 rounded border border-white/5">
                     > Home Feed & Mall List components<br>
                     > Implemented Skeleton screens for better UX
@@ -576,7 +668,8 @@
                     <span class="font-mono text-pink-500 text-xs">[MAP]</span>
                     <span class="text-slate-500 font-mono text-xs">d9e2f4c · 2025.11.18</span>
                 </div>
-                <h3 class="text-white font-bold mb-2 group-hover:text-pink-500 transition-colors">AMap 3D SDK Integration</h3>
+                <h3 class="text-white font-bold mb-2 group-hover:text-pink-500 transition-colors">AMap 3D SDK
+                    Integration</h3>
                 <p class="text-slate-400 text-sm font-mono bg-surface p-3 rounded border border-white/5">
                     > 3D Buildings & Blue Dot Location<br>
                     > Custom Marker rendering & Privacy compliance
@@ -590,7 +683,8 @@
                     <span class="font-mono text-yellow-400 text-xs">[SHOP]</span>
                     <span class="text-slate-500 font-mono text-xs">e5f6a7b · 2025.11.22</span>
                 </div>
-                <h3 class="text-white font-bold mb-2 group-hover:text-yellow-400 transition-colors">E-Commerce Loop Logic</h3>
+                <h3 class="text-white font-bold mb-2 group-hover:text-yellow-400 transition-colors">E-Commerce Loop
+                    Logic</h3>
                 <p class="text-slate-400 text-sm font-mono bg-surface p-3 rounded border border-white/5">
                     > Cart management & Order submission logic<br>
                     > Favorites & Browsing History modules
@@ -604,7 +698,8 @@
                     <span class="font-mono text-purple-500 text-xs">[UI/UX]</span>
                     <span class="text-slate-500 font-mono text-xs">f1a2b3c · 2025.11.24</span>
                 </div>
-                <h3 class="text-white font-bold mb-2 group-hover:text-purple-500 transition-colors">Dark Mode & UI Polish</h3>
+                <h3 class="text-white font-bold mb-2 group-hover:text-purple-500 transition-colors">Dark Mode & UI
+                    Polish</h3>
                 <p class="text-slate-400 text-sm font-mono bg-surface p-3 rounded border border-white/5">
                     > Global Material 3 standardization<br>
                     > Full Dark Mode adaptation & Animation tuning
@@ -630,15 +725,15 @@
 
             <!-- Future -->
             <div class="relative pl-10 opacity-50 hover:opacity-100 transition-opacity">
-                 <div class="absolute -left-[5px] top-1 w-2.5 h-2.5 bg-transparent border border-dashed border-slate-500 rounded-full"></div>
-                 <div class="font-mono text-slate-500 text-xs mb-1">FUTURE_ROADMAP</div>
-                 <div class="text-slate-500 text-sm font-mono border border-dashed border-slate-700 p-3 rounded">
+                <div class="absolute -left-[5px] top-1 w-2.5 h-2.5 bg-transparent border border-dashed border-slate-500 rounded-full"></div>
+                <div class="font-mono text-slate-500 text-xs mb-1">FUTURE_ROADMAP</div>
+                <div class="text-slate-500 text-sm font-mono border border-dashed border-slate-700 p-3 rounded">
                     <ul class="list-inside list-disc">
                         <li>Integrate Gemini/DeepSeek AI</li>
                         <li>TTS Audio Guide features</li>
                         <li>Smart Itinerary Planner</li>
                     </ul>
-                 </div>
+                </div>
             </div>
 
         </div>
@@ -670,15 +765,18 @@
                     TravelMap is a demonstration of modern Android development practices.
                 </p>
 
-                <div class="flex justify-center md:justify-start gap-4">
-                    <a href="https://github.com/Justtyn" target="_blank" class="w-10 h-10 flex items-center justify-center rounded bg-white/5 hover:bg-primary hover:text-black transition-all border border-white/10">
-                        <i class="fab fa-github"></i>
+                <div class="flex justify-center md:justify-start gap-3 font-mono text-xs">
+                    <a href="https://github.com/Justtyn" target="_blank"
+                       class="px-4 py-2 rounded-lg border border-primary/50 text-primary bg-primary/10 hover:bg-primary hover:text-black transition-all flex items-center gap-2 tracking-wide">
+                        <span>&lt;github</span><span class="text-white">/Justtyn&gt;</span>
                     </a>
-                    <a href="mailto:togjustyn@gmail.com" class="w-10 h-10 flex items-center justify-center rounded bg-white/5 hover:bg-secondary hover:text-white transition-all border border-white/10">
-                        <i class="fas fa-envelope"></i>
+                    <a href="mailto:togjustyn@gmail.com"
+                       class="px-4 py-2 rounded-lg border border-secondary/50 text-secondary bg-secondary/10 hover:bg-secondary hover:text-white transition-all flex items-center gap-2 tracking-wide">
+                        <span>&lt;mail</span><span class="text-white">/contact&gt;</span>
                     </a>
-                    <a href="https://justtyn.github.io/" target="_blank" class="w-10 h-10 flex items-center justify-center rounded bg-white/5 hover:bg-accent hover:text-black transition-all border border-white/10">
-                        <i class="fas fa-globe"></i>
+                    <a href="https://justtyn.github.io/" target="_blank"
+                       class="px-4 py-2 rounded-lg border border-accent/60 text-accent bg-accent/10 hover:bg-accent hover:text-black transition-all flex items-center gap-2 tracking-wide">
+                        <span>&lt;www</span><span class="text-white">/portfolio&gt;</span>
                     </a>
                 </div>
             </div>
@@ -696,17 +794,19 @@
         <div class="inline-flex flex-col md:flex-row items-center gap-6 bg-surface border border-white/10 p-2 rounded-2xl md:rounded-full pr-2 md:pr-8">
 
             <!-- QR Code Popover Group -->
-            <div class="relative group p-2 bg-white rounded-xl md:rounded-full md:rounded-r-none">
+            <div class="relative group p-2 bg-white rounded-2xl md:rounded-full border border-white/10 overflow-hidden md:overflow-visible">
                 <div class="w-32 h-32 md:w-12 md:h-12 flex items-center justify-center">
-                     <!-- On desktop, icon is small, hover shows QR. On mobile, QR is shown. -->
-                     <i class="fas fa-qrcode text-2xl text-black md:block hidden"></i>
-                     <img src="https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/index-image/TravelMapQRcode.png" class="md:hidden block w-full h-full object-contain">
+                    <!-- On desktop, icon is small, hover shows QR. On mobile, QR is shown. -->
+                    <i class="fas fa-qrcode text-2xl text-black md:block hidden"></i>
+                    <img src="https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/index-image/TravelMapQRcode.png"
+                         class="md:hidden block w-full h-full object-contain rounded-xl">
                 </div>
 
                 <!-- Desktop Hover QR -->
                 <div class="hidden md:block absolute bottom-full left-1/2 -translate-x-1/2 mb-4 opacity-0 group-hover:opacity-100 pointer-events-none transition-all transform translate-y-2 group-hover:translate-y-0">
-                    <div class="bg-white p-2 rounded-lg shadow-2xl w-40 h-40">
-                        <img src="https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/index-image/TravelMapQRcode.png" class="w-full h-full object-contain">
+                    <div class="bg-white p-2 rounded-2xl shadow-2xl w-40 h-40 border border-black/5 overflow-hidden">
+                        <img src="https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/index-image/TravelMapQRcode.png"
+                             class="w-full h-full object-contain rounded-xl">
                     </div>
                 </div>
             </div>
