@@ -148,7 +148,7 @@
                 radial-gradient(circle, #ffbd2e 5px, transparent 6px),
                 radial-gradient(circle, #27c93f 5px, transparent 6px);
             background-size: 100px 100%;
-            background-position: 14px center, 34px center, 54px center;
+            background-position: 10px center, 26px center, 42px center;
             background-repeat: no-repeat;
         }
         .markdown-body pre code {
@@ -283,11 +283,17 @@ print('Data Processing Started...')
         const [isDarkMode, setIsDarkMode] = useState(false);
         const [fontSize, setFontSize] = useState('base');
         const [isUsingDefault, setIsUsingDefault] = useState(true);
+        const [toc, setToc] = useState([]);
 
         const fileInputRef = useRef(null);
         const settingsRef = useRef(null);
 
         const encodeDocPath = (path) => path.split('/').map(encodeURIComponent).join('/');
+        const slugify = (text) => text
+            .toLowerCase()
+            .trim()
+            .replace(/[^\w\u4e00-\u9fa5]+/g, '-')
+            .replace(/^-+|-+$/g, '') || 'section';
 
         const loadDefaultDocs = async () => {
             setIsLoading(true);
@@ -339,12 +345,29 @@ print('Data Processing Started...')
 
         useEffect(() => {
             if (selectedFile?.content) {
-                setTimeout(() => {
+                const timer = setTimeout(() => {
                     document.querySelectorAll('pre code').forEach((el) => {
                         hljs.highlightElement(el);
                     });
+
+                    const container = document.querySelector('.markdown-body');
+                    if (!container) return;
+                    const headingEls = container.querySelectorAll('h1, h2, h3, h4, h5, h6');
+                    const outline = [];
+                    headingEls.forEach((el, idx) => {
+                        const level = parseInt(el.tagName.replace('H', ''), 10);
+                        const text = el.textContent || `标题 ${idx + 1}`;
+                        const id = el.id || `${slugify(text)}-${idx}`;
+                        el.id = id;
+                        outline.push({ id, text, level });
+                    });
+                    setToc(outline);
                 }, 0);
+
+                return () => clearTimeout(timer);
             }
+
+            setToc([]);
         }, [selectedFile]);
 
         useEffect(() => {
@@ -599,12 +622,39 @@ print('Data Processing Started...')
                     </div>
 
                     <div className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar">
-                        <div className={`max-w-4xl mx-auto px-6 py-10 md:px-12 md:py-14 pb-32 animate-fade-in ${getFontSizeClass()}`}>
+                        <div className={`max-w-6xl mx-auto px-6 py-10 md:px-12 md:py-14 pb-32 animate-fade-in ${getFontSizeClass()}`}>
                             {selectedFile ? (
-                                <div
-                                    className="markdown-body"
-                                    dangerouslySetInnerHTML={{ __html: marked.parse(selectedFile.content || '') }}
-                                />
+                                <div className="grid gap-8 lg:grid-cols-[1fr,260px]">
+                                    <div
+                                        className="markdown-body"
+                                        dangerouslySetInnerHTML={{ __html: marked.parse(selectedFile.content || '') }}
+                                    />
+
+                                    {toc.length > 0 && (
+                                        <div className="border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 rounded-xl p-4 h-fit lg:sticky lg:top-24 lg:max-h-[calc(100vh-160px)] overflow-y-auto custom-scrollbar">
+                                            <div className="text-xs font-semibold text-slate-500 dark:text-slate-300 tracking-wide uppercase mb-3 flex items-center gap-2">
+                                                <Icon name="list" size={14} /> 目录
+                                            </div>
+                                            <div className="space-y-1">
+                                                {toc.map((item) => (
+                                                    <button
+                                                        key={item.id}
+                                                        onClick={() => {
+                                                            const target = document.getElementById(item.id);
+                                                            if (target) {
+                                                                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                            }
+                                                        }}
+                                                        className="w-full text-left text-sm text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 px-2 py-1 rounded-md hover:bg-slate-200/60 dark:hover:bg-slate-700 transition-colors"
+                                                        style={{ paddingLeft: `${(item.level - 1) * 12 + 4}px` }}
+                                                    >
+                                                        <span className="block truncate">{item.text}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-[60vh] text-slate-300 dark:text-slate-600">
                                     <Icon name="book-dashed" size={64} className="mb-4 opacity-50" />
