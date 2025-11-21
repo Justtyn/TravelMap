@@ -3,7 +3,7 @@
     <img alt="TravelMap Logo" width="215" src="https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/logo.png">
   </a>
 
-  <br><br>
+  <br>
 
   <a href="LICENSE">
     <img src="https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/mit.svg" alt="license">
