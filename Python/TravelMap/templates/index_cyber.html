@@ -2,8 +2,23 @@
 <html lang="zh-CN" class="dark scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TravelMap_ // Dev.Build_v1.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="TravelMap - 赛博风旅行指南与安卓 Demo，展示 3D 地图、商城与路线规划体验。">
+    <meta name="keywords" content="TravelMap, 旅行地图, 3D 地图, 安卓 Demo, 赛博风, AMap SDK">
+    <meta name="theme-color" content="#030712">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    <meta property="og:title" content="TravelMap // Cyber Demo">
+    <meta property="og:description" content="赛博风 TravelMap 安卓 Demo，涵盖 3D 地图、商城与路线规划。">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="{{ url_for('static', filename='logo.png', _external=True) }}">
+    <meta property="og:url" content="{{ request.url_root }}">
+    <meta name="twitter:card" content="summary">
+    <title>TravelMap // 旅图</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo.svg') }}">
+    <link rel="alternate icon" href="{{ url_for('static', filename='logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Google Fonts: Space Grotesk (未来感标题) & JetBrains Mono (极客代码感) -->
@@ -153,6 +168,13 @@
             animation: cursor 1s step-end infinite;
             color: #00f2ff;
         }
+
+        /* Mobile tuning */
+        @media (max-width: 640px) {
+            .bg-grid {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body class="text-slate-300 selection:bg-primary selection:text-black antialiased">
@@ -284,33 +306,42 @@
             </span>
         </a>
     </div>
-    <!-- Mobile Menu Overlay would go here -->
+    <div id="mobile-menu"
+         class="md:hidden hidden fixed inset-x-4 top-24 bg-slate-900/95 border border-white/10 rounded-2xl shadow-2xl p-4 z-40 space-y-2">
+        <a href="#gallery" class="block px-3 py-2 rounded-lg text-slate-200 font-mono text-sm hover:bg-white/5">~/UI_GALLERY</a>
+        <a href="#concept" class="block px-3 py-2 rounded-lg text-slate-200 font-mono text-sm hover:bg-white/5">~/DESIGN</a>
+        <a href="#features" class="block px-3 py-2 rounded-lg text-slate-200 font-mono text-sm hover:bg-white/5">~/MODULES</a>
+        <a href="#timeline" class="block px-3 py-2 rounded-lg text-slate-200 font-mono text-sm hover:bg-white/5">~/LOGS</a>
+        <a href="{{ url_for('doc_library_page') }}" class="block px-3 py-2 rounded-lg text-slate-200 font-mono text-sm hover:bg-white/5">~/DOCS</a>
+        <a href="{{ url_for('game_library_page') }}" class="block px-3 py-2 rounded-lg text-slate-200 font-mono text-sm hover:bg-white/5">~/GAMES</a>
+        <a href="#download" class="block px-3 py-2 rounded-lg text-primary font-bold text-center border border-primary/40 hover:bg-primary hover:text-black transition-all">GET_APP</a>
+    </div>
 </nav>
 
 <!-- Hero: 控制台风格 -->
-<section id="home" class="relative pt-32 pb-20 lg:pt-48 min-h-screen flex items-center overflow-hidden">
+<section id="home" class="relative pt-28 pb-16 lg:pt-48 min-h-screen flex items-center overflow-hidden">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative w-full z-10">
         <div class="grid lg:grid-cols-12 gap-12 items-center">
 
             <!-- Left Content -->
-            <div class="lg:col-span-7 space-y-8">
+            <div class="lg:col-span-7 space-y-8 text-center lg:text-left">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded bg-white/5 border border-white/10 text-xs font-mono text-primary">
                     <span class="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
                     <span>System.Status: ONLINE</span>
                 </div>
 
-                <h1 class="text-5xl md:text-7xl font-bold text-white leading-tight font-sans">
+                <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight font-sans">
                     <span class="block">REDEFINE</span>
                     <span class="block text-transparent bg-clip-text bg-gradient-to-r from-primary via-white to-secondary neon-text">LOCAL_TRAVEL</span>
                 </h1>
 
-                <div class="max-w-xl font-mono text-sm md:text-base text-slate-400 leading-relaxed border-l-2 border-primary/30 pl-6 py-2 bg-gradient-to-r from-primary/5 to-transparent">
+                <div class="max-w-xl mx-auto lg:mx-0 font-mono text-sm md:text-base text-slate-400 leading-relaxed border-l-2 border-primary/30 pl-6 py-2 bg-gradient-to-r from-primary/5 to-transparent">
                     <p class="typing-cursor mb-2">> Init: TravelMap.exe</p>
                     <p>> Loading Modules: 3D_AMap, E-Commerce, Route_Planning...</p>
                     <p>> Concept: Inspired by Geek Aesthetics, built for explorers.</p>
                 </div>
 
-                <div class="flex flex-wrap gap-5 pt-4">
+                <div class="flex flex-col sm:flex-row justify-center lg:justify-start flex-wrap gap-4 pt-4">
                     <a href="#download"
                        class="px-8 py-4 bg-primary text-black font-bold rounded hover:bg-cyan-300 transition-all hover:shadow-[0_0_20px_rgba(0,242,255,0.4)] flex items-center gap-3">
                         <i class="fab fa-android text-lg"></i>
@@ -323,7 +354,7 @@
                     </a>
                 </div>
 
-                <div class="pt-8 flex items-center gap-6 text-xs font-mono text-slate-500">
+                <div class="pt-6 flex flex-wrap justify-center lg:justify-start items-center gap-4 text-xs font-mono text-slate-500">
                     <div class="flex items-center gap-2">
                         <i class="fas fa-code text-secondary"></i>
                         <span>Java / Kotlin</span>
@@ -340,13 +371,13 @@
             </div>
 
             <!-- Right Visual: Holographic Device -->
-            <div class="lg:col-span-5 relative flex justify-center lg:justify-end animate-float">
+            <div class="lg:col-span-5 relative flex justify-center lg:justify-end animate-float mt-4 lg:mt-0">
                 <!-- Decorative Circle Rings -->
                 <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] border border-white/5 rounded-full animate-spin-slow pointer-events-none"></div>
                 <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] border border-white/5 rounded-full animate-spin-slow [animation-direction:reverse] pointer-events-none"></div>
 
                 <!-- Phone Frame -->
-                <div class="relative w-[320px] h-[650px] bg-black rounded-[40px] border-[2px] border-white/10 shadow-2xl overflow-hidden group">
+                <div class="relative w-[250px] h-[520px] sm:w-[300px] sm:h-[600px] md:w-[320px] md:h-[640px] bg-black rounded-[40px] border-[2px] border-white/10 shadow-2xl overflow-hidden group">
                     <!-- Glowing Border -->
                     <div class="absolute -inset-[1px] bg-gradient-to-b from-primary/50 via-secondary/50 to-primary/50 rounded-[40px] opacity-50 blur-sm group-hover:opacity-100 transition-opacity duration-500"></div>
 
@@ -396,7 +427,7 @@
 <!-- Interface Gallery: 赛博展厅 -->
 <section id="gallery" class="py-24 border-t border-white/5 relative">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-        <div class="flex items-end justify-between">
+        <div class="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 sm:gap-0">
             <div>
                 <h2 class="text-primary font-mono text-sm mb-2 tracking-widest">/// UI_COMPONENTS</h2>
                 <h3 class="text-3xl md:text-4xl font-bold text-white">Interface Visualization</h3>
@@ -444,7 +475,7 @@
         screenshotNames.forEach((name, index) => {
             const imgUrl = `${baseImageUrl}${encodeURIComponent(name)}.jpg`;
             document.write(`
-                <div class="snap-center shrink-0 w-[280px] h-[580px] relative group cursor-pointer">
+                <div class="snap-center shrink-0 w-[230px] h-[460px] sm:w-[260px] sm:h-[520px] lg:w-[280px] lg:h-[580px] relative group cursor-pointer">
                     <!-- Frame -->
                     <div class="absolute inset-0 bg-surface rounded-[30px] border border-white/10 z-0 group-hover:border-primary/50 transition-colors duration-300"></div>
 
@@ -837,6 +868,8 @@
     const desktopStyleMenu = document.getElementById('style-switcher-menu');
     const mobileStyleSwitcher = document.getElementById('style-switcher-mobile');
     const mobileStyleMenu = document.getElementById('style-switcher-menu-mobile');
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
 
     function bindStyleMenu(trigger, menu) {
         if (!trigger || !menu) return;
@@ -855,6 +888,26 @@
 
     bindStyleMenu(desktopStyleSwitcher, desktopStyleMenu);
     bindStyleMenu(mobileStyleSwitcher, mobileStyleMenu);
+
+    if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            mobileMenu.classList.toggle('hidden');
+            mobileStyleMenu?.classList.add('hidden');
+        });
+
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!mobileMenu.classList.contains('hidden') &&
+                !mobileMenu.contains(event.target) &&
+                !mobileMenuBtn.contains(event.target)) {
+                mobileMenu.classList.add('hidden');
+            }
+        });
+    }
 
     // Smooth scroll for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {

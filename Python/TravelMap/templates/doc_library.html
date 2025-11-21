@@ -2,8 +2,24 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown 文档库</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="TravelMap - 赛博风旅行地图 Demo，涵盖 3D 地图、商城与路线规划体验。">
+    <meta name="keywords" content="TravelMap, 旅行地图, 3D 地图, 安卓 Demo, AMap SDK">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    <meta property="og:title" content="Markdown 文档库">
+    <meta property="og:description" content="TravelMap 安卓 Demo，展示地图、商城与路线规划。">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="{{ url_for('static', filename='logo.png', _external=True) }}">
+    <meta property="og:url" content="{{ request.url_root }}">
+    <meta name="twitter:card" content="summary">
+    <title>TravelMap - 文档库</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo.svg') }}">
+    <link rel="alternate icon" href="{{ url_for('static', filename='logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.png') }}">
+
 
     <!-- React Core -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -32,7 +48,8 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <!-- Syntax Highlighting (Atom One Dark Theme) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
     <!-- Icons -->
@@ -166,36 +183,36 @@
 </head>
 <body class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 h-screen overflow-hidden transition-colors duration-300">
 
-    <div id="root"></div>
+<div id="root"></div>
 
-    <script type="text/babel">
-        {% raw %}
-        const { useState, useEffect, useRef, useMemo } = React;
+<script type="text/babel">
+    {% raw %}
+    const { useState, useEffect, useRef, useMemo } = React;
 
-        const Icon = ({ name, size = 20, className = "" }) => {
-            const iconRef = useRef(null);
+    const Icon = ({ name, size = 20, className = "" }) => {
+        const iconRef = useRef(null);
 
-            useEffect(() => {
-                const holder = iconRef.current;
-                if (!holder) return;
-                holder.innerHTML = '';
-                const iconFactory = lucide?.icons?.[name];
-                if (iconFactory) {
-                    holder.insertAdjacentHTML('afterbegin', iconFactory.toSvg({ width: size, height: size }));
-                } else {
-                    holder.textContent = '•';
-                }
-            }, [name, size]);
+        useEffect(() => {
+            const holder = iconRef.current;
+            if (!holder) return;
+            holder.innerHTML = '';
+            const iconFactory = lucide?.icons?.[name];
+            if (iconFactory) {
+                holder.insertAdjacentHTML('afterbegin', iconFactory.toSvg({ width: size, height: size }));
+            } else {
+                holder.textContent = '•';
+            }
+        }, [name, size]);
 
-            return <span ref={iconRef} className={`inline-block ${className}`} aria-hidden="true"></span>;
-        };
+        return <span ref={iconRef} className={`inline-block ${className}`} aria-hidden="true"></span>;
+    };
 
-        // Fixed: Using template literals (backticks) for multiline content to avoid syntax errors
-        const DEMO_FILES = [
-            {
-                name: "👋 欢迎使用.md",
-                path: "👋 欢迎使用.md",
-                content: `# 欢迎使用 Markdown 浏览器
+    // Fixed: Using template literals (backticks) for multiline content to avoid syntax errors
+    const DEMO_FILES = [
+        {
+            name: "👋 欢迎使用.md",
+            path: "👋 欢迎使用.md",
+            content: `# 欢迎使用 Markdown 浏览器
 
 这是一个美观的本地 Markdown 阅读器。所有的解析都在你浏览器中完成，安全、快速。
 
@@ -211,12 +228,12 @@
 
 \`\`\`jsx
 function Welcome({ name }) {
-  return (
-    <div className="p-4 bg-blue-50 rounded-lg">
-      <h1 className="text-2xl font-bold">Hello, {name}!</h1>
-      <p>Welcome to the new documentation viewer.</p>
-    </div>
-  );
+return (
+<div className="p-4 bg-blue-50 rounded-lg">
+  <h1 className="text-2xl font-bold">Hello, {name}!</h1>
+  <p>Welcome to the new documentation viewer.</p>
+</div>
+);
 }
 \`\`\`
 
@@ -228,11 +245,11 @@ function Welcome({ name }) {
 | \`点击侧边栏\` | 切换 | 快速切换文档 |
 
 > "Simplicity is the ultimate sophistication." — Leonardo da Vinci`
-            },
-            {
-                name: "📝 Python 示例.md",
-                path: "docs/Python 示例.md",
-                content: `# Python 数据处理
+        },
+        {
+            name: "📝 Python 示例.md",
+            path: "docs/Python 示例.md",
+            content: `# Python 数据处理
 
 这是一个 Python 代码块的示例，展示高亮效果。
 
@@ -241,377 +258,377 @@ import pandas as pd
 import numpy as np
 
 def process_data(df):
-    # 计算移动平均线
-    df['MA_5'] = df['close'].rolling(window=5).mean()
+# 计算移动平均线
+df['MA_5'] = df['close'].rolling(window=5).mean()
 
-    # 筛选数据
-    filtered = df[df['volume'] > 1000000]
+# 筛选数据
+filtered = df[df['volume'] > 1000000]
 
-    return filtered
+return filtered
 
 # 主程序入口
 if __name__ == '__main__':
-    print('Data Processing Started...')
+print('Data Processing Started...')
 \`\`\``
-            }
-        ];
+        }
+    ];
 
-        const App = () => {
-            const [files, setFiles] = useState([]);
-            const [selectedFile, setSelectedFile] = useState(null);
-            const [searchQuery, setSearchQuery] = useState("");
-            const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-            const [isLoading, setIsLoading] = useState(false);
-            const [showSettings, setShowSettings] = useState(false);
-            const [isDarkMode, setIsDarkMode] = useState(false);
-            const [fontSize, setFontSize] = useState('base');
-            const [isUsingDefault, setIsUsingDefault] = useState(true);
+    const App = () => {
+        const [files, setFiles] = useState([]);
+        const [selectedFile, setSelectedFile] = useState(null);
+        const [searchQuery, setSearchQuery] = useState("");
+        const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+        const [isLoading, setIsLoading] = useState(false);
+        const [showSettings, setShowSettings] = useState(false);
+        const [isDarkMode, setIsDarkMode] = useState(false);
+        const [fontSize, setFontSize] = useState('base');
+        const [isUsingDefault, setIsUsingDefault] = useState(true);
 
-            const fileInputRef = useRef(null);
-            const settingsRef = useRef(null);
+        const fileInputRef = useRef(null);
+        const settingsRef = useRef(null);
 
-            const encodeDocPath = (path) => path.split('/').map(encodeURIComponent).join('/');
+        const encodeDocPath = (path) => path.split('/').map(encodeURIComponent).join('/');
 
-            const loadDefaultDocs = async () => {
-                setIsLoading(true);
-                try {
-                    const res = await fetch('/api/docs/list');
-                    const payload = await res.json();
-                    if (!res.ok || payload.code !== 200) {
-                        throw new Error(payload.msg || '加载失败');
-                    }
-                    const mappedFiles = (payload.data?.files || []).map(item => ({
-                        name: item.name,
-                        path: item.path,
-                        isRemote: true,
-                        content: null
-                    }));
-                    setFiles(mappedFiles);
-                    setSearchQuery("");
-                    setIsUsingDefault(true);
-                    if (mappedFiles.length > 0) {
-                        loadFileContent(mappedFiles[0]);
-                    } else {
-                        setSelectedFile(null);
-                    }
-                } catch (err) {
-                    console.error(err);
-                    alert('加载默认文档失败，请稍后再试');
-                } finally {
-                    setIsLoading(false);
+        const loadDefaultDocs = async () => {
+            setIsLoading(true);
+            try {
+                const res = await fetch('/api/docs/list');
+                const payload = await res.json();
+                if (!res.ok || payload.code !== 200) {
+                    throw new Error(payload.msg || '加载失败');
                 }
-            };
-
-            useEffect(() => {
-                if (isDarkMode) {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
-            }, [isDarkMode]);
-
-            useEffect(() => {
-                const handleClickOutside = (event) => {
-                    if (settingsRef.current && !settingsRef.current.contains(event.target)) {
-                        setShowSettings(false);
-                    }
-                };
-                document.addEventListener("mousedown", handleClickOutside);
-                return () => document.removeEventListener("mousedown", handleClickOutside);
-            }, []);
-
-            useEffect(() => {
-                if (selectedFile?.content) {
-                    setTimeout(() => {
-                        document.querySelectorAll('pre code').forEach((el) => {
-                            hljs.highlightElement(el);
-                        });
-                    }, 0);
-                }
-            }, [selectedFile]);
-
-            useEffect(() => {
-                loadDefaultDocs();
-            }, []);
-
-            const filteredFiles = useMemo(() => {
-                if (!searchQuery) return files;
-                return files.filter(f =>
-                    f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    f.path.toLowerCase().includes(searchQuery.toLowerCase())
-                );
-            }, [files, searchQuery]);
-
-            const handleFolderSelect = async (e) => {
-                const fileList = e.target.files;
-                if (!fileList || fileList.length === 0) return;
-
-                setIsLoading(true);
-                const mdFiles = Array.from(fileList).filter(file =>
-                    file.name.toLowerCase().endsWith('.md')
-                );
-
-                if (mdFiles.length === 0) {
-                    alert("未找到 .md 文件");
-                    setIsLoading(false);
-                    return;
-                }
-
-                mdFiles.sort((a, b) => a.name.localeCompare(b.name));
-
-                const mappedFiles = mdFiles.map(file => ({
-                    name: file.name,
-                    path: file.webkitRelativePath || file.name,
-                    handle: file,
+                const mappedFiles = (payload.data?.files || []).map(item => ({
+                    name: item.name,
+                    path: item.path,
+                    isRemote: true,
                     content: null
                 }));
-
                 setFiles(mappedFiles);
-                setIsUsingDefault(false);
                 setSearchQuery("");
+                setIsUsingDefault(true);
                 if (mappedFiles.length > 0) {
                     loadFileContent(mappedFiles[0]);
                 } else {
                     setSelectedFile(null);
                 }
+            } catch (err) {
+                console.error(err);
+                alert('加载默认文档失败，请稍后再试');
+            } finally {
                 setIsLoading(false);
-            };
+            }
+        };
 
-            const loadFileContent = (fileWrapper) => {
-                if (fileWrapper.content) {
-                    setSelectedFile(fileWrapper);
-                    if (window.innerWidth < 768) setIsSidebarOpen(false);
-                    return;
+        useEffect(() => {
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }, [isDarkMode]);
+
+        useEffect(() => {
+            const handleClickOutside = (event) => {
+                if (settingsRef.current && !settingsRef.current.contains(event.target)) {
+                    setShowSettings(false);
                 }
+            };
+            document.addEventListener("mousedown", handleClickOutside);
+            return () => document.removeEventListener("mousedown", handleClickOutside);
+        }, []);
 
-                if (fileWrapper.isRemote) {
-                    const requestUrl = `/docs/file/${encodeDocPath(fileWrapper.path)}?t=${Date.now()}`;
-                    fetch(requestUrl, { cache: 'no-store' })
-                        .then(res => {
-                            if (!res.ok) {
-                                throw new Error('加载文档失败');
-                            }
-                            return res.text();
-                        })
-                        .then(text => {
-                            const updatedFile = { ...fileWrapper, content: text };
-                            setFiles(prev => prev.map(f => f.path === fileWrapper.path ? updatedFile : f));
-                            setSelectedFile(updatedFile);
-                            if (window.innerWidth < 768) setIsSidebarOpen(false);
-                        })
-                        .catch(() => alert('无法加载该文档'));
-                } else if (fileWrapper.handle) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const updatedFile = { ...fileWrapper, content: e.target.result };
+        useEffect(() => {
+            if (selectedFile?.content) {
+                setTimeout(() => {
+                    document.querySelectorAll('pre code').forEach((el) => {
+                        hljs.highlightElement(el);
+                    });
+                }, 0);
+            }
+        }, [selectedFile]);
+
+        useEffect(() => {
+            loadDefaultDocs();
+        }, []);
+
+        const filteredFiles = useMemo(() => {
+            if (!searchQuery) return files;
+            return files.filter(f =>
+                f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                f.path.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }, [files, searchQuery]);
+
+        const handleFolderSelect = async (e) => {
+            const fileList = e.target.files;
+            if (!fileList || fileList.length === 0) return;
+
+            setIsLoading(true);
+            const mdFiles = Array.from(fileList).filter(file =>
+                file.name.toLowerCase().endsWith('.md')
+            );
+
+            if (mdFiles.length === 0) {
+                alert("未找到 .md 文件");
+                setIsLoading(false);
+                return;
+            }
+
+            mdFiles.sort((a, b) => a.name.localeCompare(b.name));
+
+            const mappedFiles = mdFiles.map(file => ({
+                name: file.name,
+                path: file.webkitRelativePath || file.name,
+                handle: file,
+                content: null
+            }));
+
+            setFiles(mappedFiles);
+            setIsUsingDefault(false);
+            setSearchQuery("");
+            if (mappedFiles.length > 0) {
+                loadFileContent(mappedFiles[0]);
+            } else {
+                setSelectedFile(null);
+            }
+            setIsLoading(false);
+        };
+
+        const loadFileContent = (fileWrapper) => {
+            if (fileWrapper.content) {
+                setSelectedFile(fileWrapper);
+                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                return;
+            }
+
+            if (fileWrapper.isRemote) {
+                const requestUrl = `/docs/file/${encodeDocPath(fileWrapper.path)}?t=${Date.now()}`;
+                fetch(requestUrl, { cache: 'no-store' })
+                    .then(res => {
+                        if (!res.ok) {
+                            throw new Error('加载文档失败');
+                        }
+                        return res.text();
+                    })
+                    .then(text => {
+                        const updatedFile = { ...fileWrapper, content: text };
                         setFiles(prev => prev.map(f => f.path === fileWrapper.path ? updatedFile : f));
                         setSelectedFile(updatedFile);
                         if (window.innerWidth < 768) setIsSidebarOpen(false);
-                    };
-                    reader.readAsText(fileWrapper.handle);
-                }
-            };
+                    })
+                    .catch(() => alert('无法加载该文档'));
+            } else if (fileWrapper.handle) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const updatedFile = { ...fileWrapper, content: e.target.result };
+                    setFiles(prev => prev.map(f => f.path === fileWrapper.path ? updatedFile : f));
+                    setSelectedFile(updatedFile);
+                    if (window.innerWidth < 768) setIsSidebarOpen(false);
+                };
+                reader.readAsText(fileWrapper.handle);
+            }
+        };
 
-            const getFontSizeClass = () => {
-                switch(fontSize) {
-                    case 'sm': return 'text-sm';
-                    case 'lg': return 'text-lg';
-                    case 'xl': return 'text-xl';
-                    default: return 'text-base';
-                }
-            };
+        const getFontSizeClass = () => {
+            switch(fontSize) {
+                case 'sm': return 'text-sm';
+                case 'lg': return 'text-lg';
+                case 'xl': return 'text-xl';
+                default: return 'text-base';
+            }
+        };
 
-            return (
-                <div className="flex h-screen w-full bg-white dark:bg-slate-900 transition-colors duration-300">
+        return (
+            <div className="flex h-screen w-full bg-white dark:bg-slate-900 transition-colors duration-300">
 
-                    <div className={`${isSidebarOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full'} transition-all duration-300 bg-slate-50 dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 absolute md:relative z-30 h-full shadow-xl md:shadow-none`}>
+                <div className={`${isSidebarOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full'} transition-all duration-300 bg-slate-50 dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 absolute md:relative z-30 h-full shadow-xl md:shadow-none`}>
 
-                        <div className={`p-5 border-b border-slate-200 dark:border-slate-800 ${!isSidebarOpen && 'hidden'}`}>
-                            <h2 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4 text-lg">
-                                <div className="bg-blue-600 text-white p-1.5 rounded-lg">
-                                </div>
-                                文档库
-                            </h2>
-
-                            <div className="relative group">
-                                <Icon name="search" size={16} className="absolute left-3 top-2.5 text-slate-400 group-focus-within:text-blue-500 transition-colors"/>
-                                <input
-                                    type="text"
-                                    placeholder="搜索..."
-                                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 transition-all"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                />
+                    <div className={`p-5 border-b border-slate-200 dark:border-slate-800 ${!isSidebarOpen && 'hidden'}`}>
+                        <h2 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4 text-lg">
+                            <div className="bg-blue-600 text-white p-1.5 rounded-lg">
                             </div>
-                        </div>
+                            文档库
+                        </h2>
 
-                        <div className={`flex-1 overflow-y-auto p-2 custom-scrollbar ${!isSidebarOpen && 'hidden'}`}>
-                            {filteredFiles.length === 0 ? (
-                                <div className="text-center mt-12 text-slate-400 text-sm">
-                                    <p>没有找到文档</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-1">
-                                    {filteredFiles.map((file, idx) => {
-                                        const isSelected = selectedFile && selectedFile.path === file.path;
-                                        return (
-                                            <button
-                                                key={file.path + idx}
-                                                onClick={() => loadFileContent(file)}
-                                                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all flex items-center gap-3 group ${
-                                                    isSelected
-                                                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
-                                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
-                                                }`}
-                                            >
-                                                <Icon name="file-text" size={16} className={`shrink-0 ${isSelected ? 'text-blue-500' : 'text-slate-400 group-hover:text-slate-500'}`} />
-                                                <div className="truncate flex-1">
-                                                    <div className="truncate">{file.name}</div>
-                                                    {file.path !== file.name && (
-                                                        <div className="text-[10px] opacity-60 truncate mt-0.5 font-normal">
-                                                            {file.path.replace(`/${file.name}`, '')}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className={`p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 ${!isSidebarOpen && 'hidden'}`}>
-                            <input type="file" webkitdirectory="true" directory="true" multiple className="hidden" ref={fileInputRef} onChange={handleFolderSelect} />
-                            <div className="space-y-2">
-                                <button
-                                    onClick={() => fileInputRef.current.click()}
-                                    disabled={isLoading}
-                                    className="w-full bg-slate-800 hover:bg-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-sm font-medium py-2.5 px-4 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-300/50 dark:shadow-none active:scale-95"
-                                >
-                                    {isLoading ? <div className="spinner"></div> : <><Icon name="folder-plus" size={18} /> 导入文件夹</>}
-                                </button>
-                                {!isUsingDefault && (
-                                    <button
-                                        onClick={loadDefaultDocs}
-                                        disabled={isLoading}
-                                        className="w-full bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium py-2.5 px-4 rounded-lg transition-all flex items-center justify-center gap-2 active:scale-95"
-                                    >
-                                        <Icon name="rotate-ccw" size={18} /> 恢复默认文档
-                                    </button>
-                                )}
-                            </div>
+                        <div className="relative group">
+                            <Icon name="search" size={16} className="absolute left-3 top-2.5 text-slate-400 group-focus-within:text-blue-500 transition-colors"/>
+                            <input
+                                type="text"
+                                placeholder="搜索..."
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 transition-all"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
                         </div>
                     </div>
 
-                    <div className="flex-1 flex flex-col h-full w-full relative bg-white dark:bg-slate-900">
+                    <div className={`flex-1 overflow-y-auto p-2 custom-scrollbar ${!isSidebarOpen && 'hidden'}`}>
+                        {filteredFiles.length === 0 ? (
+                            <div className="text-center mt-12 text-slate-400 text-sm">
+                                <p>没有找到文档</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-1">
+                                {filteredFiles.map((file, idx) => {
+                                    const isSelected = selectedFile && selectedFile.path === file.path;
+                                    return (
+                                        <button
+                                            key={file.path + idx}
+                                            onClick={() => loadFileContent(file)}
+                                            className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all flex items-center gap-3 group ${
+                                                isSelected
+                                                ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
+                                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
+                                            }`}
+                                        >
+                                            <Icon name="file-text" size={16} className={`shrink-0 ${isSelected ? 'text-blue-500' : 'text-slate-400 group-hover:text-slate-500'}`} />
+                                            <div className="truncate flex-1">
+                                                <div className="truncate">{file.name}</div>
+                                                {file.path !== file.name && (
+                                                    <div className="text-[10px] opacity-60 truncate mt-0.5 font-normal">
+                                                        {file.path.replace(`/${file.name}`, '')}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
 
-                        <div className="h-16 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between px-4 md:px-8 shrink-0 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md z-20">
-                            <div className="flex items-center gap-3 overflow-hidden">
+                    <div className={`p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 ${!isSidebarOpen && 'hidden'}`}>
+                        <input type="file" webkitdirectory="true" directory="true" multiple className="hidden" ref={fileInputRef} onChange={handleFolderSelect} />
+                        <div className="space-y-2">
+                            <button
+                                onClick={() => fileInputRef.current.click()}
+                                disabled={isLoading}
+                                className="w-full bg-slate-800 hover:bg-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-sm font-medium py-2.5 px-4 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-300/50 dark:shadow-none active:scale-95"
+                            >
+                                {isLoading ? <div className="spinner"></div> : <><Icon name="folder-plus" size={18} /> 导入文件夹</>}
+                            </button>
+                            {!isUsingDefault && (
                                 <button
-                                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
+                                    onClick={loadDefaultDocs}
+                                    disabled={isLoading}
+                                    className="w-full bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium py-2.5 px-4 rounded-lg transition-all flex items-center justify-center gap-2 active:scale-95"
                                 >
-                                    <Icon name={isSidebarOpen ? "panel-left-close" : "panel-left-open"} size={20} />
+                                    <Icon name="rotate-ccw" size={18} /> 恢复默认文档
                                 </button>
-                                <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
-                                <span className="font-medium text-slate-700 dark:text-slate-200 truncate text-sm md:text-base">
-                                    {selectedFile ? selectedFile.name : '未选择文件'}
-                                </span>
-                            </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
 
-                            <div className="flex items-center gap-2">
-                                <a
-                                    href="/"
-                                    className="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
-                                >
-                                    <Icon name="home" size={18} /> 返回首页
-                                </a>
+                <div className="flex-1 flex flex-col h-full w-full relative bg-white dark:bg-slate-900">
 
-                                <div className="relative" ref={settingsRef}>
-                                    <button
-                                        onClick={() => setShowSettings(!showSettings)}
-                                        className={`p-2 rounded-lg transition-colors ${showSettings ? 'bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                                    >
-                                        <Icon name="settings-2" size={20} />
-                                    </button>
-
-                                    {showSettings && (
-                                        <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-100 dark:border-slate-700 p-4 animate-fade-in z-50">
-                                            <h3 className="text-xs font-bold text-slate-400 uppercase mb-3 tracking-wider">显示设置</h3>
-
-                                            <div className="flex items-center justify-between mb-4">
-                                                <span className="text-sm text-slate-600 dark:text-slate-300 flex items-center gap-2">
-                                                    <Icon name={isDarkMode ? "moon" : "sun"} size={16} />
-                                                    {isDarkMode ? '暗黑模式' : '明亮模式'}
-                                                </span>
-                                                <button
-                                                    onClick={() => setIsDarkMode(!isDarkMode)}
-                                                    className={`w-11 h-6 rounded-full transition-colors relative ${isDarkMode ? 'bg-blue-600' : 'bg-slate-200'}`}
-                                                >
-                                                    <div className={`w-4 h-4 bg-white rounded-full shadow-sm absolute top-1 transition-transform ${isDarkMode ? 'left-6' : 'left-1'}`}></div>
-                                                </button>
-                                            </div>
-
-                                            <div className="h-px bg-slate-100 dark:bg-slate-700 my-3"></div>
-
-                                            <div>
-                                                <div className="flex justify-between text-sm text-slate-600 dark:text-slate-300 mb-2">
-                                                    <span className="flex items-center gap-2"><Icon name="type" size={16} /> 字体大小</span>
-                                                    <span className="text-xs text-slate-400">{fontSize === 'base' ? '标准' : fontSize === 'sm' ? '小' : '大'}</span>
-                                                </div>
-                                                <div className="flex gap-2 bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg">
-                                                    {['sm', 'base', 'lg', 'xl'].map((size) => (
-                                                        <button
-                                                            key={size}
-                                                            onClick={() => setFontSize(size)}
-                                                            className={`flex-1 py-1 text-xs rounded-md transition-all ${
-                                                                fontSize === size
-                                                                ? 'bg-white dark:bg-slate-600 shadow-sm text-blue-600 dark:text-white font-medium'
-                                                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
-                                                            }`}
-                                                        >
-                                                            {size === 'sm' ? 'A' : size === 'base' ? 'A+' : size === 'lg' ? 'A++' : 'A+++'}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                    <div className="h-16 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between px-4 md:px-8 shrink-0 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md z-20">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                            <button
+                                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
+                            >
+                                <Icon name={isSidebarOpen ? "panel-left-close" : "panel-left-open"} size={20} />
+                            </button>
+                            <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+                            <span className="font-medium text-slate-700 dark:text-slate-200 truncate text-sm md:text-base">
+                                {selectedFile ? selectedFile.name : '未选择文件'}
+                            </span>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar">
-                            <div className={`max-w-4xl mx-auto px-6 py-10 md:px-12 md:py-14 pb-32 animate-fade-in ${getFontSizeClass()}`}>
-                                {selectedFile ? (
-                                    <div
-                                        className="markdown-body"
-                                        dangerouslySetInnerHTML={{ __html: marked.parse(selectedFile.content || '') }}
-                                    />
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center h-[60vh] text-slate-300 dark:text-slate-600">
-                                        <Icon name="book-dashed" size={64} className="mb-4 opacity-50" />
-                                        <p>选择文件以开始阅读</p>
+                        <div className="flex items-center gap-2">
+                            <a
+                                href="/"
+                                className="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
+                            >
+                                <Icon name="home" size={18} /> 返回首页
+                            </a>
+
+                            <div className="relative" ref={settingsRef}>
+                                <button
+                                    onClick={() => setShowSettings(!showSettings)}
+                                    className={`p-2 rounded-lg transition-colors ${showSettings ? 'bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                >
+                                    <Icon name="settings-2" size={20} />
+                                </button>
+
+                                {showSettings && (
+                                    <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-100 dark:border-slate-700 p-4 animate-fade-in z-50">
+                                        <h3 className="text-xs font-bold text-slate-400 uppercase mb-3 tracking-wider">显示设置</h3>
+
+                                        <div className="flex items-center justify-between mb-4">
+                                            <span className="text-sm text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                                                <Icon name={isDarkMode ? "moon" : "sun"} size={16} />
+                                                {isDarkMode ? '暗黑模式' : '明亮模式'}
+                                            </span>
+                                            <button
+                                                onClick={() => setIsDarkMode(!isDarkMode)}
+                                                className={`w-11 h-6 rounded-full transition-colors relative ${isDarkMode ? 'bg-blue-600' : 'bg-slate-200'}`}
+                                            >
+                                                <div className={`w-4 h-4 bg-white rounded-full shadow-sm absolute top-1 transition-transform ${isDarkMode ? 'left-6' : 'left-1'}`}></div>
+                                            </button>
+                                        </div>
+
+                                        <div className="h-px bg-slate-100 dark:bg-slate-700 my-3"></div>
+
+                                        <div>
+                                            <div className="flex justify-between text-sm text-slate-600 dark:text-slate-300 mb-2">
+                                                <span className="flex items-center gap-2"><Icon name="type" size={16} /> 字体大小</span>
+                                                <span className="text-xs text-slate-400">{fontSize === 'base' ? '标准' : fontSize === 'sm' ? '小' : '大'}</span>
+                                            </div>
+                                            <div className="flex gap-2 bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg">
+                                                {['sm', 'base', 'lg', 'xl'].map((size) => (
+                                                    <button
+                                                        key={size}
+                                                        onClick={() => setFontSize(size)}
+                                                        className={`flex-1 py-1 text-xs rounded-md transition-all ${
+                                                            fontSize === size
+                                                            ? 'bg-white dark:bg-slate-600 shadow-sm text-blue-600 dark:text-white font-medium'
+                                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+                                                        }`}
+                                                    >
+                                                        {size === 'sm' ? 'A' : size === 'base' ? 'A+' : size === 'lg' ? 'A++' : 'A+++'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>
                         </div>
-
                     </div>
 
-                    {isSidebarOpen && (
-                        <div
-                            className="fixed inset-0 bg-black/20 dark:bg-black/50 z-20 md:hidden backdrop-blur-sm"
-                            onClick={() => setIsSidebarOpen(false)}
-                        ></div>
-                    )}
-                </div>
-            );
-        };
+                    <div className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar">
+                        <div className={`max-w-4xl mx-auto px-6 py-10 md:px-12 md:py-14 pb-32 animate-fade-in ${getFontSizeClass()}`}>
+                            {selectedFile ? (
+                                <div
+                                    className="markdown-body"
+                                    dangerouslySetInnerHTML={{ __html: marked.parse(selectedFile.content || '') }}
+                                />
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-[60vh] text-slate-300 dark:text-slate-600">
+                                    <Icon name="book-dashed" size={64} className="mb-4 opacity-50" />
+                                    <p>选择文件以开始阅读</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-        {% endraw %}
-    </script>
+                </div>
+
+                {isSidebarOpen && (
+                    <div
+                        className="fixed inset-0 bg-black/20 dark:bg-black/50 z-20 md:hidden backdrop-blur-sm"
+                        onClick={() => setIsSidebarOpen(false)}
+                    ></div>
+                )}
+            </div>
+        );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+    {% endraw %}
+</script>
 </body>
 </html>
