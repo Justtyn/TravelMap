@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Image Point Cloud Lab | 数字艺术幻境</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #050505; font-family: 'Inter', sans-serif; }
+        #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+
+        /* UI Overlay Styles */
+        .ui-layer { position: relative; z-index: 10; pointer-events: none; }
+        .interactive { pointer-events: auto; }
+
+        .glass-panel {
+            background: rgba(20, 20, 20, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-grad {
+            background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            transition: 0.5s;
+            background-size: 200% auto;
+            border: none;
+        }
+        .btn-grad:hover {
+            background-position: right center;
+            box-shadow: 0 0 20px #4facfe;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #00f2fe;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.8);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+        }
+
+        /* Selected state for buttons */
+        .mode-btn.selected {
+            background-color: rgba(0, 242, 254, 0.2);
+            border-color: #00f2fe;
+            color: #00f2fe;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.1);
+        }
+
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top: 3px solid #00f2fe;
+            width: 24px;
+            height: 24px;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Intro Animation */
+        #intro-overlay {
+            transition: opacity 1s ease-out;
+        }
+        .fade-out { opacity: 0; pointer-events: none; }
+    </style>
+    <!-- Three.js Imports -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <!-- WebGL Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- UI Interface -->
+    <div class="ui-layer w-full h-full flex flex-col justify-between p-6 text-white">
+
+        <!-- Header -->
+        <div class="flex justify-between items-start">
+            <div class="interactive glass-panel p-4 rounded-xl max-w-md">
+                <h1 class="text-2xl font-bold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600">
+                    POINT CLOUD LAB
+                </h1>
+                <p class="text-xs text-gray-400 mt-1 tracking-widest">3D SPATIAL ILLUSION ENGINE</p>
+
+                <div class="mt-4 flex items-center gap-3">
+                    <label class="btn-grad text-white px-4 py-2 rounded cursor-pointer text-sm font-bold shadow-lg flex items-center gap-2 hover:scale-105 transform transition">
+                        <span>📤 上传图片</span>
+                        <input type="file" id="fileInput" accept="image/*" class="hidden">
+                    </label>
+                    <div id="loadingSpinner" class="loader"></div>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-2">支持拖拽上传 • 建议使用高对比度图片</p>
+            </div>
+
+            <!-- Stats / Info -->
+            <div class="interactive glass-panel px-4 py-2 rounded-full text-xs font-mono text-cyan-300 flex gap-4">
+                <span id="point-count">POINTS: 0</span>
+                <span>FPS: <span id="fps-counter">60</span></span>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="interactive glass-panel p-6 rounded-2xl w-80 self-end absolute top-24 right-6 transform transition-all duration-500">
+            <h3 class="text-sm font-bold text-gray-300 mb-4 border-b border-gray-700 pb-2">参数控制 (PARAMETERS)</h3>
+
+            <!-- Effect Modes -->
+            <div class="grid grid-cols-2 gap-2 mb-6">
+                <button class="mode-btn selected bg-gray-800/50 border border-gray-700 text-gray-400 text-xs py-2 rounded hover:bg-gray-700 transition" data-mode="0">原画 (Clear)</button>
+                <button class="mode-btn bg-gray-800/50 border border-gray-700 text-gray-400 text-xs py-2 rounded hover:bg-gray-700 transition" data-mode="1">流体 (Liquid)</button>
+                <button class="mode-btn bg-gray-800/50 border border-gray-700 text-gray-400 text-xs py-2 rounded hover:bg-gray-700 transition" data-mode="2">扭曲 (Vortex)</button>
+                <button class="mode-btn bg-gray-800/50 border border-gray-700 text-gray-400 text-xs py-2 rounded hover:bg-gray-700 transition" data-mode="3">扫描 (Scan)</button>
+            </div>
+
+            <div class="space-y-5">
+                <div>
+                    <div class="flex justify-between text-xs mb-1 text-gray-400">
+                        <span>粒子大小 (Size)</span>
+                        <span id="val-size">1.8</span>
+                    </div>
+                    <input type="range" id="sizeSlider" min="0.5" max="4.0" step="0.1" value="1.8" class="w-full">
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-xs mb-1 text-gray-400">
+                        <span>3D 隆起 (Extrude)</span>
+                        <span id="val-depth">0.5</span>
+                    </div>
+                    <input type="range" id="depthSlider" min="0" max="5.0" step="0.1" value="0.5" class="w-full">
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-xs mb-1 text-gray-400">
+                        <span>动画速度 (Speed)</span>
+                        <span id="val-speed">1.0</span>
+                    </div>
+                    <input type="range" id="speedSlider" min="0" max="3.0" step="0.1" value="1.0" class="w-full">
+                </div>
+
+                 <div>
+                    <div class="flex justify-between text-xs mb-1 text-gray-400">
+                        <span>鼠标干扰 (Mouse Force)</span>
+                        <span id="val-mouse">0.5</span>
+                    </div>
+                    <input type="range" id="mouseSlider" min="0" max="2.0" step="0.1" value="0.5" class="w-full">
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Text -->
+        <div class="text-center pointer-events-none opacity-50 text-[10px] tracking-[0.3em] uppercase text-white mb-2">
+            Immersive Digital Art Rendering Engine v2.0
+        </div>
+    </div>
+
+    <!-- Intro Overlay -->
+    <div id="intro-overlay" class="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center text-white pointer-events-none">
+        <h1 class="text-4xl md:text-6xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-600 mb-4">
+            DIGITAL VOID
+        </h1>
+        <p class="text-cyan-400 font-mono text-sm animate-pulse">INITIALIZING PARTICLE SYSTEM...</p>
+    </div>
+
+    <!-- Application Logic -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- Configuration & State ---
+        const config = {
+            particleSize: 1.8,
+            depthMultiplier: 0.5, // Lower default depth for clearer initial image
+            animationSpeed: 1.0,
+            mouseForce: 1.0,
+            mode: 0, // 0: Clear/Idle, 1: Liquid, 2: Vortex, 3: Scan
+        };
+
+        let scene, camera, renderer, controls;
+        let pointCloud;
+        let geometry, material;
+        let clock = new THREE.Clock();
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2(-9999, -9999);
+        const normalizedMouse = new THREE.Vector2();
+
+        // --- Shaders (Updated for Clarity and Color) ---
+
+        const vertexShader = `
+            uniform float uTime;
+            uniform float uSize;
+            uniform float uDepth;
+            uniform float uMouseForce;
+            uniform vec2 uMouse;
+            uniform int uMode;
+
+            attribute float aScale;
+            attribute float aBrightness;
+            attribute vec3 aColor;
+            attribute vec3 aOriginalPos;
+
+            varying vec3 vColor;
+            varying float vBrightness;
+            varying float vDist;
+
+            // Pseudo-random function
+            float random(vec2 st) {
+                return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+            }
+
+            void main() {
+                vColor = aColor;
+                vBrightness = aBrightness;
+
+                vec3 pos = aOriginalPos;
+
+                // 1. Base Depth (Use brightness to extrude Z)
+                // We use a smaller multiplier by default to keep image recognizable
+                pos.z += aBrightness * 50.0 * uDepth;
+
+                // 2. Mode Specific Effects
+
+                if (uMode == 1) { // Liquid / Wave
+                    float wave = sin(pos.x * 0.02 + uTime * 1.5) * 10.0;
+                    float wave2 = cos(pos.y * 0.03 + uTime * 1.2) * 10.0;
+                    pos.z += wave + wave2;
+                }
+                else if (uMode == 2) { // Vortex / Twist (User liked this)
+                    float dist = length(pos.xy);
+                    float angle = atan(pos.y, pos.x);
+                    // Dynamic twist based on distance from center
+                    float twist = 300.0 / (dist + 50.0) * sin(uTime * 0.8);
+                    float newAngle = angle + twist;
+                    pos.x = cos(newAngle) * dist;
+                    pos.y = sin(newAngle) * dist;
+                    pos.z += sin(dist * 0.05 - uTime * 2.0) * 30.0;
+                }
+                else if (uMode == 3) { // Scan / Digital Glitch
+                    float scanline = sin(pos.y * 0.05 + uTime * 3.0);
+                    // Only displace if scanline is high
+                    if (scanline > 0.95) {
+                        pos.x += sin(uTime * 50.0) * 10.0;
+                        pos.z += 20.0;
+                        vColor += vec3(0.5); // Highlight scanline
+                    }
+                }
+                else { // Idle / Clear
+                     // Subtle breathing to keep it 3D
+                     pos.z += sin(pos.x * 0.01 + uTime) * 2.0;
+                }
+
+                // 3. Mouse Interaction (Repel/Attract)
+                float mouseDist = distance(pos.xy, uMouse);
+                float mouseArea = 250.0;
+                if (mouseDist < mouseArea) {
+                    float force = (1.0 - mouseDist / mouseArea);
+                    force = force * force; // Quadratic falloff for smoother feel
+                    vec3 dir = normalize(pos - vec3(uMouse, 0.0));
+
+                    // Push away xy, push up z
+                    pos += dir * force * 80.0 * uMouseForce;
+                    pos.z += force * 100.0 * uMouseForce;
+                }
+
+                vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                gl_Position = projectionMatrix * mvPosition;
+
+                vDist = -mvPosition.z;
+
+                // Size attenuation
+                // Scale based on distance but clamped to avoid disappearing
+                gl_PointSize = uSize * aScale * (800.0 / -mvPosition.z);
+            }
+        `;
+
+        const fragmentShader = `
+            uniform float uTime;
+            varying vec3 vColor;
+            varying float vBrightness;
+            varying float vDist;
+
+            void main() {
+                // Circular particle shape
+                vec2 xy = gl_PointCoord.xy - vec2(0.5);
+                float r = length(xy);
+
+                // 1. Sharper Circle (Better for image clarity)
+                // Previous was smoothstep(0.3, 0.5), very blurry.
+                // Now smoothstep(0.45, 0.5) is much sharper.
+                if (r > 0.5) discard;
+
+                // 2. Color Vibrancy
+                // We use the raw color mostly.
+                vec3 finalColor = vColor;
+
+                // 3. Subtle Edge darkening for "bead" look
+                float alpha = smoothstep(0.5, 0.4, r);
+
+                // 4. Fog (Make it much further away so it doesn't dim the image)
+                float fogFactor = smoothstep(1200.0, 3000.0, vDist);
+                finalColor = mix(finalColor, vec3(0.0), fogFactor);
+
+                gl_FragColor = vec4(finalColor, 1.0); // Alpha 1.0 for solid look
+            }
+        `;
+
+        // --- Initialization ---
+
+        function init() {
+            const container = document.getElementById('canvas-container');
+
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000000); // Pure black for contrast
+            // scene.fog = new THREE.FogExp2(0x000000, 0.0008); // Removed heavy fog
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 5000);
+            camera.position.set(0, 0, 600);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            // Note: removed AdditiveBlending setting here, handled in material
+            container.appendChild(renderer.domElement);
+
+            // Controls
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.rotateSpeed = 0.5;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 0.5;
+
+            // Load Default Image (Placeholder Art)
+            createPlaceholderArt();
+
+            // Listeners
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('mousemove', onMouseMove);
+            document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+
+            // UI Listeners
+            setupUI();
+
+            // Start loop
+            renderer.setAnimationLoop(animate);
+
+            // Remove intro
+            setTimeout(() => {
+                document.getElementById('intro-overlay').classList.add('fade-out');
+            }, 1500);
+        }
+
+        function createPlaceholderArt() {
+            // Generate a procedural colorful grid if no image is loaded
+            const width = 200;
+            const height = 200;
+            const count = width * height;
+
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+            const scales = new Float32Array(count);
+            const brightness = new Float32Array(count);
+            const originalPos = new Float32Array(count * 3);
+
+            let i = 0;
+            for(let x = 0; x < width; x++) {
+                for(let y = 0; y < height; y++) {
+                    const u = x / width;
+                    const v = y / height;
+
+                    const px = (x - width/2) * 3;
+                    const py = (y - height/2) * 3;
+                    const pz = 0;
+
+                    positions[i*3] = px;
+                    positions[i*3+1] = py;
+                    positions[i*3+2] = pz;
+
+                    originalPos[i*3] = px;
+                    originalPos[i*3+1] = py;
+                    originalPos[i*3+2] = pz;
+
+                    // Cool gradient color
+                    colors[i*3] = 0.2 + 0.8 * u; // R
+                    colors[i*3+1] = 0.2 + 0.8 * v; // G
+                    colors[i*3+2] = 0.5 + 0.5 * Math.sin(u * 10.0); // B
+
+                    const bright = (colors[i*3] + colors[i*3+1] + colors[i*3+2]) / 3;
+                    brightness[i] = bright;
+                    scales[i] = Math.random();
+
+                    i++;
+                }
+            }
+
+            createParticleSystem(positions, colors, scales, brightness, originalPos);
+            updateStats(count);
+        }
+
+        function handleFileSelect(evt) {
+            const file = evt.target.files[0];
+            if (!file) return;
+
+            const spinner = document.getElementById('loadingSpinner');
+            spinner.style.display = 'block';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    processImage(img);
+                    spinner.style.display = 'none';
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- Core: Image to Particles ---
+
+        function processImage(img) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Slightly increased particle budget for better definition
+            const maxParticles = 300000;
+            const ratio = Math.sqrt(maxParticles / (img.width * img.height));
+            const width = Math.floor(img.width * ratio);
+            const height = Math.floor(img.height * ratio);
+
+            canvas.width = width;
+            canvas.height = height;
+
+            ctx.drawImage(img, 0, 0, width, height);
+            const imgData = ctx.getImageData(0, 0, width, height);
+            const data = imgData.data;
+
+            const count = width * height;
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+            const scales = new Float32Array(count);
+            const brightness = new Float32Array(count);
+            const originalPos = new Float32Array(count * 3);
+
+            let idx = 0;
+            for (let i = 0; i < count; i++) {
+                // Extract color
+                let r = data[i * 4] / 255;
+                let g = data[i * 4 + 1] / 255;
+                let b = data[i * 4 + 2] / 255;
+                const a = data[i * 4 + 3] / 255;
+
+                // Skip transparent
+                if (a < 0.1) continue;
+
+                // COLOR BOOST: Increase saturation/vibrancy slightly to pop against black
+                // Simple contrast boost
+                r = Math.pow(r, 0.9) * 1.1;
+                g = Math.pow(g, 0.9) * 1.1;
+                b = Math.pow(b, 0.9) * 1.1;
+
+                const x = (i % width);
+                const y = Math.floor(i / width);
+
+                // Tighter spacing for better image coherence
+                const px = (x - width / 2) * 1.8;
+                const py = -(y - height / 2) * 1.8;
+                const pz = 0;
+
+                positions[idx * 3] = px;
+                positions[idx * 3 + 1] = py;
+                positions[idx * 3 + 2] = pz;
+
+                originalPos[idx * 3] = px;
+                originalPos[idx * 3 + 1] = py;
+                originalPos[idx * 3 + 2] = pz;
+
+                colors[idx * 3] = r;
+                colors[idx * 3 + 1] = g;
+                colors[idx * 3 + 2] = b;
+
+                const bright = (r + g + b) / 3.0;
+                brightness[idx] = bright;
+                scales[idx] = Math.random() * 0.5 + 0.5; // Less random size variation for cleaner look
+
+                idx++;
+            }
+
+            // Trim arrays to actual valid pixels
+            const finalPos = positions.slice(0, idx*3);
+            const finalCol = colors.slice(0, idx*3);
+            const finalScale = scales.slice(0, idx);
+            const finalBri = brightness.slice(0, idx);
+            const finalOrig = originalPos.slice(0, idx*3);
+
+            createParticleSystem(finalPos, finalCol, finalScale, finalBri, finalOrig);
+            updateStats(idx);
+        }
+
+        function createParticleSystem(pos, col, scl, bri, orig) {
+            if (pointCloud) {
+                scene.remove(pointCloud);
+                geometry.dispose();
+            }
+
+            geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            geometry.setAttribute('aColor', new THREE.BufferAttribute(col, 3));
+            geometry.setAttribute('aScale', new THREE.BufferAttribute(scl, 1));
+            geometry.setAttribute('aBrightness', new THREE.BufferAttribute(bri, 1));
+            geometry.setAttribute('aOriginalPos', new THREE.BufferAttribute(orig, 3));
+
+            // IMPORTANT CHANGE: NormalBlending + DepthWrite = Solid, Vivid Colors
+            material = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 },
+                    uSize: { value: config.particleSize },
+                    uDepth: { value: config.depthMultiplier },
+                    uMouse: { value: new THREE.Vector2(0, 0) },
+                    uMouseForce: { value: config.mouseForce },
+                    uMode: { value: config.mode },
+                },
+                vertexShader: vertexShader,
+                fragmentShader: fragmentShader,
+                transparent: false, // Solid particles
+                depthTest: true,    // Proper occlusion
+                depthWrite: true,   // Proper occlusion
+                blending: THREE.NormalBlending, // Restore true colors (No Additive)
+            });
+
+            pointCloud = new THREE.Points(geometry, material);
+            scene.add(pointCloud);
+        }
+
+        function updateStats(count) {
+            document.getElementById('point-count').innerText = `POINTS: ${count.toLocaleString()}`;
+        }
+
+        // --- UI Controls ---
+
+        function setupUI() {
+            // Sliders
+            bindSlider('sizeSlider', 'val-size', (v) => config.particleSize = v);
+            bindSlider('depthSlider', 'val-depth', (v) => config.depthMultiplier = v);
+            bindSlider('speedSlider', 'val-speed', (v) => config.animationSpeed = v);
+            bindSlider('mouseSlider', 'val-mouse', (v) => config.mouseForce = v);
+
+            // Mode Buttons
+            const buttons = document.querySelectorAll('.mode-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Reset styles
+                    buttons.forEach(b => b.classList.remove('selected'));
+                    // Active style
+                    e.target.classList.add('selected');
+
+                    config.mode = parseInt(e.target.dataset.mode);
+                });
+            });
+        }
+
+        function bindSlider(id, labelId, callback) {
+            const el = document.getElementById(id);
+            const label = document.getElementById(labelId);
+            el.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                label.innerText = val.toFixed(1);
+                callback(val);
+            });
+        }
+
+        // --- Interaction ---
+
+        function onMouseMove(event) {
+            // Normalize mouse for Raycasting if needed, but for shader we use raw world projection approximation
+            // Calculate mouse position in normalized device coordinates (-1 to +1)
+            normalizedMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            normalizedMouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            // Project mouse onto the z=0 plane for the shader interaction
+            // This is a simplification. For perfect 3D picking we need Raycaster, but for "force field" effect this works.
+            // We map screen coords roughly to world coords at z=0
+
+            // Using unproject to get world coordinate
+            let vec = new THREE.Vector3(normalizedMouse.x, normalizedMouse.y, 0.5);
+            vec.unproject(camera);
+            let dir = vec.sub(camera.position).normalize();
+            let distance = -camera.position.z / dir.z;
+            let pos = camera.position.clone().add(dir.multiplyScalar(distance));
+
+            mouse.x = pos.x;
+            mouse.y = pos.y;
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- Animation Loop ---
+        let lastTime = 0;
+        let frameCount = 0;
+        const fpsElem = document.getElementById('fps-counter');
+
+        function animate(time) {
+            const delta = clock.getDelta();
+
+            if (material) {
+                material.uniforms.uTime.value += delta * config.animationSpeed;
+                material.uniforms.uSize.value = config.particleSize;
+                material.uniforms.uDepth.value = THREE.MathUtils.lerp(material.uniforms.uDepth.value, config.depthMultiplier, 0.1);
+                material.uniforms.uMouseForce.value = config.mouseForce;
+                material.uniforms.uMode.value = config.mode;
+
+                // Smoothly interpolate mouse uniform
+                material.uniforms.uMouse.value.lerp(mouse, 0.1);
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+
+            // FPS Counter
+            frameCount++;
+            if (time - lastTime >= 1000) {
+                fpsElem.innerText = frameCount;
+                frameCount = 0;
+                lastTime = time;
+            }
+        }
+
+        // Start
+        init();
+
+    </script>
+</body>
+</html>

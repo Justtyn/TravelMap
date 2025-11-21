@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Reverse Snake: The Hunted (Cyber Edition)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --bg-color: #050505;
+            --grid-line: #1a1a1a;
+            --neon-green: #00ff9d;
+            --neon-red: #ff0055;
+            --neon-blue: #00d9ff;
+            --neon-yellow: #ffcc00;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #e2e8f0;
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden;
+            touch-action: none;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* 层叠 Canvas 设计 */
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            position: absolute;
+            image-rendering: pixelated;
+        }
+
+        #bgCanvas { z-index: 0; opacity: 0.4; }
+        #gameCanvas { z-index: 1; }
+        #uiCanvas { z-index: 2; pointer-events: none; }
+
+        /* UI 覆盖层 */
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hud-panel {
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            text-shadow: 0 0 5px var(--neon-green);
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+        .stat-label { font-size: 0.8rem; color: #64748b; text-transform: uppercase; }
+        .stat-value { font-size: 1.5rem; color: white; font-weight: bold; }
+
+        /* 道具栏 */
+        .powerup-bar {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+
+        .powerup-icon {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #333;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.5);
+            opacity: 0.3;
+            transition: 0.2s;
+            font-size: 20px;
+        }
+        .powerup-icon.active {
+            opacity: 1;
+            border-color: white;
+            box-shadow: 0 0 10px currentColor;
+            animation: pulse 1s infinite;
+        }
+
+        /* 模态框 */
+        .modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 5, 5, 0.9);
+            backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal.visible { opacity: 1; pointer-events: auto; }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            color: var(--neon-green);
+            text-shadow: 0 0 20px var(--neon-green);
+            margin-bottom: 0;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+        .subtitle { color: var(--neon-red); margin-bottom: 2rem; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 5px; }
+
+        .btn-primary {
+            background: transparent;
+            color: var(--neon-green);
+            border: 2px solid var(--neon-green);
+            padding: 1rem 3rem;
+            font-size: 1.5rem;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 10px rgba(0, 255, 157, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-primary:hover {
+            background: var(--neon-green);
+            color: black;
+            box-shadow: 0 0 30px var(--neon-green);
+        }
+
+        /* 移动端控制 */
+        .mobile-controls {
+            pointer-events: auto;
+            display: none;
+            width: 100%;
+            height: 180px;
+            padding-bottom: 20px;
+            position: relative;
+        }
+
+        /* CRT 扫描线特效 */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            z-index: 99;
+            pointer-events: none;
+        }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        /* 虚拟摇杆样式 */
+        .dpad-grid {
+            display: grid;
+            grid-template-columns: 60px 60px 60px;
+            grid-template-rows: 60px 60px;
+            gap: 10px;
+            margin: 0 auto;
+            justify-content: center;
+        }
+        .dpad-btn {
+            width: 60px; height: 60px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; color: rgba(255,255,255,0.7);
+            touch-action: manipulation;
+        }
+        .dpad-btn:active { background: var(--neon-green); color: black; }
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+
+    <!-- Container -->
+    <div id="game-container">
+        <canvas id="bgCanvas"></canvas>
+        <canvas id="gameCanvas"></canvas>
+
+        <div class="ui-overlay">
+            <div class="hud-panel">
+                <div class="stat-box">
+                    <div class="stat-label">Survival Time</div>
+                    <div class="stat-value"><span id="ui-score">0</span>s</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Threat Level</div>
+                    <div class="stat-value" style="color: var(--neon-red)">DETAILS_<span id="ui-enemies">0</span></div>
+                </div>
+            </div>
+
+            <div class="powerup-bar">
+                <div id="icon-freeze" class="powerup-icon" style="color: var(--neon-blue)">❄</div>
+                <div id="icon-ghost" class="powerup-icon" style="color: #a855f7">👻</div>
+                <div id="icon-speed" class="powerup-icon" style="color: var(--neon-yellow)">⚡</div>
+            </div>
+
+            <div class="mobile-controls" id="mobile-controls">
+                <div class="dpad-grid">
+                    <div style="grid-column: 2" class="dpad-btn" data-key="ArrowUp">▲</div>
+                    <div style="grid-column: 1; grid-row: 2" class="dpad-btn" data-key="ArrowLeft">◀</div>
+                    <div style="grid-column: 2; grid-row: 2" class="dpad-btn" data-key="ArrowDown">▼</div>
+                    <div style="grid-column: 3; grid-row: 2" class="dpad-btn" data-key="ArrowRight">▶</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Menu -->
+    <div id="start-modal" class="modal visible">
+        <h1>REVERSE SNAKE</h1>
+        <div class="subtitle">THE HUNTED</div>
+        <button class="btn-primary" id="btn-start">INITIATE SEQUENCE</button>
+        <div style="margin-top: 20px; color: #64748b; font-size: 0.9rem;">
+            <p>躲避红色猎手 | 收集蓝色道具</p>
+            <p>最高存活: <span id="ui-highscore">0</span>s</p>
+        </div>
+    </div>
+
+    <!-- Game Over Menu -->
+    <div id="gameover-modal" class="modal">
+        <h1 style="color: var(--neon-red)">TERMINATED</h1>
+        <div class="subtitle" id="death-reason">CAUGHT BY HUNTER</div>
+        <div style="font-size: 2rem; margin: 1rem 0;">TIME: <span id="ui-final-score">0</span>s</div>
+        <button class="btn-primary" id="btn-restart">REBOOT SYSTEM</button>
+    </div>
+
+<script>
+/**
+ * ------------------------------------------------------------------
+ * 1. 配置与常量 (Configuration)
+ * ------------------------------------------------------------------
+ */
+const CONFIG = {
+    GRID_SIZE: 20,
+    BASE_SNAKE_SPEED: 15, // 帧数间隔 (数值越小越快)
+    ENEMY_SPAWN_RATE: 8, // 秒
+    SNAKE_GROWTH_RATE: 4, // 秒
+    COLORS: {
+        SNAKE_HEAD: '#00ff9d',
+        SNAKE_BODY: '#059669',
+        ENEMY: '#ff0055',
+        POWERUP_FREEZE: '#00d9ff',
+        POWERUP_GHOST: '#a855f7',
+        POWERUP_SPEED: '#ffcc00',
+        PARTICLE: '#ffffff'
+    }
+};
+
+// 游戏全局状态
+const STATE = {
+    score: 0,
+    highScore: localStorage.getItem('reverse_snake_highscore') || 0,
+    isGameOver: false,
+    isPaused: false,
+    frameCount: 0,
+    lastTime: 0,
+    shake: 0
+};
+
+document.getElementById('ui-highscore').innerText = STATE.highScore;
+
+/**
+ * ------------------------------------------------------------------
+ * 2. 音频系统 (Web Audio API) - 无需外部资源
+ * ------------------------------------------------------------------
+ */
+class AudioSystem {
+    constructor() {
+        this.ctx = null;
+        this.bgmNodes = [];
+        this.masterGain = null;
+        this.isMuted = false;
+    }
+
+    init() {
+        if (!this.ctx) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            this.masterGain = this.ctx.createGain();
+            this.masterGain.gain.value = 0.3; // 默认音量
+            this.masterGain.connect(this.ctx.destination);
+        }
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+    }
+
+    playTone(freq, type, duration, vol = 1) {
+        if (!this.ctx || this.isMuted) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+    }
+
+    sfxMove() { this.playTone(100, 'triangle', 0.05, 0.2); }
+    sfxDie() {
+        // 噪音爆炸效果
+        if (!this.ctx) return;
+        const bufferSize = this.ctx.sampleRate * 0.5;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.5);
+        noise.connect(gain);
+        gain.connect(this.masterGain);
+        noise.start();
+    }
+    sfxPowerUp() {
+        this.playTone(440, 'sine', 0.1, 0.5);
+        setTimeout(() => this.playTone(880, 'sine', 0.3, 0.5), 100);
+    }
+    sfxWarning() { this.playTone(150, 'sawtooth', 0.3, 0.3); }
+
+    startBGM() {
+        if (this.bgmInterval) clearInterval(this.bgmInterval);
+        // 极简的赛博低音循环
+        const bassLine = [110, 110, 0, 110, 98, 98, 0, 130];
+        let noteIdx = 0;
+        this.bgmInterval = setInterval(() => {
+            if(STATE.isGameOver) return;
+            const freq = bassLine[noteIdx++ % bassLine.length];
+            if (freq > 0) this.playTone(freq, 'square', 0.1, 0.1); // 非常低沉的背景音
+        }, 250);
+    }
+    stopBGM() { clearInterval(this.bgmInterval); }
+}
+const audio = new AudioSystem();
+
+/**
+ * ------------------------------------------------------------------
+ * 3. 对象池与粒子系统 (Performance)
+ * ------------------------------------------------------------------
+ */
+class Particle {
+    constructor() { this.active = false; }
+    spawn(x, y, color) {
+        this.x = x; this.y = y;
+        this.color = color;
+        this.vx = (Math.random() - 0.5) * 10;
+        this.vy = (Math.random() - 0.5) * 10;
+        this.life = 1.0;
+        this.active = true;
+    }
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life -= 0.03;
+        if (this.life <= 0) this.active = false;
+    }
+    draw(ctx) {
+        ctx.globalAlpha = this.life;
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, 4, 4);
+        ctx.globalAlpha = 1;
+    }
+}
+
+const particlePool = [];
+for(let i=0; i<100; i++) particlePool.push(new Particle());
+
+function spawnExplosion(x, y, color) {
+    // 网格坐标转像素坐标
+    const px = x * CONFIG.GRID_SIZE + CONFIG.GRID_SIZE/2;
+    const py = y * CONFIG.GRID_SIZE + CONFIG.GRID_SIZE/2;
+    let count = 0;
+    for(let p of particlePool) {
+        if(!p.active) {
+            p.spawn(px, py, color);
+            count++;
+            if(count >= 10) break;
+        }
+    }
+}
+
+/**
+ * ------------------------------------------------------------------
+ * 4. 游戏实体类 (Entities)
+ * ------------------------------------------------------------------
+ */
+class Snake {
+    constructor(x, y) {
+        this.body = [{x, y}, {x, y:y+1}, {x, y:y+2}];
+        this.dir = {x:0, y:-1};
+        this.nextDir = {x:0, y:-1};
+        this.growPending = 0;
+        this.speedBuff = false;
+    }
+
+    input(dir) {
+        // 防止反向移动
+        if (dir.x !== 0 && this.dir.x !== 0) return;
+        if (dir.y !== 0 && this.dir.y !== 0) return;
+        this.nextDir = dir;
+    }
+
+    update(gridW, gridH) {
+        this.dir = this.nextDir;
+        const head = { x: this.body[0].x + this.dir.x, y: this.body[0].y + this.dir.y };
+
+        // 死亡检测：撞墙
+        if (head.x < 0 || head.x >= gridW || head.y < 0 || head.y >= gridH) return 'CRASH_WALL';
+
+        // 死亡检测：撞自己
+        for(let part of this.body) {
+            if (head.x === part.x && head.y === part.y) return 'CRASH_SELF';
+        }
+
+        this.body.unshift(head);
+        if (this.growPending > 0) {
+            this.growPending--;
+        } else {
+            this.body.pop();
+        }
+
+        audio.sfxMove();
+        return null;
+    }
+}
+
+class Enemy {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.moveTimer = 0;
+        this.moveThreshold = 2; // 默认每2次蛇移动，敌人移动1次
+        this.id = Math.random().toString(36).substr(2, 9);
+    }
+
+    update(target, enemies) {
+        this.moveTimer++;
+        if (this.moveTimer < this.moveThreshold) return;
+        this.moveTimer = 0;
+
+        // 简易寻路 (向目标靠近)
+        const dx = target.x - this.x;
+        const dy = target.y - this.y;
+        let mx = 0, my = 0;
+
+        if (Math.abs(dx) > Math.abs(dy)) mx = Math.sign(dx);
+        else my = Math.sign(dy);
+
+        // 简单的防重叠 (如果目标点有其他敌人，尝试另一个轴)
+        let blocked = false;
+        for(let e of enemies) {
+            if(e.id !== this.id && e.x === this.x + mx && e.y === this.y + my) {
+                blocked = true; break;
+            }
+        }
+
+        if(blocked) {
+            // 尝试另一个轴移动
+            if(mx !== 0) { mx = 0; my = Math.sign(dy); }
+            else { my = 0; mx = Math.sign(dx); }
+        }
+
+        this.x += mx;
+        this.y += my;
+    }
+}
+
+class PowerUp {
+    constructor(x, y, type) {
+        this.x = x; this.y = y;
+        this.type = type; // 'FREEZE', 'GHOST', 'SPEED'
+    }
+}
+
+/**
+ * ------------------------------------------------------------------
+ * 5. 游戏主逻辑 (Game Engine)
+ * ------------------------------------------------------------------
+ */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const bgCanvas = document.getElementById('bgCanvas');
+const bgCtx = bgCanvas.getContext('2d');
+
+let snake;
+let enemies = [];
+let powerUps = [];
+let gridW, gridH;
+let gameTimer = 0;
+let snakeSpeed = CONFIG.BASE_SNAKE_SPEED;
+
+// 能力状态
+let activeEffects = {
+    freeze: 0, // 冻结敌人
+    ghost: 0,  // 穿墙/穿人
+    speed: 0   // 加速
+};
+
+function init() {
+    resize();
+    gridW = Math.floor(canvas.width / CONFIG.GRID_SIZE);
+    gridH = Math.floor(canvas.height / CONFIG.GRID_SIZE);
+
+    snake = new Snake(Math.floor(gridW/2), Math.floor(gridH/2));
+    enemies = [];
+    powerUps = [];
+    activeEffects = { freeze: 0, ghost: 0, speed: 0 };
+    STATE.score = 0;
+    STATE.isGameOver = false;
+    STATE.shake = 0;
+
+    // 初始敌人
+    spawnEnemy();
+
+    updateUI();
+    renderStaticBG();
+
+    audio.init();
+    audio.startBGM();
+
+    gameLoop();
+}
+
+function spawnEnemy() {
+    let x, y, valid = false;
+    while(!valid) {
+        x = Math.floor(Math.random() * gridW);
+        y = Math.floor(Math.random() * gridH);
+        // 离蛇头远一点
+        const dist = Math.abs(x - snake.body[0].x) + Math.abs(y - snake.body[0].y);
+        if (dist > 10) valid = true;
+    }
+    enemies.push(new Enemy(x, y));
+    spawnExplosion(x, y, CONFIG.COLORS.ENEMY); // 生成特效
+    audio.sfxWarning();
+}
+
+function spawnPowerUp() {
+    const types = ['FREEZE', 'GHOST', 'SPEED'];
+    const type = types[Math.floor(Math.random() * types.length)];
+    let x = Math.floor(Math.random() * gridW);
+    let y = Math.floor(Math.random() * gridH);
+    powerUps.push(new PowerUp(x, y, type));
+}
+
+function updateLogic() {
+    // 1. 时间流逝
+    if (STATE.frameCount % 60 === 0) {
+        STATE.score++;
+        updateUI();
+
+        // 难度提升：蛇生长
+        if (STATE.score % CONFIG.SNAKE_GROWTH_RATE === 0) snake.growPending++;
+        // 难度提升：新敌人
+        if (STATE.score % CONFIG.ENEMY_SPAWN_RATE === 0) spawnEnemy();
+        // 随机：生成道具
+        if (Math.random() < 0.05) spawnPowerUp();
+    }
+
+    // 2. 效果倒计时
+    if (activeEffects.freeze > 0) activeEffects.freeze--;
+    if (activeEffects.ghost > 0) activeEffects.ghost--;
+    if (activeEffects.speed > 0) activeEffects.speed--;
+
+    // 3. 蛇移动 (根据速度效果改变频率)
+    let currentSpeed = activeEffects.speed > 0 ? CONFIG.BASE_SNAKE_SPEED / 1.5 : CONFIG.BASE_SNAKE_SPEED;
+
+    if (STATE.frameCount % Math.floor(currentSpeed) === 0) {
+        const result = snake.update(gridW, gridH);
+
+        if (result) {
+            if (activeEffects.ghost > 0 && result === 'CRASH_SELF') {
+                // 幽灵模式忽略撞自己
+            } else if (activeEffects.ghost > 0 && result === 'CRASH_WALL') {
+                // 幽灵模式穿墙 (Teleport)
+                const head = snake.body[0];
+                if(head.x < 0) head.x = gridW - 1;
+                if(head.x >= gridW) head.x = 0;
+                if(head.y < 0) head.y = gridH - 1;
+                if(head.y >= gridH) head.y = 0;
+            } else {
+                gameOver(result);
+                return;
+            }
+        }
+
+        // 道具检测
+        const head = snake.body[0];
+        for(let i = powerUps.length-1; i>=0; i--) {
+            const p = powerUps[i];
+            if(head.x === p.x && head.y === p.y) {
+                activatePowerUp(p.type);
+                powerUps.splice(i, 1);
+                spawnExplosion(p.x, p.y, '#fff');
+                audio.sfxPowerUp();
+            }
+        }
+
+        // 敌人碰撞与移动
+        if (activeEffects.freeze === 0) {
+            enemies.forEach(e => {
+                // 敌人移动逻辑跟随蛇的节奏，但也需要计数器
+                e.update(snake.body[0], enemies);
+            });
+        }
+
+        // 死亡检测 (被敌人抓到)
+        if (activeEffects.ghost === 0) {
+            for(let e of enemies) {
+                for(let part of snake.body) {
+                    if (part.x === e.x && part.y === e.y) {
+                        gameOver('CAUGHT');
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+
+function activatePowerUp(type) {
+    if (type === 'FREEZE') activeEffects.freeze = 180; // 3秒
+    if (type === 'GHOST') activeEffects.ghost = 300;   // 5秒
+    if (type === 'SPEED') activeEffects.speed = 300;   // 5秒
+    updateUI();
+}
+
+function draw() {
+    // 清除游戏层 (不清除背景层)
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 屏幕震动应用
+    let sx = 0, sy = 0;
+    if (STATE.shake > 0) {
+        sx = (Math.random() - 0.5) * STATE.shake;
+        sy = (Math.random() - 0.5) * STATE.shake;
+        STATE.shake *= 0.9;
+        if (STATE.shake < 0.5) STATE.shake = 0;
+    }
+    ctx.save();
+    ctx.translate(sx, sy);
+
+    // 绘制道具 (带光晕)
+    ctx.shadowBlur = 15;
+    powerUps.forEach(p => {
+        ctx.fillStyle = CONFIG.COLORS[`POWERUP_${p.type}`];
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.beginPath();
+        ctx.arc((p.x + 0.5) * CONFIG.GRID_SIZE, (p.y + 0.5) * CONFIG.GRID_SIZE, CONFIG.GRID_SIZE/3, 0, Math.PI*2);
+        ctx.fill();
+    });
+    ctx.shadowBlur = 0;
+
+    // 绘制敌人
+    ctx.fillStyle = CONFIG.COLORS.ENEMY;
+    enemies.forEach(e => {
+        // 简单的呼吸效果
+        const size = activeEffects.freeze > 0 ? CONFIG.GRID_SIZE - 6 : CONFIG.GRID_SIZE - 2;
+        const offset = (CONFIG.GRID_SIZE - size) / 2;
+        ctx.fillRect(e.x * CONFIG.GRID_SIZE + offset, e.y * CONFIG.GRID_SIZE + offset, size, size);
+
+        // 眼睛
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(e.x * CONFIG.GRID_SIZE + 5, e.y * CONFIG.GRID_SIZE + 5, 4, 4);
+        ctx.fillRect(e.x * CONFIG.GRID_SIZE + 12, e.y * CONFIG.GRID_SIZE + 5, 4, 4);
+        ctx.fillStyle = CONFIG.COLORS.ENEMY;
+    });
+
+    // 绘制蛇
+    // 身体批量绘制
+    ctx.fillStyle = activeEffects.ghost > 0 ? 'rgba(0, 255, 157, 0.3)' : CONFIG.COLORS.SNAKE_BODY;
+    ctx.beginPath();
+    for (let i = 1; i < snake.body.length; i++) {
+        let p = snake.body[i];
+        ctx.rect(p.x * CONFIG.GRID_SIZE + 1, p.y * CONFIG.GRID_SIZE + 1, CONFIG.GRID_SIZE - 2, CONFIG.GRID_SIZE - 2);
+    }
+    ctx.fill();
+
+    // 头部单独绘制 (发光)
+    const head = snake.body[0];
+    ctx.fillStyle = CONFIG.COLORS.SNAKE_HEAD;
+    if (activeEffects.ghost === 0) {
+        ctx.shadowColor = CONFIG.COLORS.SNAKE_HEAD;
+        ctx.shadowBlur = 20;
+    }
+    ctx.fillRect(head.x * CONFIG.GRID_SIZE, head.y * CONFIG.GRID_SIZE, CONFIG.GRID_SIZE, CONFIG.GRID_SIZE);
+    ctx.shadowBlur = 0;
+
+    // 粒子系统
+    particlePool.forEach(p => {
+        if(p.active) {
+            p.update();
+            p.draw(ctx);
+        }
+    });
+
+    ctx.restore();
+}
+
+function renderStaticBG() {
+    // 仅绘制一次的网格背景
+    bgCanvas.width = canvas.width;
+    bgCanvas.height = canvas.height;
+    bgCtx.fillStyle = '#050505';
+    bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+
+    bgCtx.strokeStyle = '#111';
+    bgCtx.lineWidth = 1;
+    bgCtx.beginPath();
+    for(let x=0; x<=bgCanvas.width; x+=CONFIG.GRID_SIZE) {
+        bgCtx.moveTo(x, 0); bgCtx.lineTo(x, bgCanvas.height);
+    }
+    for(let y=0; y<=bgCanvas.height; y+=CONFIG.GRID_SIZE) {
+        bgCtx.moveTo(0, y); bgCtx.lineTo(bgCanvas.width, y);
+    }
+    bgCtx.stroke();
+}
+
+function gameLoop() {
+    if (STATE.isGameOver) return;
+    requestAnimationFrame(gameLoop);
+
+    STATE.frameCount++;
+    updateLogic();
+    draw();
+}
+
+function gameOver(reason) {
+    STATE.isGameOver = true;
+    STATE.shake = 20;
+    draw(); // 最后画一帧带震动的
+    audio.stopBGM();
+    audio.sfxDie();
+
+    if (STATE.score > STATE.highScore) {
+        STATE.highScore = STATE.score;
+        localStorage.setItem('reverse_snake_highscore', STATE.highScore);
+    }
+
+    document.getElementById('death-reason').innerText = reason === 'CAUGHT' ? '被捕食者吞噬' : '系统撞击崩溃';
+    document.getElementById('ui-final-score').innerText = STATE.score;
+    document.getElementById('gameover-modal').classList.add('visible');
+}
+
+/**
+ * ------------------------------------------------------------------
+ * 6. UI 与 输入管理 (UI & Input)
+ * ------------------------------------------------------------------
+ */
+function updateUI() {
+    document.getElementById('ui-score').innerText = STATE.score;
+    document.getElementById('ui-enemies').innerText = enemies.length;
+
+    // 更新道具图标状态
+    document.getElementById('icon-freeze').classList.toggle('active', activeEffects.freeze > 0);
+    document.getElementById('icon-ghost').classList.toggle('active', activeEffects.ghost > 0);
+    document.getElementById('icon-speed').classList.toggle('active', activeEffects.speed > 0);
+}
+
+function resize() {
+    // 动态适配窗口
+    const aspect = window.innerWidth / window.innerHeight;
+    let w = window.innerWidth;
+    let h = window.innerHeight;
+
+    // 保证网格对齐
+    canvas.width = w - (w % CONFIG.GRID_SIZE);
+    canvas.height = h - (h % CONFIG.GRID_SIZE);
+
+    // 背景层同步
+    if(bgCanvas.width !== canvas.width) renderStaticBG();
+}
+
+window.addEventListener('resize', () => {
+    resize();
+    if (snake) {
+        // 防止 resize 导致 grid 变化后的重绘问题，简单处理：保持原样或暂停
+        // 在这里我们只更新 gridW/H，不重新开始，可能会导致边界显示问题，
+        // 完美方案是重置游戏或根据比例缩放。
+        gridW = Math.floor(canvas.width / CONFIG.GRID_SIZE);
+        gridH = Math.floor(canvas.height / CONFIG.GRID_SIZE);
+    }
+});
+
+// 输入处理
+const inputQueue = [];
+document.addEventListener('keydown', e => {
+    const keyMap = {
+        'ArrowUp': {x:0, y:-1}, 'w': {x:0, y:-1},
+        'ArrowDown': {x:0, y:1}, 's': {x:0, y:1},
+        'ArrowLeft': {x:-1, y:0}, 'a': {x:-1, y:0},
+        'ArrowRight': {x:1, y:0}, 'd': {x:1, y:0}
+    };
+    if (keyMap[e.key]) {
+        snake.input(keyMap[e.key]);
+    }
+});
+
+// 触摸与虚拟按键
+const touchBtns = document.querySelectorAll('.dpad-btn');
+touchBtns.forEach(btn => {
+    btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const key = btn.getAttribute('data-key');
+        const evt = new KeyboardEvent('keydown', { key: key });
+        document.dispatchEvent(evt);
+    });
+});
+
+// 滑动手势
+let tsX, tsY;
+document.addEventListener('touchstart', e => {
+    tsX = e.touches[0].clientX;
+    tsY = e.touches[0].clientY;
+}, {passive: false});
+
+document.addEventListener('touchmove', e => {
+    if(e.target.closest('.dpad-grid')) return; // 如果在按键上，不触发滑动
+    e.preventDefault();
+}, {passive: false});
+
+document.addEventListener('touchend', e => {
+    if(e.target.closest('.dpad-grid')) return;
+
+    const teX = e.changedTouches[0].clientX;
+    const teY = e.changedTouches[0].clientY;
+    const dx = teX - tsX;
+    const dy = teY - tsY;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+        if (Math.abs(dx) > 30) snake.input(dx > 0 ? {x:1, y:0} : {x:-1, y:0});
+    } else {
+        if (Math.abs(dy) > 30) snake.input(dy > 0 ? {x:0, y:1} : {x:0, y:-1});
+    }
+});
+
+// 按钮逻辑
+document.getElementById('btn-start').onclick = () => {
+    document.getElementById('start-modal').classList.remove('visible');
+    init();
+};
+document.getElementById('btn-restart').onclick = () => {
+    document.getElementById('gameover-modal').classList.remove('visible');
+    init();
+};
+
+// 移动端检测
+if ('ontouchstart' in window) {
+    document.getElementById('mobile-controls').style.display = 'block';
+}
+
+</script>
+</body>
+</html>

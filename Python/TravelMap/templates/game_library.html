@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARCADE HUB - 本地游戏启动器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            background-image:
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%),
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* 玻璃拟态卡片 */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 10px 30px -10px rgba(139, 92, 246, 0.3);
+        }
+
+        /* 游戏运行时的全屏覆盖层 */
+        .game-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .game-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* 霓虹文字效果 */
+        .neon-text {
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3);
+        }
+
+        /* 加载动画 */
+        .loader {
+            border-top-color: #a855f7;
+            -webkit-animation: spinner 1.5s linear infinite;
+            animation: spinner 1.5s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-purple-500 selection:text-white">
+
+    <!-- 顶部导航 -->
+    <nav class="fixed w-full z-40 top-0 glass-card border-b border-white/10 !bg-slate-900/80 !backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="gamepad-2" class="text-purple-400 w-8 h-8"></i>
+                    <span class="text-2xl font-bold tracking-wider neon-text">ARCADE HUB</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div id="file-count" class="hidden text-sm text-gray-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
+                        已加载 0 个游戏
+                    </div>
+                    <label class="cursor-pointer group relative inline-flex items-center justify-center px-6 py-2 overflow-hidden font-bold text-white rounded-lg bg-gradient-to-br from-purple-600 to-blue-500 hover:from-purple-500 hover:to-blue-400 transition-all duration-300 shadow-lg hover:shadow-purple-500/30">
+                        <span class="absolute w-0 h-0 transition-all duration-500 ease-out bg-white rounded-full group-hover:w-56 group-hover:h-56 opacity-10"></span>
+                        <span class="relative flex items-center gap-2">
+                            <i data-lucide="folder-open" class="w-4 h-4"></i>
+                            加载游戏文件夹
+                        </span>
+                        <!-- 关键属性：webkitdirectory 允许选择文件夹 -->
+                        <input type="file" id="folder-input" class="hidden" webkitdirectory directory multiple />
+                    </label>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="pt-28 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto min-h-screen">
+
+        <!-- 初始空状态 -->
+        <div id="empty-state" class="flex flex-col items-center justify-center h-[60vh] text-center animate-fade-in">
+            <div class="bg-slate-800/50 p-8 rounded-full mb-6 ring-4 ring-purple-500/20">
+                <i data-lucide="joystick" class="w-24 h-24 text-purple-400/80"></i>
+            </div>
+            <h2 class="text-4xl font-bold text-white mb-4">准备好开始了吗？</h2>
+            <p class="text-slate-400 text-lg max-w-md mx-auto mb-8">
+                点击右上角的按钮上传包含 HTML 游戏的文件夹。<br>我们将自动为您构建游戏库。
+            </p>
+            <div class="text-xs text-slate-600 bg-slate-900/50 px-4 py-2 rounded border border-slate-800">
+                提示：最适合单文件 HTML 游戏。复杂依赖可能会因浏览器安全策略受限。
+            </div>
+        </div>
+
+        <!-- 游戏列表网格 -->
+        <div id="game-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- 卡片由 JS 动态生成 -->
+        </div>
+
+    </main>
+
+    <!-- 游戏全屏播放器 -->
+    <div id="game-player" class="game-overlay">
+        <!-- 播放器顶部栏 -->
+        <div class="h-14 bg-slate-900 flex items-center justify-between px-6 border-b border-gray-800 shadow-2xl z-10">
+            <div class="flex items-center gap-3">
+                <span id="current-game-title" class="text-white font-semibold tracking-wide">游戏标题</span>
+                <span class="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded border border-gray-700">Running</span>
+            </div>
+            <button id="close-game-btn" class="text-gray-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/50 border border-transparent p-2 rounded-md transition-colors flex items-center gap-2">
+                <i data-lucide="x" class="w-5 h-5"></i>
+                <span class="text-sm font-medium">关闭游戏</span>
+            </button>
+        </div>
+
+        <!-- Iframe 容器 -->
+        <div class="flex-1 bg-black relative w-full h-full flex items-center justify-center overflow-hidden">
+            <div id="loader-container" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-0">
+                <div class="loader ease-linear rounded-full border-4 border-t-4 border-slate-700 h-12 w-12 mb-4"></div>
+                <p class="text-slate-400 text-sm animate-pulse">正在加载资源...</p>
+            </div>
+            <iframe id="game-iframe" class="w-full h-full border-0 relative z-10 bg-white" sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms"></iframe>
+        </div>
+    </div>
+
+    <script>
+        // 初始化图标
+        lucide.createIcons();
+
+        const folderInput = document.getElementById('folder-input');
+        const gameGrid = document.getElementById('game-grid');
+        const emptyState = document.getElementById('empty-state');
+        const fileCountBadge = document.getElementById('file-count');
+
+        const gamePlayer = document.getElementById('game-player');
+        const gameIframe = document.getElementById('game-iframe');
+        const closeGameBtn = document.getElementById('close-game-btn');
+        const currentGameTitle = document.getElementById('current-game-title');
+        const loaderContainer = document.getElementById('loader-container');
+
+        let activeObjectUrl = null;
+
+        // 监听文件夹上传
+        folderInput.addEventListener('change', async (event) => {
+            const files = Array.from(event.target.files);
+
+            // 过滤 HTML 文件
+            const htmlFiles = files.filter(file =>
+                file.name.toLowerCase().endsWith('.html') ||
+                file.name.toLowerCase().endsWith('.htm')
+            );
+
+            if (htmlFiles.length === 0) {
+                alert('未在所选文件夹中找到 HTML 游戏文件。');
+                return;
+            }
+
+            renderGameList(htmlFiles);
+        });
+
+        function renderGameList(files) {
+            // 更新 UI 状态
+            emptyState.classList.add('hidden');
+            gameGrid.classList.remove('hidden');
+            fileCountBadge.classList.remove('hidden');
+            fileCountBadge.innerText = `已加载 ${files.length} 个游戏`;
+
+            gameGrid.innerHTML = ''; // 清空列表
+
+            files.forEach((file, index) => {
+                // 生成随机的渐变色背景作为封面
+                const gradients = [
+                    'from-purple-500 to-indigo-600',
+                    'from-blue-500 to-cyan-500',
+                    'from-emerald-500 to-teal-600',
+                    'from-rose-500 to-orange-500',
+                    'from-fuchsia-600 to-pink-600',
+                    'from-amber-500 to-orange-600'
+                ];
+                const randomGradient = gradients[index % gradients.length];
+
+                // 清理文件名作为标题
+                const cleanName = file.name.replace(/\.html?$/i, '').replace(/[-_]/g, ' ');
+
+                const card = document.createElement('div');
+                card.className = 'glass-card rounded-xl overflow-hidden flex flex-col group cursor-pointer';
+                card.innerHTML = `
+                    <div class="h-32 bg-gradient-to-br ${randomGradient} relative flex items-center justify-center overflow-hidden">
+                        <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+                        <i data-lucide="gamepad" class="text-white/80 w-12 h-12 transform group-hover:scale-110 transition-transform duration-300"></i>
+                        <div class="absolute bottom-2 right-2 bg-black/50 text-xs text-white px-2 py-0.5 rounded backdrop-blur-sm">
+                            HTML5
+                        </div>
+                    </div>
+                    <div class="p-5 flex-1 flex flex-col">
+                        <h3 class="text-lg font-bold text-white mb-1 truncate" title="${cleanName}">${cleanName}</h3>
+                        <p class="text-xs text-slate-400 mb-4 truncate">${file.webkitRelativePath || file.name}</p>
+                        <div class="mt-auto">
+                            <button class="w-full py-2 bg-slate-700/50 hover:bg-purple-600 text-slate-300 hover:text-white rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 group-hover:shadow-lg group-hover:shadow-purple-500/20 border border-slate-600 hover:border-purple-500">
+                                <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+                                开始游戏
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                // 绑定点击事件
+                card.addEventListener('click', () => launchGame(file, cleanName));
+
+                gameGrid.appendChild(card);
+            });
+
+            // 重新渲染新添加的图标
+            lucide.createIcons();
+        }
+
+        function launchGame(file, title) {
+            // 1. 设置标题
+            currentGameTitle.innerText = title;
+
+            // 2. 创建 Blob URL
+            if (activeObjectUrl) {
+                URL.revokeObjectURL(activeObjectUrl); // 清理旧内存
+            }
+            activeObjectUrl = URL.createObjectURL(file);
+
+            // 3. 显示加载动画
+            loaderContainer.style.display = 'flex';
+
+            // 4. 设置 iframe
+            gameIframe.src = activeObjectUrl;
+
+            // 5. 显示播放器界面
+            gamePlayer.classList.add('active');
+            document.body.style.overflow = 'hidden'; // 禁止背景滚动
+
+            // 6. 监听加载完成（简单的延迟处理，因为 iframe load 事件在 blob 下有时触发极快）
+            gameIframe.onload = () => {
+                setTimeout(() => {
+                    loaderContainer.style.display = 'none';
+                }, 500);
+            };
+        }
+
+        function closeGame() {
+            gamePlayer.classList.remove('active');
+            gameIframe.src = ''; // 停止游戏运行
+            document.body.style.overflow = ''; // 恢复滚动
+
+            // 清理内存
+            if (activeObjectUrl) {
+                URL.revokeObjectURL(activeObjectUrl);
+                activeObjectUrl = null;
+            }
+        }
+
+        // 绑定关闭事件
+        closeGameBtn.addEventListener('click', closeGame);
+
+        // ESC 键关闭游戏
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && gamePlayer.classList.contains('active')) {
+                closeGame();
+            }
+        });
+
+    </script>
+</body>
+</html>

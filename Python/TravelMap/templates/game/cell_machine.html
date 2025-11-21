@@ -14,56 +14,59 @@
         
         canvas { display: block; image-rendering: pixelated; cursor: crosshair; }
         
-        /* 玻璃拟态面板风格 - 回归现代清爽 */
-        .panel { 
-            backdrop-filter: blur(20px); 
-            background: rgba(15, 23, 42, 0.6); 
-            border: 1px solid rgba(255,255,255,0.08); 
+        /* 玻璃拟态面板风格 */
+        .panel {
+            backdrop-filter: blur(20px);
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255,255,255,0.08);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
-        
+
         /* 滚动条优化 */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
         ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-        
-        /* Vue 动画过渡 */
+
+        /* 动画过渡 */
         .slide-right-enter-active, .slide-right-leave-active { transition: transform 0.3s ease, opacity 0.3s ease; }
         .slide-right-enter-from, .slide-right-leave-to { transform: translateX(20px); opacity: 0; }
 
         .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
-        
-        /* 交互控件样式 */
+
+        /* 控件样式 */
         input[type=range] { @apply h-1.5 bg-slate-700/50 rounded-lg appearance-none cursor-pointer; }
         input[type=range]::-webkit-slider-thumb { @apply appearance-none w-3.5 h-3.5 bg-cyan-400 rounded-full shadow-[0_0_10px_rgba(34,211,238,0.5)] hover:scale-110 transition-all; }
-        
+
         button:active { transform: scale(0.96); }
-        
+
         /* 屏幕震动特效 */
-        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake { 
-            10%, 90% { transform: translate3d(-1px, 0, 0); } 
-            20%, 80% { transform: translate3d(2px, 0, 0); } 
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 
-            40%, 60% { transform: translate3d(4px, 0, 0); } 
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
         }
 
         /* 成就解锁弹窗动画 */
         .achievement-pop { animation: slideInUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes slideInUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* 血条动画 */
+        .hp-bar-transition { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     </style>
 </head>
 <body>
 
 <div id="app" class="relative w-screen h-screen overflow-hidden bg-slate-900">
-    
+
     <!-- 画布层 -->
     <div class="absolute inset-0 transition-transform duration-100" :class="{ 'shake': screenShake }">
         <canvas ref="canvasRef" class="w-full h-full"
-                @mousedown="handleMouseDown" 
-                @mousemove="handleMouseMove" 
+                @mousedown="handleMouseDown"
+                @mousemove="handleMouseMove"
                 @mouseup="handleMouseUp"
                 @mouseleave="handleMouseUp"
                 @wheel="handleWheel"
@@ -71,14 +74,15 @@
     </div>
 
     <!-- 音频未启动提示遮罩 -->
-    <div v-if="!audioInitialized" class="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm cursor-pointer" @click="initAudio">
+    <div v-if="!audioInitialized" class="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm cursor-pointer" @click="initAudio">
         <div class="bg-white/10 px-8 py-4 rounded-full border border-white/20 text-white font-medium animate-pulse flex items-center gap-3 shadow-2xl hover:bg-white/20 transition-all">
             <i data-lucide="play-circle"></i> 点击任意处启动引擎与音效
         </div>
     </div>
 
     <!-- 顶部 HUD -->
-    <div class="absolute top-6 left-1/2 -translate-x-1/2 panel px-8 py-3 rounded-full flex items-center gap-8 z-20 text-xs font-medium text-slate-300">
+    <div class="absolute top-6 left-1/2 -translate-x-1/2 panel px-8 py-3 rounded-full flex items-center gap-8 z-20 text-xs font-medium text-slate-300 transition-all duration-500" :class="{'bg-red-900/40 border-red-500/30': baseHp < 30 && gameMode === 'defense'}">
+        <!-- 通用信息 -->
         <div class="flex flex-col items-center min-w-[60px]">
             <span class="text-[10px] text-slate-500 uppercase tracking-wider">FPS</span>
             <span class="text-lg font-bold font-mono" :class="fps < 30 ? 'text-red-400' : 'text-emerald-400'">{{ fps }}</span>
@@ -93,24 +97,32 @@
             <span class="text-[10px] text-slate-500 uppercase tracking-wider">Population</span>
             <span class="text-lg font-bold text-cyan-400 font-mono">{{ (activeCells).toLocaleString() }}</span>
         </div>
-        
-        <!-- 随机事件快捷入口 -->
-        <div class="ml-4 flex gap-2">
-            <button @click="triggerEvent('meteor')" class="w-8 h-8 rounded-full bg-red-500/10 hover:bg-red-500/30 text-red-400 flex items-center justify-center transition-colors" title="召唤陨石">
-                <i data-lucide="flame" class="w-4 h-4"></i>
-            </button>
-            <button @click="triggerEvent('life_rain')" class="w-8 h-8 rounded-full bg-blue-500/10 hover:bg-blue-500/30 text-blue-400 flex items-center justify-center transition-colors" title="生命之雨">
-                <i data-lucide="cloud-rain" class="w-4 h-4"></i>
-            </button>
-            <button @click="triggerEvent('virus')" class="w-8 h-8 rounded-full bg-purple-500/10 hover:bg-purple-500/30 text-purple-400 flex items-center justify-center transition-colors" title="投放病毒">
-                <i data-lucide="skull" class="w-4 h-4"></i>
-            </button>
-        </div>
+
+        <!-- 塔防模式专属 HUD -->
+        <template v-if="gameMode === 'defense'">
+            <div class="w-px h-8 bg-white/10"></div>
+            <div class="flex flex-col items-center min-w-[80px]">
+                <span class="text-[10px] text-slate-500 uppercase tracking-wider">Wave</span>
+                <span class="text-lg font-bold text-yellow-400 font-mono">{{ defenseWave }} / 5</span>
+            </div>
+            <div class="w-px h-8 bg-white/10"></div>
+            <div class="flex flex-col justify-center w-32">
+                 <div class="flex justify-between text-[10px] mb-1">
+                     <span class="text-slate-400">BASE HP</span>
+                     <span :class="baseHp < 30 ? 'text-red-400' : 'text-white'">{{ baseHp }}%</span>
+                 </div>
+                 <div class="h-2 bg-slate-800 rounded-full overflow-hidden">
+                     <div class="h-full hp-bar-transition"
+                          :class="baseHp < 30 ? 'bg-red-500' : (baseHp < 60 ? 'bg-yellow-500' : 'bg-green-500')"
+                          :style="{ width: baseHp + '%' }"></div>
+                 </div>
+            </div>
+        </template>
     </div>
 
     <!-- 左侧控制面板 -->
-    <div class="panel absolute top-24 left-6 w-80 p-6 rounded-3xl flex flex-col gap-6 z-20 max-h-[calc(100vh-8rem)] overflow-y-auto transition-all hover:shadow-[0_10px_50px_-10px_rgba(0,0,0,0.5)]">
-        
+    <div class="panel absolute top-24 left-6 w-80 p-6 rounded-3xl flex flex-col gap-5 z-20 max-h-[calc(100vh-8rem)] overflow-y-auto transition-all hover:shadow-[0_10px_50px_-10px_rgba(0,0,0,0.5)]">
+
         <!-- 标题区 -->
         <div class="flex justify-between items-center">
             <div>
@@ -129,7 +141,7 @@
 
         <!-- 播放控制 -->
         <div class="grid grid-cols-2 gap-2">
-            <button @click="togglePlay" :class="isPlaying ? 'bg-rose-500 hover:bg-rose-600 text-white' : 'bg-cyan-500 hover:bg-cyan-600 text-white'" 
+            <button @click="togglePlay" :class="isPlaying ? 'bg-rose-500 hover:bg-rose-600 text-white' : 'bg-cyan-500 hover:bg-cyan-600 text-white'"
                     class="col-span-2 py-3 rounded-xl font-bold shadow-lg shadow-cyan-500/20 transition-all flex items-center justify-center gap-2 active:scale-95">
                 <i :data-lucide="isPlaying ? 'pause' : 'play'" class="w-4 h-4 fill-current"></i>
                 <span>{{ isPlaying ? '暂停模拟' : '开始演化' }}</span>
@@ -139,7 +151,7 @@
         </div>
 
         <!-- 模式选择 -->
-        <div class="space-y-3">
+        <div class="space-y-2">
             <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Game Mode</div>
             <div class="grid grid-cols-3 gap-1 bg-slate-800/40 p-1 rounded-xl">
                 <button v-for="m in ['sandbox', 'defense', 'challenge']" :key="m"
@@ -151,8 +163,37 @@
             </div>
         </div>
 
+        <!-- 挑战模式控制器 (新增) -->
+        <div v-if="gameMode === 'challenge'" class="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-3 space-y-3 animate-fade-in">
+            <div class="flex justify-between items-start">
+                 <div>
+                     <h3 class="text-indigo-300 font-bold text-xs mb-1">Lv.{{ currentChallengeIndex + 1 }} {{ currentLevel.name }}</h3>
+                     <p class="text-[10px] text-slate-400 leading-tight">{{ currentLevel.description }}</p>
+                 </div>
+                 <div class="flex gap-1">
+                     <button @click="prevLevel" class="p-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-400" :disabled="currentChallengeIndex===0"><i data-lucide="chevron-left" class="w-3 h-3"></i></button>
+                     <button @click="nextLevel" class="p-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-400" :disabled="currentChallengeIndex===challengeLevels.length-1"><i data-lucide="chevron-right" class="w-3 h-3"></i></button>
+                 </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-indigo-500/10">
+                 <div class="text-[10px] text-slate-400">
+                     <div>目标: <span class="text-white">{{ currentLevel.winText }}</span></div>
+                 </div>
+                 <button @click="startChallenge" class="col-span-2 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded transition-colors">
+                     重置并开始挑战
+                 </button>
+            </div>
+        </div>
+
+        <!-- 防线模式提示 (新增) -->
+        <div v-if="gameMode === 'defense'" class="bg-red-900/20 border border-red-500/20 rounded-xl p-3 text-[10px] text-slate-300 animate-fade-in">
+             <strong class="text-red-300 block mb-1">⚠️ 红色警报</strong>
+             紫色病毒正在入侵核心。使用<span class="text-cyan-300 font-bold">绘制</span>工具建立青色防线，通过接触消灭敌人。
+        </div>
+
         <!-- 画笔工具 -->
-        <div class="space-y-3">
+        <div class="space-y-2">
              <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tools</div>
              <div class="flex gap-2">
                  <button v-for="t in ['pan', 'draw', 'erase']" :key="t"
@@ -163,17 +204,15 @@
                      <span class="capitalize">{{ t }}</span>
                  </button>
              </div>
-             
-             <!-- 笔刷大小滑块 -->
              <div v-if="tool !== 'pan'" class="bg-slate-800/30 p-3 rounded-xl flex items-center gap-3 transition-all">
-                 <span class="text-xs text-slate-400 whitespace-nowrap">笔刷半径</span>
+                 <span class="text-xs text-slate-400 whitespace-nowrap">半径</span>
                  <input type="range" min="1" max="15" v-model.number="brushSize" class="flex-1">
                  <span class="text-xs font-mono font-bold text-cyan-400 w-5 text-right">{{ brushSize }}</span>
              </div>
         </div>
 
         <!-- 参数设置 -->
-        <div class="space-y-4 pt-2 border-t border-white/5">
+        <div class="space-y-4 pt-2 border-t border-white/5" v-if="gameMode === 'sandbox'">
              <div>
                  <div class="flex justify-between text-xs mb-2">
                      <span class="text-slate-400">演化速度</span>
@@ -181,7 +220,7 @@
                  </div>
                  <input type="range" min="0" max="200" v-model.number="speed" class="w-full">
              </div>
-             
+
              <div>
                  <div class="flex justify-between text-xs mb-2">
                      <span class="text-slate-400">规则 (B/S)</span>
@@ -194,11 +233,13 @@
                  </div>
              </div>
         </div>
-        
-        <!-- 分享按钮 -->
-        <button @click="openShareModal" class="w-full py-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 text-indigo-300 text-xs font-bold transition-all flex items-center justify-center gap-2">
-            <i data-lucide="share-2" class="w-3 h-3"></i> 分享你的创造
-        </button>
+
+        <!-- 随机事件 (沙盒独有) -->
+        <div v-if="gameMode === 'sandbox'" class="grid grid-cols-3 gap-2 pt-4 border-t border-slate-700/50">
+            <button @click="triggerEvent('meteor')" class="py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-[10px] font-bold flex flex-col items-center gap-1"><i data-lucide="flame" class="w-3 h-3"></i> 陨石</button>
+            <button @click="triggerEvent('life_rain')" class="py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-[10px] font-bold flex flex-col items-center gap-1"><i data-lucide="cloud-rain" class="w-3 h-3"></i> 生命雨</button>
+            <button @click="triggerEvent('virus')" class="py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-lg text-[10px] font-bold flex flex-col items-center gap-1"><i data-lucide="skull" class="w-3 h-3"></i> 病毒</button>
+        </div>
 
     </div>
 
@@ -214,42 +255,39 @@
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
-            
+
             <div class="flex-1 overflow-y-auto space-y-2 pr-1 -mr-2">
-                <div v-for="ach in achievements" :key="ach.id" 
+                <div v-for="ach in achievements" :key="ach.id"
                      class="p-3 rounded-xl border transition-all flex gap-3 items-center relative overflow-hidden group"
                      :class="ach.unlocked ? 'bg-cyan-900/20 border-cyan-500/30' : 'bg-slate-800/20 border-slate-700/30 opacity-50'">
-                     
-                     <div class="text-2xl group-hover:scale-110 transition-transform duration-300">{{ ach.icon }}</div>
+                     <div class="text-2xl">{{ ach.icon }}</div>
                      <div class="flex-1 min-w-0">
                          <div class="text-xs font-bold truncate" :class="ach.unlocked ? 'text-cyan-200' : 'text-slate-400'">{{ ach.title }}</div>
                          <div class="text-[10px] text-slate-500 truncate">{{ ach.desc }}</div>
                      </div>
-                     <div v-if="ach.unlocked" class="absolute top-2 right-2 text-cyan-500">
-                         <i data-lucide="check-circle-2" class="w-3 h-3"></i>
-                     </div>
+                     <div v-if="ach.unlocked" class="absolute top-2 right-2 text-cyan-500"><i data-lucide="check-circle-2" class="w-3 h-3"></i></div>
                 </div>
             </div>
         </div>
     </transition>
 
-    <!-- 成就解锁通知弹窗 -->
-    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col gap-2 pointer-events-none z-50">
-        <div v-for="notif in achievementQueue" :key="notif.id" class="achievement-pop panel px-4 py-3 rounded-xl flex items-center gap-3 pointer-events-auto bg-slate-900/90 border-yellow-500/30">
-            <div class="text-2xl">{{ notif.icon }}</div>
-            <div>
-                <div class="text-[10px] font-bold text-yellow-500 uppercase tracking-wider">Achievement Unlocked</div>
-                <div class="text-sm font-bold text-white">{{ notif.title }}</div>
+    <!-- 通知弹窗 (成就/胜利/失败) -->
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col gap-2 pointer-events-none z-50 w-full max-w-sm items-center">
+        <transition-group name="list">
+            <div v-for="notif in notificationQueue" :key="notif.id"
+                 class="achievement-pop panel px-6 py-4 rounded-xl flex items-center gap-4 pointer-events-auto shadow-2xl border-l-4"
+                 :class="notif.type === 'win' ? 'border-green-500 bg-green-900/80' : (notif.type === 'loss' ? 'border-red-500 bg-red-900/80' : 'border-yellow-500 bg-slate-900/90')">
+                <div class="text-3xl">{{ notif.icon }}</div>
+                <div>
+                    <div class="text-[10px] font-bold uppercase tracking-wider opacity-80">{{ notif.subtitle || 'Notification' }}</div>
+                    <div class="text-sm font-bold text-white">{{ notif.title }}</div>
+                </div>
+                <button v-if="notif.action" @click="notif.action()" class="ml-auto px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs font-bold text-white transition-colors">
+                    {{ notif.actionLabel }}
+                </button>
             </div>
-        </div>
+        </transition-group>
     </div>
-    
-    <!-- 随机事件警告 -->
-    <transition name="slide-up">
-        <div v-if="eventMessage" class="absolute top-8 left-1/2 -translate-x-1/2 bg-red-500 text-white px-6 py-2 rounded-full shadow-red-500/50 shadow-lg font-bold text-sm flex items-center gap-2 z-50">
-            <i data-lucide="alert-triangle" class="w-4 h-4"></i> {{ eventMessage }}
-        </div>
-    </transition>
 
 </div>
 
@@ -259,15 +297,23 @@ const workerCode = `
     let width = 0, height = 0;
     let cells = null, nextCells = null, pixels = null;
     let born = new Uint8Array(9), survive = new Uint8Array(9);
-    let gameMode = 'sandbox';
-    let defenseTick = 0, safeZoneRadius = 60;
-    
-    // 颜色定义 ABGR
-    const C_ALIVE = 0xFFE2E8F0; // Slate-200
-    const C_DEAD  = 0xFF0F172A; // Slate-900
-    const C_ENEMY = 0xFF9333EA; // Purple-600
-    const C_SAFE  = 0xFF1E293B; // Slate-800
 
+    // Game Mode States
+    let gameMode = 'sandbox';
+
+    // Defense States
+    let defenseTick = 0;
+    let baseHP = 100;
+    let waveIndex = 1;
+    let coreRadius = 50;
+
+    // Cell States: 0=Dead, 1=Player(Friendly), 2=Enemy, 3=Core
+    const C_DEAD  = 0xFF0F172A; // Slate-900
+    const C_FRIENDLY = 0xFFE2E8F0; // Slate-200 (Cyan tint in render)
+    const C_ENEMY = 0xFFD020D0; // Purple
+    const C_CORE  = 0xFFFFFF00; // Cyan Core
+
+    // Default Rule
     born[3] = 1; survive[2] = 1; survive[3] = 1;
 
     self.onmessage = function(e) {
@@ -278,7 +324,7 @@ const workerCode = `
                 cells = new Uint8Array(width * height);
                 nextCells = new Uint8Array(width * height);
                 pixels = new Uint32Array(width * height);
-                randomize(payload.density);
+                if(payload.density) randomize(payload.density);
                 sendFrame(0, 0);
                 break;
             case 'STEP':
@@ -286,7 +332,7 @@ const workerCode = `
                 break;
             case 'RESET':
                 if(gameMode === 'defense') initDefenseMode();
-                else randomize(payload.density);
+                else { cells.fill(0); if(gameMode === 'sandbox') randomize(0.2); }
                 sendFrame(0, 0);
                 break;
             case 'UPDATE_RULE':
@@ -302,7 +348,18 @@ const workerCode = `
             case 'SET_MODE':
                 gameMode = payload.mode;
                 if(gameMode === 'defense') initDefenseMode();
-                else { cells.fill(0); randomize(0.2); }
+                else { cells.fill(0); if(gameMode === 'sandbox') randomize(0.2); }
+                sendFrame(0, 0);
+                break;
+            case 'LOAD_CHALLENGE':
+                gameMode = 'challenge';
+                cells.fill(0);
+                parseRule(payload.rule || 'B3/S23');
+                if(payload.initType === 'random') randomize(0.15);
+                else if(payload.initType === 'center_block') {
+                     const cx = width>>1, cy=height>>1;
+                     for(let y=-5; y<5; y++) for(let x=-5; x<5; x++) if(Math.random()>0.5) cells[(cy+y)*width+(cx+x)] = 1;
+                }
                 sendFrame(0, 0);
                 break;
         }
@@ -310,13 +367,15 @@ const workerCode = `
 
     function drawBrush(cx, cy, state, size) {
         const r = Math.floor(size / 2);
+        const drawState = gameMode === 'defense' && state === 1 ? 1 : state; // In defense, draw friendly
         for (let dy = -r; dy <= r; dy++) {
             for (let dx = -r; dx <= r; dx++) {
                 if (dx*dx + dy*dy <= r*r + 1) {
                     const x = cx + dx;
                     const y = cy + dy;
                     if (x >= 0 && x < width && y >= 0 && y < height) {
-                        cells[y * width + x] = state;
+                        // Don't overwrite Core
+                        if(cells[y * width + x] !== 3) cells[y * width + x] = drawState;
                     }
                 }
             }
@@ -325,9 +384,7 @@ const workerCode = `
     }
 
     function handleRandomEvent(name) {
-        // 随机事件实现
         if (name === 'meteor') {
-            // 陨石：清除圆形区域
             const cx = Math.floor(Math.random()*width), cy = Math.floor(Math.random()*height);
             const r = 30;
             for(let dy=-r; dy<=r; dy++) for(let dx=-r; dx<=r; dx++) {
@@ -335,17 +392,12 @@ const workerCode = `
                     cells[(cy+dy)*width+(cx+dx)] = 0;
             }
         } else if (name === 'life_rain') {
-            // 生命之雨：撒点
-            for(let i=0; i<width*height*0.05; i++) {
-                const idx = Math.floor(Math.random()*width*height);
-                cells[idx] = 1;
-            }
+            for(let i=0; i<width*height*0.05; i++) cells[Math.floor(Math.random()*width*height)] = 1;
         } else if (name === 'virus') {
-            // 病毒：生成高密度块
-            for(let i=0; i<20; i++) {
+             for(let i=0; i<30; i++) {
                 const cx = Math.floor(Math.random()*width), cy = Math.floor(Math.random()*height);
                 for(let dy=-2; dy<=2; dy++) for(let dx=-2; dx<=2; dx++) {
-                     if(cx+dx>=0 && cx+dx<width && cy+dy>=0 && cy+dy<height) cells[(cy+dy)*width+(cx+dx)] = 1;
+                     if(cx+dx>=0 && cx+dx<width && cy+dy>=0 && cy+dy<height) cells[(cy+dy)*width+(cx+dx)] = 2; // Spawn Enemy state
                 }
             }
         }
@@ -353,78 +405,177 @@ const workerCode = `
 
     function initDefenseMode() {
         cells.fill(0);
+        defenseTick = 0;
+        baseHP = 100;
+        waveIndex = 1;
         const cx = width >> 1, cy = height >> 1;
-        // 圣地
-        cells[cy*width+cx]=1; cells[cy*width+cx+1]=1;
-        cells[(cy+1)*width+cx]=1; cells[(cy+1)*width+cx+1]=1;
+        // Draw Core (State 3)
+        for(let y=-3; y<=3; y++) for(let x=-3; x<=3; x++) cells[(cy+y)*width+(cx+x)] = 3;
     }
 
     function step() {
-        if(gameMode === 'defense') processDefense();
-        
+        if(gameMode === 'defense') {
+            processDefense();
+            if (baseHP <= 0) {
+                self.postMessage({ type: 'DEFENSE_LOST' });
+                return; // Stop simulation
+            }
+        }
+
         let changed = 0;
         let active = 0;
         let births = 0;
         let deaths = 0;
 
         for (let i = 0; i < width * height; i++) {
+            const state = cells[i];
+            // Skip Core logic, it is static
+            if (state === 3) {
+                nextCells[i] = 3;
+                continue;
+            }
+
             const y = Math.floor(i / width);
             const x = i % width;
-            
+
             let n = 0;
-            // 简单的邻居计算
+            let enemyNeighbors = 0;
+            let friendlyNeighbors = 0;
+
+            // Neighbor check
             for(let dy=-1; dy<=1; dy++) {
                 for(let dx=-1; dx<=1; dx++) {
                     if (dx===0 && dy===0) continue;
                     const nx = x+dx, ny = y+dy;
-                    if(nx>=0 && nx<width && ny>=0 && ny<height && cells[ny*width+nx]) n++;
+                    if(nx>=0 && nx<width && ny>=0 && ny<height) {
+                        const nState = cells[ny*width+nx];
+                        if (nState > 0) {
+                            n++;
+                            if(nState === 2) enemyNeighbors++;
+                            else if (nState === 1) friendlyNeighbors++;
+                        }
+                    }
                 }
             }
-            
-            const state = cells[i];
-            const next = state ? survive[n] : born[n];
-            
+
+            // CA Rule Application
+            let next = 0;
+            // Standard B3/S23 logic first
+            if (state > 0) { // Alive
+                if (survive[n]) next = state;
+                else next = 0;
+            } else { // Dead
+                if (born[n]) {
+                    // Faction determination logic:
+                    // If more enemies around, become enemy. Else friendly.
+                    next = (enemyNeighbors > friendlyNeighbors) ? 2 : 1;
+                }
+            }
+
+            // Combat / Interaction (Defense Mode specific)
+            if (gameMode === 'defense' && next > 0) {
+                // If touching core (distance check simplified)
+                const cx = width>>1, cy = height>>1;
+                if (Math.abs(x-cx) < 5 && Math.abs(y-cy) < 5) {
+                    if (next === 2) {
+                        // Enemy hit core!
+                        next = 0; // Enemy dies (kamikaze)
+                        // We handle damage in processDefense or separate loop,
+                        // but simple is: post message immediately or flag it
+                        // To avoid massive messaging, we deduct HP in processDefense via loop
+                    }
+                }
+            }
+
             nextCells[i] = next;
             if (next !== state) changed++;
-            if (next) active++;
-            if (!state && next) births++;
-            if (state && !next) deaths++;
+            if (next > 0) active++;
+            if (state === 0 && next > 0) births++;
+            if (state > 0 && next === 0) deaths++;
         }
-        
+
         let t = cells; cells = nextCells; nextCells = t;
         sendFrame(active, changed, births, deaths);
     }
 
     function processDefense() {
         defenseTick++;
-        if (defenseTick % 30 === 0) {
-            // 敌人生成：向中心移动的滑翔机或炸弹
-            // 简化：边缘生成高密度块
-             const ex = Math.random() < 0.5 ? 5 : width - 5; 
-             const ey = Math.floor(Math.random() * height);
-             for(let dy=-2; dy<=2; dy++) for(let dx=-2; dx<=2; dx++) {
-                 if(ex+dx>=0 && ex+dx<width && ey+dy>=0 && ey+dy<height) cells[(ey+dy)*width+(ex+dx)] = 1;
+        const waveInterval = 500; // ticks per wave
+
+        // Wave Management
+        if (defenseTick % waveInterval === 0) {
+            waveIndex++;
+            if (waveIndex > 5) { // Max 5 waves for now
+                 // Check victory if no enemies left?
+                 // For simpler logic, just loop wave 5 intensity
+                 waveIndex = 5;
+            }
+        }
+
+        // Spawning Logic based on Wave
+        const spawnRate = Math.max(5, 50 - waveIndex * 8);
+        if (defenseTick % spawnRate === 0) {
+             const spawnCount = waveIndex * 2;
+             for(let k=0; k<spawnCount; k++) {
+                let ex, ey;
+                if (waveIndex === 1) {
+                    // Left/Right edges
+                    ex = Math.random()<0.5 ? 1 : width-2; ey = Math.floor(Math.random()*height);
+                } else if (waveIndex === 2) {
+                    // Corners
+                    ex = Math.random()<0.5 ? 5 : width-5; ey = Math.random()<0.5 ? 5 : height-5;
+                } else {
+                    // Random edges
+                    if(Math.random()>0.5) { ex = Math.random()*width; ey = Math.random()<0.5?1:height-2; }
+                    else { ex = Math.random()<0.5?1:width-2; ey = Math.random()*height; }
+                }
+
+                // Spawn 2x2 Enemy Block
+                ex = Math.floor(ex); ey = Math.floor(ey);
+                for(let dy=0; dy<2; dy++) for(let dx=0; dx<2; dx++) {
+                     if(ex+dx<width && ey+dy<height) cells[(ey+dy)*width+(ex+dx)] = 2;
+                }
              }
+        }
+
+        // Damage Check (Loop through core area)
+        const cx = width>>1, cy = height>>1;
+        let damage = 0;
+        for(let dy=-5; dy<=5; dy++) for(let dx=-5; dx<=5; dx++) {
+            const idx = (cy+dy)*width+(cx+dx);
+            if (cells[idx] === 2) {
+                damage++;
+                cells[idx] = 0; // Enemy consumed
+            }
+        }
+        if (damage > 0) {
+            baseHP = Math.max(0, baseHP - damage * 5);
         }
     }
 
     function sendFrame(active, changed, births, deaths) {
         const cx = width>>1, cy = height>>1;
         for (let i = 0; i < width * height; i++) {
-            let col = cells[i] ? C_ALIVE : C_DEAD;
-            // Defense mode coloring
-            if (gameMode === 'defense') {
-                const x = i%width, y=Math.floor(i/width);
-                if(Math.abs(x-cx) > safeZoneRadius || Math.abs(y-cy) > safeZoneRadius) {
-                     if(cells[i]) col = C_ENEMY; 
-                } else if (!cells[i]) {
-                    col = C_SAFE;
-                }
-            }
+            const s = cells[i];
+            let col = C_DEAD;
+            if (s === 1) col = C_FRIENDLY;
+            else if (s === 2) col = C_ENEMY;
+            else if (s === 3) col = C_CORE;
+
+            // Little Endian ABGR.
+            // C_FRIENDLY = Slate 200 ~ 0xFFE2E8F0 -> R=E2, G=E8, B=F0, A=FF
+            // Manual tinting for visuals? No, keep it performant.
+
             pixels[i] = col;
         }
+
         const img = new ImageData(new Uint8ClampedArray(pixels.buffer), width, height);
-        self.postMessage({ type: 'FRAME', image: img, stats: { pop: active, changed, births, deaths } });
+        self.postMessage({
+            type: 'FRAME',
+            image: img,
+            stats: { pop: active, changed, births, deaths },
+            defense: gameMode === 'defense' ? { hp: baseHP, wave: waveIndex } : null
+        });
     }
 
     function randomize(d) { for(let i=0; i<width*height; i++) cells[i] = Math.random() < d ? 1 : 0; }
@@ -437,13 +588,51 @@ const workerCode = `
     }
 `;
 
-const { createApp, ref, onMounted, onUnmounted, computed, reactive, nextTick } = Vue;
+const { createApp, ref, onMounted, onUnmounted, computed, reactive, watch } = Vue;
+
+// --- 挑战关卡配置 ---
+const CHALLENGE_LEVELS = [
+    {
+        id: 1,
+        name: "秩序的诞生",
+        description: "在 100 代内让混沌归于平静，人口归零。",
+        ruleString: "B3/S23",
+        initType: "random",
+        winText: "人口 = 0",
+        checkWin: (s) => s.pop === 0 && s.gen > 20,
+        checkLoss: (s) => s.gen > 200
+    },
+    {
+        id: 2,
+        name: "大过滤器",
+        description: "维持种群在 2000 ~ 3000 之间持续 50 代。",
+        ruleString: "B3/S23",
+        initType: "random",
+        winText: "2000 < Pop < 3000",
+        checkWin: (s) => {
+            // Stateful check logic would be better, simplified here
+            return s.pop > 2000 && s.pop < 3000 && s.gen > 50;
+        },
+        checkLoss: (s) => s.gen > 300
+    },
+    {
+        id: 3,
+        name: "高能反应",
+        description: "使用 HighLife 规则 (B36/S23)，制造一个自我复制者（人口爆炸）。",
+        ruleString: "B36/S23",
+        initType: "center_block",
+        winText: "Pop > 5000",
+        checkWin: (s) => s.pop > 5000,
+        checkLoss: (s) => s.pop === 0
+    }
+];
 
 createApp({
     setup() {
         const canvasRef = ref(null);
         const worker = ref(null);
-        
+
+        // 核心状态
         const isPlaying = ref(false);
         const fps = ref(0);
         const speed = ref(30);
@@ -454,12 +643,22 @@ createApp({
         const ruleString = ref('B3/S23');
         const gameMode = ref('sandbox');
         const screenShake = ref(false);
-        const eventMessage = ref('');
 
         // 视口
         const scale = ref(4);
         const offsetX = ref(0), offsetY = ref(0);
         const W = 512, H = 512;
+
+        // 防线模式状态
+        const baseHp = ref(100);
+        const defenseWave = ref(1);
+
+        // 挑战模式状态
+        const currentChallengeIndex = ref(0);
+        const currentLevel = computed(() => CHALLENGE_LEVELS[currentChallengeIndex.value]);
+
+        // 通知队列
+        const notificationQueue = ref([]);
 
         // 音频
         const audioInitialized = ref(false);
@@ -468,13 +667,12 @@ createApp({
 
         // 成就
         const showAchievements = ref(false);
-        const achievementQueue = ref([]);
         const achievements = reactive([
             { id: 1, title: "创世第一步", desc: "绘制第一个细胞", icon: "🌱", unlocked: false, check: s => s.drawn },
             { id: 2, title: "文明繁荣", desc: "人口超过 5,000", icon: "🏙️", unlocked: false, check: s => s.pop > 5000 },
-            { id: 3, title: "灭世者", desc: "人口归零", icon: "💀", unlocked: false, check: s => s.pop === 0 && s.gen > 10 },
-            { id: 4, title: "永恒引擎", desc: "演化超过 500 代", icon: "⏳", unlocked: false, check: s => s.gen > 500 },
-            { id: 5, title: "上帝之手", desc: "触发一次随机事件", icon: "⚡", unlocked: false, check: s => s.eventTriggered },
+            { id: 3, title: "坚不可摧", desc: "满血通关防线模式", icon: "🛡️", unlocked: false, check: s => false }, // Logic handled in defense end
+            { id: 4, title: "解谜大师", desc: "完成 3 个挑战关卡", icon: "🧠", unlocked: false, check: s => false },
+            { id: 5, title: "上帝之手", desc: "触发随机事件", icon: "⚡", unlocked: false, check: s => s.eventTriggered },
         ]);
         const unlockedCount = computed(() => achievements.filter(a => a.unlocked).length);
         const stateFlags = { drawn: false, eventTriggered: false };
@@ -482,13 +680,12 @@ createApp({
         let ctx, bufferCanvas, bufferCtx, lastTime = 0, animId;
         let isDrag = false, lx=0, ly=0;
 
-        // --- 音频引擎 (Procedural Audio) ---
+        // --- 音频引擎 ---
         const initAudio = () => {
             if (audioInitialized.value) return;
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             audioCtx = new AudioContext();
             audioInitialized.value = true;
-            // 启动背景音
             playDrone();
         };
 
@@ -508,11 +705,10 @@ createApp({
 
         const playDrone = () => {
             if (isMuted.value || !audioCtx) return;
-            // 简单的低频背景音
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.frequency.value = 50;
-            gain.gain.value = 0.02;
+            osc.frequency.value = 60;
+            gain.gain.value = 0.03;
             osc.connect(gain);
             gain.connect(audioCtx.destination);
             osc.start();
@@ -523,11 +719,23 @@ createApp({
             switch(type) {
                 case 'birth': playTone(400 + Math.random()*400, 'sine', 0.1, 0.05); break;
                 case 'death': playTone(100 + Math.random()*50, 'sawtooth', 0.1, 0.03); break;
-                case 'achieve': 
-                    [261, 329, 392, 523].forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.6, 0.1), i*60));
-                    break;
+                case 'achieve': [261, 329, 392, 523].forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.6, 0.1), i*60)); break;
                 case 'event': playTone(150, 'square', 0.5, 0.1); break;
+                case 'alert': playTone(800, 'sawtooth', 0.2, 0.1); setTimeout(()=>playTone(600, 'sawtooth', 0.2, 0.1), 200); break;
+                case 'win': [523, 659, 784].forEach((f, i) => setTimeout(() => playTone(f, 'sine', 0.4, 0.1), i*100)); break;
+                case 'lose': [100, 80, 60].forEach((f, i) => setTimeout(() => playTone(f, 'sawtooth', 0.3, 0.1), i*100)); break;
             }
+        };
+
+        const notify = (type, title, subtitle, action, actionLabel) => {
+            const id = Date.now();
+            const icon = type === 'win' ? '🎉' : (type === 'loss' ? '💀' : '🏆');
+            notificationQueue.value.push({ id, type, title, subtitle, icon, action, actionLabel });
+            setTimeout(() => {
+                const idx = notificationQueue.value.findIndex(n => n.id === id);
+                if(idx !== -1) notificationQueue.value.splice(idx, 1);
+            }, 5000);
+            playSound(type === 'win' || type === 'achieve' ? 'win' : 'lose');
         };
 
         // --- Worker ---
@@ -539,35 +747,64 @@ createApp({
         };
 
         const onWorkerMsg = (e) => {
-            const { type, image, stats } = e.data;
+            const { type, image, stats, defense } = e.data;
+
             if (type === 'FRAME') {
                 bufferCtx.putImageData(image, 0, 0);
                 if (stats) {
                     activeCells.value = stats.pop;
+                    // Defense Updates
+                    if (defense) {
+                        if (defense.hp < baseHp.value) {
+                            screenShake.value = true; // Hurt effect
+                            setTimeout(() => screenShake.value = false, 300);
+                            playSound('death');
+                        }
+                        baseHp.value = defense.hp;
+                        defenseWave.value = defense.wave;
+                    }
+
+                    // Loop Logic
                     if (isPlaying.value) {
                         generation.value++;
-                        // 声音触发逻辑 (避免每一帧都太吵)
-                        if (stats.births > stats.deaths + 50) playSound('birth');
-                        else if (stats.deaths > stats.births + 50) playSound('death');
-                        
+                        // Sounds
+                        if (stats.births > stats.deaths + 100) playSound('birth');
+
+                        // Logic Checks
                         checkAchievements();
+                        if (gameMode.value === 'challenge') checkChallengeStatus();
                     }
                 }
                 if (isPlaying.value) setTimeout(() => worker.value.postMessage({ type: 'STEP' }), speed.value);
             }
+            else if (type === 'DEFENSE_LOST') {
+                isPlaying.value = false;
+                playSound('lose');
+                notify('loss', '防线失守', '基地已被摧毁', () => switchMode('defense'), '重试');
+            }
         };
 
-        // --- 逻辑 ---
+        // --- 逻辑判断 ---
         const checkAchievements = () => {
             const s = { pop: activeCells.value, gen: generation.value, ...stateFlags };
             achievements.forEach(ach => {
                 if (!ach.unlocked && ach.check(s)) {
                     ach.unlocked = true;
-                    playSound('achieve');
-                    achievementQueue.value.push({ id: Date.now(), title: ach.title, icon: ach.icon });
-                    setTimeout(() => achievementQueue.value.shift(), 3000);
+                    notify('achieve', ach.title, '成就解锁');
                 }
             });
+        };
+
+        const checkChallengeStatus = () => {
+            const s = { pop: activeCells.value, gen: generation.value };
+            const lvl = currentLevel.value;
+            if (lvl.checkWin(s)) {
+                isPlaying.value = false;
+                notify('win', '挑战完成', lvl.name, nextLevel, '下一关');
+            } else if (lvl.checkLoss(s)) {
+                isPlaying.value = false;
+                notify('loss', '挑战失败', lvl.name, startChallenge, '重试');
+            }
         };
 
         const triggerEvent = (name) => {
@@ -576,31 +813,27 @@ createApp({
             playSound('event');
             screenShake.value = true;
             setTimeout(() => screenShake.value = false, 500);
-            eventMessage.value = name === 'meteor' ? '检测到高能撞击!' : (name === 'virus' ? 'T-病毒已释放' : '生命之雨降临');
-            setTimeout(() => eventMessage.value = '', 2000);
-            checkAchievements();
+            notify('event', name === 'meteor' ? '陨石撞击' : (name === 'virus' ? '病毒爆发' : '生命之雨'), '随机事件');
         };
 
         // --- 渲染 ---
         const loop = (t) => {
-            if(!lastTime) lastTime=t; const dt=t-lastTime; 
+            if(!lastTime) lastTime=t; const dt=t-lastTime;
             if(dt>=1000){ fps.value=Math.round(1000/dt*(isPlaying.value?1:0.5)); lastTime=t; }
 
             if(ctx && bufferCanvas){
-                // BUG 修复：每一帧必须强制清空背景，防止拖动时的残影
-                ctx.fillStyle = '#0f172a'; 
+                // 强制清空背景，防止残影
+                ctx.fillStyle = '#0f172a';
                 ctx.fillRect(0, 0, canvasRef.value.width, canvasRef.value.height);
-                
+
                 ctx.imageSmoothingEnabled = false;
                 const dw = W * scale.value, dh = H * scale.value;
-                
-                // 绘制 Buffer
+
                 if (!(offsetX.value > canvasRef.value.width || offsetY.value > canvasRef.value.height || offsetX.value + dw < 0 || offsetY.value + dh < 0)) {
                     ctx.drawImage(bufferCanvas, 0, 0, W, H, Math.floor(offsetX.value), Math.floor(offsetY.value), dw, dh);
                 }
-                
-                // 网格框
-                ctx.strokeStyle = '#334155'; ctx.lineWidth = 1; 
+
+                ctx.strokeStyle = '#334155'; ctx.lineWidth = 1;
                 ctx.strokeRect(Math.floor(offsetX.value), Math.floor(offsetY.value), dw, dh);
             }
             animId = requestAnimationFrame(loop);
@@ -611,8 +844,8 @@ createApp({
             x: Math.floor((cx - canvasRef.value.getBoundingClientRect().left - offsetX.value) / scale.value),
             y: Math.floor((cy - canvasRef.value.getBoundingClientRect().top - offsetY.value) / scale.value)
         });
-        
-        const handleMouseDown = (e) => { isDrag = true; lx = e.clientX; ly = e.clientY; if (tool.value !== 'pan') useTool(e); };
+
+        const handleMouseDown = (e) => { initAudio(); isDrag = true; lx = e.clientX; ly = e.clientY; if (tool.value !== 'pan') useTool(e); };
         const handleMouseMove = (e) => {
             if (!isDrag) return;
             if (tool.value === 'pan') { offsetX.value += e.clientX - lx; offsetY.value += e.clientY - ly; }
@@ -622,9 +855,9 @@ createApp({
         const useTool = (e) => {
             stateFlags.drawn = true;
             const { x, y } = getGridPos(e.clientX, e.clientY);
-            worker.value.postMessage({ 
-                type: 'DRAW', 
-                payload: { x, y, state: tool.value === 'erase' ? 0 : 1, size: tool.value !== 'pan' ? brushSize.value : 1 } 
+            worker.value.postMessage({
+                type: 'DRAW',
+                payload: { x, y, state: tool.value === 'erase' ? 0 : 1, size: tool.value !== 'pan' ? brushSize.value : 1 }
             });
         };
         const handleMouseUp = () => { isDrag = false; };
@@ -637,32 +870,43 @@ createApp({
             scale.value = ns; offsetX.value = mx - wx * ns; offsetY.value = my - wy * ns;
         };
 
-        // 控件方法
-        const togglePlay = () => { 
-            initAudio(); // Ensure audio starts on interaction
-            isPlaying.value = !isPlaying.value; 
-            if(isPlaying.value) worker.value.postMessage({type:'STEP'}); 
+        const togglePlay = () => {
+            initAudio();
+            isPlaying.value = !isPlaying.value;
+            if(isPlaying.value) worker.value.postMessage({type:'STEP'});
         };
         const step = () => { isPlaying.value=false; worker.value.postMessage({type:'STEP'}); };
-        const reset = () => { generation.value=0; worker.value.postMessage({type:'RESET',payload:{density:0.2}}); };
+        const reset = () => {
+            generation.value=0;
+            if (gameMode.value === 'challenge') startChallenge();
+            else worker.value.postMessage({type:'RESET',payload:{density:0.2}});
+        };
         const applyRule = () => worker.value.postMessage({type:'UPDATE_RULE',payload:{ruleString:ruleString.value}});
-        const switchMode = (m) => { 
+        const switchMode = (m) => {
             gameMode.value = m; generation.value = 0; isPlaying.value = false;
-            worker.value.postMessage({type:'SET_MODE',payload:{mode:m}});
+            if (m === 'challenge') startChallenge();
+            else worker.value.postMessage({type:'SET_MODE',payload:{mode:m}});
         };
         const toggleMute = () => isMuted.value = !isMuted.value;
         const openShareModal = () => alert("分享链接已复制到剪贴板! (模拟)");
+
+        // Challenge Nav
+        const startChallenge = () => {
+             isPlaying.value = false; generation.value = 0;
+             const lvl = currentLevel.value;
+             ruleString.value = lvl.ruleString;
+             worker.value.postMessage({ type: 'LOAD_CHALLENGE', payload: { rule: lvl.ruleString, initType: lvl.initType } });
+        };
+        const nextLevel = () => { if(currentChallengeIndex.value < CHALLENGE_LEVELS.length-1) { currentChallengeIndex.value++; startChallenge(); } };
+        const prevLevel = () => { if(currentChallengeIndex.value > 0) { currentChallengeIndex.value--; startChallenge(); } };
 
         onMounted(() => {
             ctx = canvasRef.value.getContext('2d', { alpha: false });
             bufferCanvas = document.createElement('canvas'); bufferCanvas.width = W; bufferCanvas.height = H;
             bufferCtx = bufferCanvas.getContext('2d');
             initWorker();
-            
-            // 初始化 Lucide 图标
             lucide.createIcons();
-            
-            const resize = () => { 
+            const resize = () => {
                 canvasRef.value.width = window.innerWidth; canvasRef.value.height = window.innerHeight;
                 if(offsetX.value === 0) { offsetX.value = (window.innerWidth - W*scale.value)/2; offsetY.value = (window.innerHeight - H*scale.value)/2; }
             };
@@ -670,15 +914,19 @@ createApp({
             resize();
             requestAnimationFrame(loop);
         });
-        
+
         onUnmounted(() => { worker.value && worker.value.terminate(); cancelAnimationFrame(animId); });
 
         return {
             canvasRef, isPlaying, fps, speed, ruleString, tool, brushSize, gameMode,
-            generation, activeCells, showAchievements, achievements, unlockedCount, achievementQueue,
-            eventMessage, triggerEvent, audioInitialized, initAudio, isMuted, toggleMute,
+            generation, activeCells, showAchievements, achievements, unlockedCount, notificationQueue,
+            triggerEvent, audioInitialized, initAudio, isMuted, toggleMute,
             handleMouseDown, handleMouseMove, handleMouseUp, handleWheel,
-            togglePlay, step, reset, applyRule, switchMode, openShareModal
+            togglePlay, step, reset, applyRule, switchMode, openShareModal,
+            // Defense State
+            baseHp, defenseWave,
+            // Challenge State
+            currentLevel, currentChallengeIndex, challengeLevels: CHALLENGE_LEVELS, nextLevel, prevLevel, startChallenge
         };
     }
 }).mount('#app');

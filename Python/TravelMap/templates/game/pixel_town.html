@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>像素都市 v2.0：奋斗与梦想</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        :root {
+            --bg-color: #2c3e50;
+            --ui-bg: #34495e;
+            --text-color: #ecf0f1;
+            --accent: #f39c12;
+            --success: #27ae60;
+            --danger: #c0392b;
+            --rare: #9b59b6;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            touch-action: none;
+        }
+
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 30px rgba(0,0,0,0.6);
+            border: 4px solid var(--ui-bg);
+            background-color: #7ab856;
+            image-rendering: pixelated;
+        }
+
+        /* UI Layout */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            padding: 10px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .stat-panel {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 4px;
+            border: 2px solid #fff;
+            pointer-events: auto;
+        }
+
+        .stat-row {
+            margin-bottom: 5px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bar-container {
+            width: 80px;
+            height: 8px;
+            background: #222;
+            border: 1px solid #555;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        #quest-panel {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 4px;
+            border: 2px solid var(--accent);
+            max-width: 180px;
+            font-size: 10px;
+            pointer-events: auto;
+        }
+
+        .quest-item {
+            margin-bottom: 6px;
+            color: #aaa;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .quest-item.active { color: #fff; }
+        .quest-item.done { color: var(--success); text-decoration: line-through; opacity: 0.6; }
+        .quest-title { color: var(--accent); margin-bottom: 8px; border-bottom: 1px solid #555; padding-bottom: 3px; text-align: center;}
+
+        /* Notifications */
+        .floater {
+            position: absolute;
+            font-size: 12px;
+            font-weight: bold;
+            animation: floatUp 1.2s ease-out forwards;
+            pointer-events: none;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 100;
+            width: 200px;
+            text-align: center;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+            50% { transform: translate(-50%, -30px) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -60px) scale(1); }
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(2px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            z-index: 20;
+        }
+
+        .modal {
+            background: var(--ui-bg);
+            padding: 20px;
+            border: 4px solid #fff;
+            text-align: center;
+            min-width: 280px;
+            box-shadow: 10px 10px 0 rgba(0,0,0,0.5);
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal h2 { color: var(--accent); font-size: 18px; margin-top: 0; text-shadow: 2px 2px 0 #000; }
+        .modal p { font-size: 10px; line-height: 1.5; margin-bottom: 15px; color: #bdc3c7; }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            background: #fff;
+            color: #2c3e50;
+            border: 3px solid #2c3e50;
+            padding: 12px 5px;
+            font-family: inherit;
+            cursor: pointer;
+            font-size: 10px;
+            position: relative;
+            transition: all 0.1s;
+            box-shadow: 0 4px 0 #bdc3c7;
+        }
+
+        .btn:hover { background: #ecf0f1; transform: translateY(-2px); box-shadow: 0 6px 0 #bdc3c7; }
+        .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #bdc3c7; }
+        .btn.close { background: var(--danger); color: white; border-color: #922b21; box-shadow: 0 4px 0 #922b21; margin-top: 5px; width: 100%;}
+        .btn.close:hover { box-shadow: 0 6px 0 #922b21; }
+        .btn.close:active { box-shadow: 0 2px 0 #922b21; }
+
+        .btn.premium { border-color: var(--accent); color: var(--accent); font-weight: bold; box-shadow: 0 4px 0 #d35400; }
+        .btn.premium:hover { box-shadow: 0 6px 0 #d35400; }
+
+        .btn small { display: block; margin-top: 4px; font-size: 8px; color: #7f8c8d; }
+
+        /* Interaction Prompt */
+        #interaction-prompt {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 10px;
+            border: 2px solid #fff;
+            display: none;
+            animation: bounce 1s infinite;
+            z-index: 15;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        /* Controls for mobile */
+        #mobile-controls {
+            display: none;
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 120px;
+            height: 120px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- UI Layer -->
+        <div id="ui-layer">
+            <div class="top-bar">
+                <div class="stat-panel">
+                    <div class="stat-row">
+                        <span>❤️ 饱食</span>
+                        <div class="bar-container"><div id="health-bar" class="bar-fill" style="background:#e74c3c; width:100%"></div></div>
+                    </div>
+                    <div class="stat-row">
+                        <span>⚡ 精力</span>
+                        <div class="bar-container"><div id="energy-bar" class="bar-fill" style="background:#f1c40f; width:100%"></div></div>
+                    </div>
+                    <div class="stat-row" style="margin-top:8px; font-size:12px; color:#f1c40f;">
+                        <span id="money-display">💰 $0</span>
+                    </div>
+                    <div class="stat-row" style="color:#bdc3c7;">
+                        <span id="day-display">📅 Day 1</span>
+                    </div>
+                </div>
+
+                <div id="quest-panel">
+                    <div class="quest-title">📜 奋斗目标</div>
+                    <div id="quest-list">
+                        <!-- Quests injected by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="interaction-prompt">按 [E] 进入</div>
+        </div>
+
+        <!-- Modals -->
+        <div id="modal-overlay" class="modal-overlay">
+
+            <!-- Convenience Store -->
+            <div id="modal-shop" class="modal" style="display:none">
+                <h2>🏪 7-Eleven</h2>
+                <p>补给与机遇</p>
+                <div class="btn-grid">
+                    <button class="btn" onclick="game.buyItem('bread')">🍞 面包 ($10)<br><small>+20 饱食</small></button>
+                    <button class="btn" onclick="game.buyItem('coffee')">☕ 咖啡 ($15)<br><small>+15 精力</small></button>
+                    <button class="btn premium" onclick="game.buyLottery()">🎫 彩票 ($10)<br><small>次日开奖 | 大奖 $500</small></button>
+                </div>
+                <button class="btn close" onclick="game.closeModal()">离开</button>
+            </div>
+
+            <!-- Job Center -->
+            <div id="modal-work" class="modal" style="display:none">
+                <h2>💼 人才市场</h2>
+                <p>努力工作，改变命运</p>
+                <div class="btn-grid">
+                    <button class="btn" onclick="game.doWork('flyer')">📰 发传单<br><small>耗:10精 | 赚:$15</small></button>
+                    <button class="btn" onclick="game.doWork('delivery')">🛵 送外卖<br><small>耗:25精 | 赚:$40</small></button>
+                    <button class="btn premium" id="btn-code" onclick="game.doWork('code')">💻 写代码<br><small>需: 编程技能 | 赚:$100</small></button>
+                </div>
+                <button class="btn close" onclick="game.closeModal()">离开</button>
+            </div>
+
+            <!-- Car Dealer -->
+            <div id="modal-car" class="modal" style="display:none">
+                <h2>🚗 极速车行</h2>
+                <p>时间就是金钱，效率就是生命</p>
+                <div class="btn-grid">
+                    <button class="btn" onclick="game.buyItem('bike')">🚲 单车 ($200)<br><small>速度: 中</small></button>
+                    <button class="btn premium" onclick="game.buyItem('sedan')">🏎️ 跑车 ($1200)<br><small>速度: 快 | 身份象征</small></button>
+                </div>
+                <button class="btn close" onclick="game.closeModal()">离开</button>
+            </div>
+
+            <!-- Home -->
+            <div id="modal-home" class="modal" style="display:none">
+                <h2>🏠 甜蜜小窝</h2>
+                <p>休息恢复全部精力</p>
+                <p style="color:#e74c3c; font-weight:bold; border:1px solid #c0392b; padding:5px;">⚠️ 房租警告: 每3天扣除 $100</p>
+                <button class="btn" onclick="game.sleep()">💤 睡觉 (进入次日)</button>
+                <button class="btn close" onclick="game.closeModal()">出门</button>
+            </div>
+
+            <!-- Clothes Shop (NEW) -->
+            <div id="modal-clothes" class="modal" style="display:none">
+                <h2>👗 时尚衣橱</h2>
+                <p>人靠衣装，换个心情</p>
+                <div class="btn-grid">
+                    <button class="btn" onclick="game.buySkin('suit')">👔 商务西装 ($150)<br><small>看起来很专业</small></button>
+                    <button class="btn premium" onclick="game.buySkin('gold')">👑 土豪金 ($800)<br><small>闪瞎路人的眼</small></button>
+                </div>
+                <button class="btn close" onclick="game.closeModal()">离开</button>
+            </div>
+
+             <!-- Restaurant (NEW) -->
+             <div id="modal-food" class="modal" style="display:none">
+                <h2>🍽️ 米其林餐厅</h2>
+                <p>享受高端生活</p>
+                <div class="btn-grid">
+                    <button class="btn" onclick="game.buyItem('steak')">🥩 战斧牛排 ($60)<br><small>饱食全满</small></button>
+                    <button class="btn premium" onclick="game.buyItem('wine')">🍷 82年拉菲 ($120)<br><small>精力全满</small></button>
+                </div>
+                <button class="btn close" onclick="game.closeModal()">离开</button>
+            </div>
+
+             <!-- Library -->
+             <div id="modal-library" class="modal" style="display:none">
+                <h2>📚 知识海洋</h2>
+                <p>投资自己是回报率最高的投资</p>
+                <button class="btn" onclick="game.learnSkill('code')">📘 编程速成 ($100)<br><small>解锁: 程序员职业</small></button>
+                <button class="btn close" onclick="game.closeModal()">离开</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        /* * 像素小镇 v2.0 核心逻辑
+         * 包含了：地图系统、经济循环、任务系统、皮肤系统、时间系统、房租机制
+         */
+
+        // --- 配置 ---
+        const TILE_SIZE = 40;
+        const MAP_W = 20;
+        const MAP_H = 15;
+
+        const COLORS = {
+            GRASS: '#7ab856',
+            ROAD: '#95a5a6',
+            WALL: '#2c3e50',
+            BUILDINGS: {
+                HOME: '#e67e22',
+                SHOP: '#e74c3c',
+                WORK: '#3498db',
+                CAR: '#9b59b6',
+                LIB: '#1abc9c',
+                CLOTHES: '#ff69b4', // 粉色服装店
+                FOOD: '#8e44ad'     // 紫色餐厅
+            }
+        };
+
+        // 地图数据 (0:草, 1:墙, 2:路)
+        // 3:家, 4:便利店, 5:工作, 6:车行, 7:图书馆, 8:服装店, 9:餐厅
+        const MAP = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,3,3,0,0,0,1,1,1,1,0,0,0,8,8,1,9,9,1,1],
+            [1,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1],
+            [1,0,0,2,1,1,0,0,0,0,0,1,1,0,0,2,0,0,1,1],
+            [1,0,0,2,1,4,4,1,0,0,0,5,5,1,0,2,0,0,1,1],
+            [1,0,0,2,1,4,4,2,2,2,2,5,5,1,0,2,0,0,1,1],
+            [1,2,2,2,1,0,0,2,1,1,2,0,0,1,0,2,0,0,1,1],
+            [1,2,0,0,2,2,2,2,1,1,2,2,2,2,2,2,2,2,1,1],
+            [1,2,0,0,1,1,1,0,0,0,0,0,1,1,1,1,0,0,1,1],
+            [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,1,1],
+            [1,0,0,0,1,6,6,1,0,0,1,7,7,1,0,0,0,0,1,1],
+            [1,0,0,0,1,6,6,1,0,0,1,7,7,1,0,0,0,0,1,1],
+            [1,1,1,1,1,2,2,1,1,1,1,2,2,1,1,1,1,1,1,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ];
+
+        const BUILDING_DATA = {
+            3: { name: '家', type: 'home', color: COLORS.BUILDINGS.HOME },
+            4: { name: '7-Eleven', type: 'shop', color: COLORS.BUILDINGS.SHOP },
+            5: { name: '人才市场', type: 'work', color: COLORS.BUILDINGS.WORK },
+            6: { name: '4S车行', type: 'car', color: COLORS.BUILDINGS.CAR },
+            7: { name: '图书馆', type: 'library', color: COLORS.BUILDINGS.LIB },
+            8: { name: '服装店', type: 'clothes', color: COLORS.BUILDINGS.CLOTHES },
+            9: { name: '高级餐厅', type: 'food', color: COLORS.BUILDINGS.FOOD }
+        };
+
+        class Game {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.canvas.width = MAP_W * TILE_SIZE;
+                this.canvas.height = MAP_H * TILE_SIZE;
+
+                // 游戏状态
+                this.state = {
+                    money: 0,
+                    energy: 100,
+                    hunger: 100,
+                    day: 1,
+                    rentDueDay: 3,
+                    rentAmount: 100,
+                    inventory: [],
+                    skills: [],
+                    skin: 'default', // default, suit, gold
+                    vehicle: 'feet', // feet, bike, sedan
+                    lotteryTicket: false
+                };
+
+                // 任务列表
+                this.quests = [
+                    { id: 'q1', text: '第一桶金: 赚 $50', done: false, check: () => this.state.money >= 50, reward: 10 },
+                    { id: 'q2', text: '享受生活: 去餐厅消费', done: false, check: () => false, reward: 20 }, // 购买触发
+                    { id: 'q3', text: '出行升级: 买辆车', done: false, check: () => this.state.vehicle !== 'feet', reward: 50 },
+                    { id: 'q4', text: '职业进阶: 成为程序员', done: false, check: () => this.state.skills.includes('code'), reward: 100 },
+                    { id: 'q5', text: '小富即安: 存款 $1000', done: false, check: () => this.state.money >= 1000, reward: 500 }
+                ];
+
+                this.player = {
+                    x: 2 * TILE_SIZE,
+                    y: 2 * TILE_SIZE,
+                    size: 24
+                };
+
+                this.keys = {};
+                this.isModalOpen = false;
+                this.nearbyBuilding = null;
+
+                this.initInput();
+                this.updateUI();
+                this.loop();
+            }
+
+            initInput() {
+                window.addEventListener('keydown', e => {
+                    this.keys[e.key.toLowerCase()] = true;
+                    if (e.key.toLowerCase() === 'e') this.tryInteract();
+                });
+                window.addEventListener('keyup', e => this.keys[e.key.toLowerCase()] = false);
+
+                // 简单的触摸支持
+                this.canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.tryInteract();
+                });
+            }
+
+            loop = () => {
+                if (!this.isModalOpen) {
+                    this.movePlayer();
+                    this.checkQuests();
+                }
+                this.draw();
+                requestAnimationFrame(this.loop);
+            }
+
+            movePlayer() {
+                let speed = 3;
+                if (this.state.vehicle === 'bike') speed = 5;
+                if (this.state.vehicle === 'sedan') speed = 8;
+                // 皮肤加成
+                if (this.state.skin === 'suit') speed *= 0.9;
+                if (this.state.skin === 'gold') speed *= 1.1;
+
+                let dx = 0, dy = 0;
+                if (this.keys['w'] || this.keys['arrowup']) dy = -speed;
+                if (this.keys['s'] || this.keys['arrowdown']) dy = speed;
+                if (this.keys['a'] || this.keys['arrowleft']) dx = -speed;
+                if (this.keys['d'] || this.keys['arrowright']) dx = speed;
+
+                // 简单的碰撞检测与移动
+                if (dx !== 0 && !this.isSolid(this.player.x + dx, this.player.y)) this.player.x += dx;
+                if (dy !== 0 && !this.isSolid(this.player.x, this.player.y + dy)) this.player.y += dy;
+
+                // 边界检查
+                this.player.x = Math.max(0, Math.min(this.canvas.width - this.player.size, this.player.x));
+                this.player.y = Math.max(0, Math.min(this.canvas.height - this.player.size, this.player.y));
+
+                // 交互检测
+                this.checkInteraction();
+            }
+
+            isSolid(x, y) {
+                const points = [
+                    {x: x, y: y},
+                    {x: x + this.player.size, y: y},
+                    {x: x, y: y + this.player.size},
+                    {x: x + this.player.size, y: y + this.player.size}
+                ];
+                for (let p of points) {
+                    let c = Math.floor(p.x / TILE_SIZE);
+                    let r = Math.floor(p.y / TILE_SIZE);
+                    if (r >= 0 && r < MAP_H && c >= 0 && c < MAP_W) {
+                        if (MAP[r][c] === 1) return true; // 墙是实体的
+                    }
+                }
+                return false;
+            }
+
+            checkInteraction() {
+                const cx = this.player.x + this.player.size/2;
+                const cy = this.player.y + this.player.size/2;
+                const c = Math.floor(cx / TILE_SIZE);
+                const r = Math.floor(cy / TILE_SIZE);
+
+                const type = MAP[r][c];
+                const prompt = document.getElementById('interaction-prompt');
+
+                if (BUILDING_DATA[type]) {
+                    this.nearbyBuilding = BUILDING_DATA[type].type;
+                    prompt.style.display = 'block';
+                    prompt.innerText = `按 [E] 进入 ${BUILDING_DATA[type].name}`;
+                } else {
+                    this.nearbyBuilding = null;
+                    prompt.style.display = 'none';
+                }
+            }
+
+            tryInteract() {
+                if (this.nearbyBuilding) {
+                    this.openModal(this.nearbyBuilding);
+                }
+            }
+
+            draw() {
+                // 绘制背景
+                this.ctx.fillStyle = '#2c3e50';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // 绘制地图
+                for (let r = 0; r < MAP_H; r++) {
+                    for (let c = 0; c < MAP_W; c++) {
+                        let type = MAP[r][c];
+                        let x = c * TILE_SIZE;
+                        let y = r * TILE_SIZE;
+
+                        if (type === 0) this.ctx.fillStyle = COLORS.GRASS;
+                        else if (type === 1) this.ctx.fillStyle = COLORS.WALL;
+                        else if (type === 2) this.ctx.fillStyle = COLORS.ROAD;
+                        else if (BUILDING_DATA[type]) this.ctx.fillStyle = BUILDING_DATA[type].color;
+
+                        this.ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+
+                        // 网格线
+                        this.ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                        this.ctx.strokeRect(x, y, TILE_SIZE, TILE_SIZE);
+
+                        // 建筑图标
+                        if (BUILDING_DATA[type]) {
+                            this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                            this.ctx.fillRect(x+2, y+20, TILE_SIZE-4, 18);
+                            this.ctx.fillStyle = '#fff';
+                            this.ctx.font = '10px Arial';
+                            this.ctx.textAlign = 'center';
+                            let icons = {home:'🏠',shop:'🛒',work:'🏢',car:'🚗',library:'📚',clothes:'👗',food:'🍽️'};
+                            this.ctx.fillText(icons[BUILDING_DATA[type].type] || '?', x+TILE_SIZE/2, y+32);
+                        }
+                    }
+                }
+
+                // 绘制玩家
+                // 载具层
+                if (this.state.vehicle !== 'feet') {
+                    this.ctx.fillStyle = this.state.vehicle === 'bike' ? '#bdc3c7' : '#e74c3c';
+                    let vw = this.state.vehicle === 'bike' ? 10 : 30;
+                    this.ctx.fillRect(this.player.x - 2, this.player.y + 10, this.player.size + 4, vw);
+                }
+
+                // 皮肤颜色
+                let pColor = '#f1c40f'; // 默认黄
+                if (this.state.skin === 'suit') pColor = '#2c3e50'; // 商务蓝
+                if (this.state.skin === 'gold') pColor = '#f39c12'; // 土豪金
+
+                this.ctx.fillStyle = pColor;
+                this.ctx.fillRect(this.player.x, this.player.y, this.player.size, this.player.size);
+
+                // 眼睛
+                this.ctx.fillStyle = '#000';
+                this.ctx.fillRect(this.player.x + 6, this.player.y + 6, 4, 4);
+                this.ctx.fillRect(this.player.x + 14, this.player.y + 6, 4, 4);
+
+                // 西装领带细节
+                if (this.state.skin === 'suit') {
+                    this.ctx.fillStyle = '#e74c3c';
+                    this.ctx.fillRect(this.player.x + 10, this.player.y + 14, 4, 6);
+                }
+                // 金色光泽细节
+                if (this.state.skin === 'gold') {
+                     this.ctx.fillStyle = '#fff';
+                     this.ctx.fillRect(this.player.x + 2, this.player.y + 2, 4, 4);
+                }
+            }
+
+            // --- 游戏逻辑与UI更新 ---
+
+            updateUI() {
+                document.getElementById('money-display').innerText = `💰 $${this.state.money}`;
+                let daysLeft = Math.max(0, this.state.rentDueDay - this.state.day);
+                document.getElementById('day-display').innerText = `📅 Day ${this.state.day} (房租: ${daysLeft}天后)`;
+                document.getElementById('health-bar').style.width = `${this.state.hunger}%`;
+                document.getElementById('energy-bar').style.width = `${this.state.energy}%`;
+
+                // 工作按钮状态更新
+                const btnCode = document.getElementById('btn-code');
+                if (this.state.skills.includes('code')) {
+                    btnCode.disabled = false;
+                    btnCode.style.opacity = 1;
+                } else {
+                    btnCode.disabled = true;
+                    btnCode.style.opacity = 0.5;
+                    btnCode.innerHTML = "💻 写代码<br><small>需: 编程技能</small>"; // 重置文字
+                }
+
+                // 任务列表更新
+                const qList = document.getElementById('quest-list');
+                qList.innerHTML = '';
+                this.quests.forEach(q => {
+                    if (!q.done) {
+                        qList.innerHTML += `<div class="quest-item active">⬜ ${q.text} <span style="color:#f1c40f;font-size:8px">+$${q.reward}</span></div>`;
+                    } else {
+                         // 也可以选择不显示已完成的任务
+                         qList.innerHTML += `<div class="quest-item done">✅ ${q.text}</div>`;
+                    }
+                });
+            }
+
+            checkQuests() {
+                let changed = false;
+                this.quests.forEach(q => {
+                    if (!q.done && q.check()) {
+                        q.done = true;
+                        this.state.money += q.reward;
+                        this.showFloat(`目标达成! +$${q.reward}`, '#f1c40f');
+                        changed = true;
+                    }
+                });
+                if (changed) this.updateUI();
+            }
+
+            // 手动触发某些无法自动检测的任务 (比如消费类)
+            completeQuestById(id) {
+                const q = this.quests.find(x => x.id === id);
+                if (q && !q.done) {
+                    q.done = true;
+                    this.state.money += q.reward;
+                    this.showFloat(`目标达成! +$${q.reward}`, '#f1c40f');
+                    this.updateUI();
+                }
+            }
+
+            // 交互逻辑
+            openModal(type) {
+                this.isModalOpen = true;
+                this.keys = {}; // 停止移动
+                document.getElementById('modal-overlay').style.display = 'flex';
+                document.querySelectorAll('.modal').forEach(el => el.style.display = 'none');
+                document.getElementById(`modal-${type}`).style.display = 'block';
+            }
+
+            closeModal() {
+                this.isModalOpen = false;
+                document.getElementById('modal-overlay').style.display = 'none';
+            }
+
+            buyItem(item) {
+                const prices = { bread: 10, coffee: 15, bike: 200, sedan: 1200, steak: 60, wine: 120 };
+                if (this.state.money >= prices[item]) {
+                    this.state.money -= prices[item];
+
+                    // 效果应用
+                    if (item === 'bread') this.state.hunger = Math.min(100, this.state.hunger + 20);
+                    if (item === 'coffee') this.state.energy = Math.min(100, this.state.energy + 15);
+                    if (item === 'steak') {
+                         this.state.hunger = 100;
+                         this.completeQuestById('q2'); // 完成去餐厅任务
+                    }
+                    if (item === 'wine') this.state.energy = 100;
+
+                    if (item === 'bike') {
+                         this.state.vehicle = 'bike';
+                         this.completeQuestById('q3'); // 完成买车任务
+                    }
+                    if (item === 'sedan') {
+                        this.state.vehicle = 'sedan';
+                        this.completeQuestById('q3');
+                    }
+
+                    this.showFloat('购买成功!', '#27ae60');
+                    this.updateUI();
+                } else {
+                    this.showFloat('资金不足!', '#c0392b');
+                }
+            }
+
+            buySkin(skin) {
+                const prices = { suit: 150, gold: 800 };
+                if (this.state.money >= prices[skin]) {
+                    this.state.money -= prices[skin];
+                    this.state.skin = skin;
+                    this.showFloat('换装成功!', '#ff69b4');
+                    this.updateUI();
+                    this.closeModal();
+                } else {
+                    this.showFloat('太贵了!', '#c0392b');
+                }
+            }
+
+            buyLottery() {
+                if (this.state.money >= 10) {
+                    this.state.money -= 10;
+                    this.state.lotteryTicket = true;
+                    this.showFloat('彩票已购买!', '#9b59b6');
+                    this.updateUI();
+                } else {
+                    this.showFloat('没钱买彩票!', '#c0392b');
+                }
+            }
+
+            learnSkill(skill) {
+                if (skill === 'code') {
+                    if(this.state.money >= 100) {
+                        if (!this.state.skills.includes('code')) {
+                            this.state.money -= 100;
+                            this.state.skills.push('code');
+                            this.showFloat('技能解锁: 编程!', '#3498db');
+                            this.updateUI();
+                        } else {
+                            this.showFloat('你已经学会了!', '#fff');
+                        }
+                    } else {
+                        this.showFloat('学费不足 ($100)!', '#c0392b');
+                    }
+                }
+            }
+
+            doWork(type) {
+                let cost = 0;
+                let gain = 0;
+                let reqVehicle = null;
+
+                if (type === 'flyer') { cost = 10; gain = 15; }
+                if (type === 'delivery') { cost = 25; gain = 40; reqVehicle = true; }
+                if (type === 'code') { cost = 30; gain = 100; }
+
+                if (reqVehicle && this.state.vehicle === 'feet') {
+                    this.showFloat('需要交通工具!', '#e67e22');
+                    return;
+                }
+                if (this.state.energy >= cost) {
+                    this.state.energy -= cost;
+                    this.state.money += gain;
+                    this.state.hunger -= 5; // 工作也会饿
+                    this.showFloat(`工作收入 +$${gain}`, '#f1c40f');
+                    this.updateUI();
+                } else {
+                    this.showFloat('精力不足! 去休息或喝咖啡', '#c0392b');
+                }
+            }
+
+            sleep() {
+                this.state.day++;
+                this.state.energy = 100;
+                this.state.hunger = Math.max(0, this.state.hunger - 15);
+
+                // 彩票开奖
+                if (this.state.lotteryTicket) {
+                    this.state.lotteryTicket = false;
+                    if (Math.random() > 0.9) { // 10% 中奖率
+                        this.state.money += 500;
+                        alert("🎉 恭喜! 彩票中大奖 $500!");
+                    } else {
+                        this.showFloat('彩票未中奖...', '#bdc3c7');
+                    }
+                }
+
+                // 房租逻辑
+                if (this.state.day >= this.state.rentDueDay) {
+                    if (this.state.money >= this.state.rentAmount) {
+                        this.state.money -= this.state.rentAmount;
+                        this.state.rentDueDay += 3; // 下次交租日
+                        alert(`交房租 -$${this.state.rentAmount}\n房东: "算你准时。"`);
+                    } else {
+                        this.state.money = 0; // 破产清零
+                        this.state.rentDueDay += 3;
+                        this.state.skin = 'default'; // 没收衣服
+                        this.state.vehicle = 'feet'; // 没收车
+                        alert("💸 交不起房租!\n房东没收了你的资产并拿走了剩余现金...");
+                    }
+                }
+
+                this.closeModal();
+                this.updateUI();
+
+                // 转场特效
+                const overlay = document.createElement('div');
+                overlay.style = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#000;z-index:99;opacity:1;transition:opacity 1s;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;font-family:"Press Start 2P"';
+                overlay.innerText = `Day ${this.state.day}`;
+                document.body.appendChild(overlay);
+                setTimeout(() => overlay.style.opacity = 0, 1500);
+                setTimeout(() => overlay.remove(), 2500);
+            }
+
+            showFloat(text, color) {
+                const el = document.createElement('div');
+                el.className = 'floater';
+                el.style.color = color;
+                el.innerText = text;
+
+                // 屏幕中央显示
+                el.style.left = `50%`;
+                el.style.top = `40%`;
+
+                document.getElementById('game-container').appendChild(el);
+                setTimeout(() => el.remove(), 1200);
+            }
+        }
+
+        // 启动游戏
+        window.onload = () => window.game = new Game();
+
+    </script>
+</body>
+</html>
