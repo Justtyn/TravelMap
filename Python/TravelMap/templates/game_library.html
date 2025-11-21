@@ -110,18 +110,23 @@
     <!-- 顶部导航 -->
     <nav class="fixed w-full z-40 top-0 glass-card border-b border-white/10 !bg-slate-900/80 !backdrop-blur-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-20">
+            <div class="flex items-center justify-between h-20 gap-3">
                 <div class="flex items-center gap-3">
                     <i data-lucide="gamepad-2" class="text-purple-400 w-8 h-8"></i>
-                    <span class="text-2xl font-bold tracking-wider neon-text">ARCADE HUB</span>
+                    <div class="leading-tight">
+                        <span class="block text-lg sm:text-2xl font-bold tracking-wider neon-text">ARCADE HUB</span>
+                        <span class="hidden sm:block text-xs text-slate-500 tracking-widest">HTML GAME LAUNCHER</span>
+                    </div>
                 </div>
-                <div class="flex items-center gap-4">
-                    <a href="/" class="flex items-center gap-2 text-sm text-slate-300 hover:text-white px-3 py-2 rounded-lg border border-slate-800 hover:border-purple-500/50 bg-slate-900/50">
-                        <i data-lucide="home" class="w-4 h-4"></i>
-                        返回首页
-                    </a>
-                    <button id="load-default-btn" class="group relative inline-flex items-center justify-center px-6 py-2 overflow-hidden font-bold text-white rounded-lg bg-gradient-to-br from-purple-600 to-blue-500 hover:from-purple-500 hover:to-blue-400 transition-all duration-300 shadow-lg hover:shadow-purple-500/30">
-                        <span class="absolute w-0 h-0 transition-all duration-500 ease-out bg-white rounded-full group-hover:w-56 group-hover:h-56 opacity-10"></span>
+
+                <!-- Desktop actions -->
+                    <div class="hidden md:flex items-center gap-4">
+                        <a href="/" class="flex items-center gap-2 text-sm text-slate-300 hover:text-white px-3 py-2 rounded-lg border border-slate-800 hover:border-purple-500/50 bg-slate-900/50">
+                            <i data-lucide="home" class="w-4 h-4"></i>
+                            返回首页
+                        </a>
+                    <button id="load-default-btn" class="group relative inline-flex items-center justify-center px-5 py-2 overflow-hidden font-bold text-white rounded-lg bg-gradient-to-br from-purple-600 to-blue-500 hover:from-purple-500 hover:to-blue-400 transition-all duration-300 shadow-lg hover:shadow-purple-500/30">
+                        <span class="absolute w-0 h-0 transition-all duration-500 ease-out bg-white rounded-full group-hover:w-48 group-hover:h-48 opacity-10"></span>
                         <span class="relative flex items-center gap-2">
                             <i data-lucide="sparkles" class="w-4 h-4"></i>
                             加载全部游戏
@@ -134,9 +139,33 @@
                         <i data-lucide="folder-open" class="w-4 h-4"></i>
                         自定义上传
                     </button>
-                    <!-- 关键属性：webkitdirectory 允许选择文件夹 -->
-                    <input type="file" id="folder-input" class="hidden" webkitdirectory directory multiple />
                 </div>
+
+                <!-- Mobile actions -->
+                <div class="md:hidden flex items-center gap-2">
+                    <button id="load-default-btn-mobile" class="flex items-center gap-1 px-3 py-2 rounded-lg bg-gradient-to-br from-purple-600 to-blue-500 text-white text-sm font-semibold shadow-lg shadow-purple-500/20">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        全部
+                    </button>
+                    <button id="mobile-nav-toggle" class="p-2 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-200 hover:border-purple-500/50">
+                        <i data-lucide="menu" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- 关键属性：webkitdirectory 允许选择文件夹 -->
+        <input type="file" id="folder-input" class="hidden" webkitdirectory directory multiple />
+        <div id="mobile-menu" class="md:hidden hidden absolute inset-x-4 top-24 bg-slate-900/95 border border-white/10 rounded-2xl shadow-2xl p-4 space-y-3">
+            <button id="custom-upload-btn-mobile" class="flex items-center justify-center gap-2 w-full text-sm text-slate-100 px-3 py-2 rounded-lg border border-slate-800 hover:border-purple-500/50 bg-slate-800/60">
+                <i data-lucide="folder-open" class="w-4 h-4"></i>
+                自定义上传
+            </button>
+            <a href="/" class="flex items-center justify-center gap-2 w-full text-sm text-slate-100 px-3 py-2 rounded-lg border border-slate-800 hover:border-purple-500/50 bg-slate-800/60">
+                <i data-lucide="home" class="w-4 h-4"></i>
+                返回首页
+            </a>
+            <div id="file-count-mobile" class="hidden text-xs text-gray-300 bg-slate-800/70 px-3 py-2 rounded-lg border border-slate-700 text-center">
+                已加载 0 个游戏
             </div>
         </div>
     </nav>
@@ -212,7 +241,12 @@
         const emptyState = document.getElementById('empty-state');
         const fileCountBadge = document.getElementById('file-count');
         const loadDefaultBtn = document.getElementById('load-default-btn');
+        const loadDefaultBtnMobile = document.getElementById('load-default-btn-mobile');
         const customUploadBtn = document.getElementById('custom-upload-btn');
+        const customUploadBtnMobile = document.getElementById('custom-upload-btn-mobile');
+        const fileCountBadgeMobile = document.getElementById('file-count-mobile');
+        const mobileNavToggle = document.getElementById('mobile-nav-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
 
         const gamePlayer = document.getElementById('game-player');
         const gameIframe = document.getElementById('game-iframe');
@@ -227,7 +261,11 @@
         // 加载内置游戏
         async function loadDefaultGames() {
             try {
-                loadDefaultBtn.classList.add('opacity-70');
+                [loadDefaultBtn, loadDefaultBtnMobile].forEach(btn => {
+                    if (btn) {
+                        btn.classList.add('opacity-70', 'pointer-events-none');
+                    }
+                });
                 const res = await fetch('/api/games/list');
                 const payload = await res.json();
                 if (!res.ok || payload.code !== 200) {
@@ -243,7 +281,11 @@
                 console.error(err);
                 alert('加载内置游戏失败，请稍后重试');
             } finally {
-                loadDefaultBtn.classList.remove('opacity-70');
+                [loadDefaultBtn, loadDefaultBtnMobile].forEach(btn => {
+                    if (btn) {
+                        btn.classList.remove('opacity-70', 'pointer-events-none');
+                    }
+                });
             }
         }
 
@@ -272,14 +314,36 @@
             renderGameList(games);
         });
 
-        loadDefaultBtn.addEventListener('click', loadDefaultGames);
-        customUploadBtn.addEventListener('click', () => folderInput.click());
+        loadDefaultBtn?.addEventListener('click', loadDefaultGames);
+        loadDefaultBtnMobile?.addEventListener('click', () => {
+            mobileMenu?.classList.add('hidden');
+            loadDefaultGames();
+        });
+        customUploadBtn?.addEventListener('click', () => folderInput.click());
+        customUploadBtnMobile?.addEventListener('click', () => {
+            mobileMenu?.classList.add('hidden');
+            folderInput.click();
+        });
+
+        mobileNavToggle?.addEventListener('click', (event) => {
+            event.stopPropagation();
+            mobileMenu?.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (event) => {
+            if (mobileMenu &&
+                !mobileMenu.classList.contains('hidden') &&
+                !mobileMenu.contains(event.target) &&
+                !mobileNavToggle.contains(event.target)) {
+                mobileMenu.classList.add('hidden');
+            }
+        });
 
         function renderGameList(files) {
             if (!files || files.length === 0) {
                 gameGrid.classList.add('hidden');
                 emptyState.classList.remove('hidden');
                 fileCountBadge.classList.add('hidden');
+                fileCountBadgeMobile?.classList.add('hidden');
                 return;
             }
             // 更新 UI 状态
@@ -287,6 +351,10 @@
             gameGrid.classList.remove('hidden');
             fileCountBadge.classList.remove('hidden');
             fileCountBadge.innerText = `已加载 ${files.length} 个游戏`;
+            if (fileCountBadgeMobile) {
+                fileCountBadgeMobile.classList.remove('hidden');
+                fileCountBadgeMobile.innerText = `已加载 ${files.length} 个游戏`;
+            }
 
             gameGrid.innerHTML = ''; // 清空列表
 
