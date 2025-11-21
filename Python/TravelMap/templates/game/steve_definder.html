@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>方块幸存者：无尽黑夜 - 修复版</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+        :root {
+            --bg: #050505;
+            --panel: rgba(0,0,0,0.75);
+            --border: #444;
+            --accent: #6cf4a0;
+            --danger: #ff5c5c;
+            --gold: #FFD700;
+            --sky: #7ddcfb;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: var(--bg);
+            color: white;
+            font-family: 'VT323', monospace;
+            user-select: none;
+            touch-action: none;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0a0a0a;
+            overflow: hidden;
+        }
+        canvas {
+            image-rendering: pixelated;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            cursor: crosshair;
+        }
+        /* UI */
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 12px;
+            text-shadow: 2px 2px 0 #000, -1px -1px 0 #000;
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .stats-panel {
+            background: var(--panel);
+            border: 3px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .res-row { display: grid; grid-template-columns: repeat(3,minmax(80px,1fr)); gap: 8px; font-size: 20px; }
+        .res-row.wide { grid-template-columns: repeat(5,minmax(60px,1fr)); }
+        .res-item { display: flex; align-items: center; gap: 6px; }
+        .res-icon { width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.4); }
+        .day-indicator { font-size: 36px; text-align: center; color: #fff; }
+        .wave-info { font-size: 20px; color: #aaa; text-align: center; font-weight: bold; min-width: 150px;}
+        .goal-tip { font-size: 18px; color: #cfe; text-align: center; margin-top: 4px; }
+        .hp-bar-container {
+            width: 220px; height: 22px; background: #222; border: 3px solid #000; position: relative;
+        }
+        .hp-fill { height: 100%; background: linear-gradient(90deg, #2af, #2ee); width: 100%; transition: width 0.2s; }
+        .hp-text { position: absolute; left: 0; top: 0; width: 100%; text-align: center; font-size: 18px; line-height: 22px; }
+        .timer-bar { width: 240px; height: 10px; background: #222; border: 2px solid #000; margin-top: 6px; position: relative; }
+        .timer-fill { height: 100%; background: linear-gradient(90deg, #72ff72, #ff4f4f); width: 0%; transition: width 0.2s; }
+        .toolbar-container { align-self: center; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: auto; }
+        .toolbar-hint { font-size: 16px; color: #ddd; background: linear-gradient(90deg, rgba(0,0,0,0.6), rgba(30,30,30,0.8)); padding: 6px 10px; border-radius: 6px; display: flex; justify-content: space-between; gap: 10px; width: 100%; box-sizing: border-box; border: 1px solid #444; }
+        .toolbar { display: flex; gap: 6px; background: linear-gradient(135deg, rgba(0,0,0,0.85), rgba(30,30,30,0.85)); padding: 10px; border-radius: 10px; border: 2px solid #444; flex-wrap: wrap; justify-content: center; box-shadow: 0 8px 30px rgba(0,0,0,0.35); }
+        .tool-slot { width: 58px; height: 60px; border: 3px solid #666; background: #8b8b8b; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; cursor: pointer; transition: all 0.1s; }
+        .tool-slot:hover { background: #999; }
+        .tool-slot.active { border-color: #eee; transform: scale(1.1); box-shadow: 0 0 15px rgba(255,255,255,0.3); background: #a0a0a0; z-index: 2; }
+        .tool-key { position: absolute; top: 2px; left: 4px; font-size: 13px; color: #fff; background: rgba(0,0,0,0.5); padding: 0 3px; border-radius: 2px; }
+        .tool-icon { font-size: 18px; margin-bottom: 2px; }
+        .tool-name { font-size: 12px; color: #fff; text-align: center; line-height: 1.05; }
+        .cost-tag { position: absolute; bottom: -10px; right: -2px; background: #222; border: 1px solid #777; color: #ffff55; font-size: 10px; padding: 0 3px; border-radius: 3px; white-space: nowrap; z-index: 3; }
+        .screen-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; pointer-events: auto; transition: opacity 0.5s; }
+        .hidden { opacity: 0; pointer-events: none; }
+        .gone { display: none !important; }
+        h1 { font-size: 72px; margin: 0; background: linear-gradient(to bottom, #55ff55, #228822); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(4px 4px 0 #000); text-align: center; line-height: 1; }
+        .subtitle { font-size: 30px; color: #aaa; margin-bottom: 30px; letter-spacing: 1px;}
+        .menu-card { background: #333; border: 4px solid #fff; padding: 30px; text-align: center; box-shadow: 10px 10px 0 #000; max-width: 780px; }
+        .btn { background: #555; border: 3px solid #222; border-bottom-width: 6px; color: white; padding: 15px 50px; font-size: 30px; font-family: 'VT323', monospace; cursor: pointer; margin-top: 16px; transition: transform 0.1s; width: 100%; box-sizing: border-box; }
+        .btn:hover { background: #777; filter: brightness(1.2); }
+        .btn:active { transform: translateY(3px); border-bottom-width: 3px; }
+        /* 升级菜单 */
+        #upgrade-menu { background: rgba(0,0,0,0.9); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px; border: 4px solid var(--gold); color: white; display: none; pointer-events: auto; z-index: 30; width: 620px; max-height: 80vh; overflow-y: auto; }
+        #upgrade-menu.active { display: block; }
+        .branch { margin-bottom: 14px; border: 1px solid #555; padding: 10px; }
+        .branch h3 { margin: 0 0 6px; color: var(--gold); }
+        .upgrade-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #444; }
+        .upgrade-btn { background: var(--gold); color: #000; border: none; padding: 5px 10px; font-family: inherit; font-size: 20px; cursor: pointer; }
+        .upgrade-btn:disabled { background: #444; color: #888; cursor: not-allowed; }
+        /* 成就弹窗与面板 */
+        #achievement-toast { position: absolute; top: 20px; right: -320px; background: #2c2c2c; border: 2px solid var(--gold); padding: 10px 20px; color: white; display: flex; align-items: center; gap: 10px; transition: right 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.6s; z-index: 40; }
+        #achievement-toast.show { right: 20px; transform: translateY(-4px); }
+        #ach-panel { position: absolute; left: 12px; bottom: 100px; width: 240px; background: rgba(0,0,0,0.78); border: 2px solid #555; padding: 10px; pointer-events: auto; max-height: 50vh; overflow: auto; }
+        #ach-panel h4 { margin: 4px 0 6px; }
+        .ach-item { font-size: 16px; margin-bottom: 6px; display: flex; justify-content: space-between; }
+        .ach-item.locked { color: #777; }
+        .ach-badge { color: var(--gold); }
+        /* overlays */
+        #vignette { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.9) 100%); pointer-events: none; z-index: 5; }
+        #hit-flash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,0,0,0.3); pointer-events: none; z-index: 6; opacity: 0; transition: opacity 0.1s; }
+        .shop-btn { background: var(--gold); color: #000; border: 2px solid #fff; padding: 5px 15px; font-family: 'VT323'; font-size: 20px; cursor: pointer; pointer-events: auto; text-decoration: none; display: inline-block; margin-left: 14px; }
+        /* 目标提示 */
+        #goal-box { background: rgba(0,0,0,0.7); border: 2px solid #666; padding: 6px 10px; border-radius: 6px; min-width: 220px; text-align: center; }
+        #goal-box .title { color: var(--accent); font-size: 18px; }
+        #goal-box .desc { color: #eee; font-size: 16px; }
+        /* 移动端控制 */
+        #mobile-controls { position: absolute; bottom: 20px; left: 20px; right: 20px; display: none; pointer-events: none; z-index: 15; }
+        #joystick { position: absolute; left: 0; bottom: 0; width: 140px; height: 140px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 2px solid #666; }
+        #joystick .stick { position: absolute; width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 2px solid #888; left: 40px; top: 40px; }
+        #mobile-btns { position: absolute; right: 0; bottom: 0; display: flex; gap: 12px; }
+        .m-btn { pointer-events: auto; width: 72px; height: 72px; border-radius: 10px; background: rgba(0,0,0,0.6); border: 3px solid #888; color: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        /* Danger flashing */
+        .blink-red { animation: blink 0.5s alternate infinite; }
+        @keyframes blink { from { filter: brightness(1); } to { filter: brightness(1.4); } }
+        /* Tool tip box */
+        #tool-info { background: rgba(0,0,0,0.7); border: 1px solid #555; padding: 6px 10px; border-radius: 6px; color: #cfe; font-size: 16px; max-width: 280px; margin-top: 4px; }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    <div id="vignette"></div>
+    <div id="hit-flash"></div>
+
+    <div id="achievement-toast">
+        <div class="ach-icon">🏆</div>
+        <div>
+            <div style="font-size: 14px; color: var(--gold)">解锁成就</div>
+            <div id="ach-text" style="font-size: 20px">初次杀敌</div>
+        </div>
+    </div>
+
+    <!-- 升级菜单 -->
+        <div id="upgrade-menu">
+            <h2 style="text-align:center; margin-top:0; color:var(--gold)">科技树 (资源: <span id="shop-res">0/0/0/0/0</span>)</h2>
+            <div id="upgrade-list"></div>
+            <div style="text-align:center; margin-top:14px">
+                <button class="btn" style="padding: 5px 20px; font-size:24px; width:auto" onclick="toggleUpgradeMenu()">关闭</button>
+            </div>
+        </div>
+        <!-- 商店 -->
+        <div id="store-menu" class="screen-overlay hidden gone" style="background:rgba(0,0,0,0.88);">
+            <div class="menu-card" style="max-width:720px;">
+                <h2 style="margin:0 0 10px;color:var(--gold)">⛺ 流浪商人</h2>
+                <p style="color:#ccc;font-size:18px;margin:0 0 10px;">像 Minecraft 的巡逻商人，拿金子换点补给吧。</p>
+                <div id="store-list" style="text-align:left;font-size:18px;"></div>
+                <button class="btn" style="padding:8px 20px;font-size:24px;width:auto" onclick="toggleStore()">关闭</button>
+            </div>
+        </div>
+
+    <div id="ui-layer">
+        <div class="top-bar">
+            <div class="stats-panel">
+                <div class="res-row wide">
+                    <div class="res-item" title="木头"><div class="res-icon" style="background:#8B4513"></div> <span id="res-wood">0</span></div>
+                    <div class="res-item" title="石头"><div class="res-icon" style="background:#808080"></div> <span id="res-stone">0</span></div>
+                    <div class="res-item" title="黄金"><div class="res-icon" style="background:var(--gold)"></div> <span id="res-gold">0</span></div>
+                    <div class="res-item" title="煤炭"><div class="res-icon" style="background:#333"></div> <span id="res-coal">0</span></div>
+                    <div class="res-item" title="钻石"><div class="res-icon" style="background:#00ffff"></div> <span id="res-diamond">0</span></div>
+                </div>
+                <div class="hp-bar-container">
+                    <div class="hp-fill" id="hp-fill"></div>
+                    <div class="hp-text"><span id="hp-val">100</span> / <span id="hp-max">100</span></div>
+                </div>
+                <div class="timer-bar"><div class="timer-fill" id="night-fill"></div></div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px">
+                <div class="day-indicator" id="day-text">DAY 1</div>
+                <div class="wave-info" id="wave-text">距离入夜: 120s</div>
+                <div id="goal-box">
+                    <div class="title">当前目标</div>
+                    <div class="desc" id="goal-desc">白天采集资源</div>
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
+                    <button class="shop-btn" onclick="toggleUpgradeMenu()">[U] 科技</button>
+                    <button class="shop-btn" onclick="toggleStore()">[M] 商店</button>
+                </div>
+            </div>
+            <div id="ach-panel">
+                <h4>成就面板</h4>
+                <div id="ach-list"></div>
+            </div>
+        </div>
+
+        <div class="toolbar-container">
+            <div class="toolbar-hint">
+                <span id="hint-scroll">[鼠标滚轮/数字] 切换工具</span>
+                <span>[U] 打开科技</span>
+            </div>
+            <div class="toolbar" id="toolbar"></div>
+            <div id="tool-info">工具提示</div>
+        </div>
+    </div>
+
+    <!-- 开始菜单 -->
+    <div id="start-screen" class="screen-overlay">
+        <div class="menu-card">
+            <h1>方块幸存者</h1>
+            <div class="subtitle">无尽黑夜：透明度修复版</div>
+            <p style="font-size: 22px; color: #ccc; line-height: 1.4;">
+                修复了树木和矿石“隐形”的问题！<br>现在资源清晰可见，祝你采集愉快。
+            </p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;text-align:left;font-size:18px;color:#cce;">
+                <div><b>修复内容</b><br>✅ 修复资源透明度：现在所有资源 100% 不透明。<br>✅ 字体增强：增加后备字体防止 Emoji 不显示。<br>✨ 依然包含：资源高亮、长白天、优化的黑夜。</div>
+            </div>
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top: 10px;">
+                <button class="btn" onclick="game.start('normal')">普通模式</button>
+                <button class="btn" onclick="game.start('hard')">困难模式</button>
+            </div>
+            <p style="color:#cce;font-size:18px;margin-top:6px;">使用 [WSAD] 移动，[空格/鼠标左键] 互动。</p>
+        </div>
+    </div>
+
+    <!-- 死亡菜单 -->
+    <div id="game-over-screen" class="screen-overlay hidden gone">
+        <div class="menu-card" style="border-color: #ff3333">
+            <h1 style="background: none; -webkit-text-fill-color: #ff3333; color: #ff3333;">你死掉了!</h1>
+            <p style="font-size: 28px; margin: 20px 0;">存活天数: <span id="final-day" style="color:#fff; font-size: 40px">0</span></p>
+            <p id="ach-summary" style="color:var(--gold); font-size:20px"></p>
+            <p id="death-reason" style="color:#888">被怪物撕碎了...</p>
+            <button class="btn" onclick="game.start(game.mode)">重新挑战</button>
+        </div>
+    </div>
+
+    <!-- 移动端控制 -->
+    <div id="mobile-controls">
+        <div id="joystick"><div class="stick"></div></div>
+        <div id="mobile-btns">
+            <div class="m-btn" id="btn-attack">攻击</div>
+            <div class="m-btn" id="btn-switch">换装</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 音频
+const SoundManager = {
+    ctx: null,
+    bgmTimer: null,
+    init() {
+        window.AudioContext = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioContext();
+    },
+    playTone(freq, type, duration, vol = 0.1) {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(); osc.stop(this.ctx.currentTime + duration);
+    },
+    playNoise(duration, vol = 0.2) {
+        if (!this.ctx) return;
+        const bufferSize = this.ctx.sampleRate * duration;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = this.ctx.createBufferSource(); noise.buffer = buffer;
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+        noise.connect(gain); gain.connect(this.ctx.destination);
+        noise.start();
+    },
+    sfx: {
+        hit: () => SoundManager.playTone(150, 'sawtooth', 0.1, 0.1),
+        swing: () => SoundManager.playNoise(0.08, 0.05),
+        collect: () => SoundManager.playTone(650 + Math.random()*120, 'sine', 0.1, 0.12),
+        build: () => SoundManager.playTone(120, 'square', 0.08, 0.2),
+        explode: () => { SoundManager.playNoise(0.5, 0.4); SoundManager.playTone(60, 'sawtooth', 0.4, 0.25); },
+        shoot: () => { SoundManager.playTone(900, 'triangle', 0.05, 0.05); SoundManager.playNoise(0.05, 0.05); },
+        heal: () => { SoundManager.playTone(420, 'sine', 0.2, 0.1); setTimeout(()=>SoundManager.playTone(620, 'sine', 0.4, 0.1), 200); },
+        achieve: () => { [400, 500, 650, 900].forEach((f,i)=>setTimeout(()=>SoundManager.playTone(f,'square',0.22,0.12), i*100)); },
+        upgrade: () => SoundManager.playTone(1100, 'sine', 0.5, 0.2)
+    },
+    startBGM() {
+        if(!this.ctx || this.bgmTimer) return;
+        const seq=[220,330,440,330,262,196,262,330];
+        let idx=0;
+        this.bgmTimer=setInterval(()=>{
+            const f=seq[idx++%seq.length];
+            this.playTone(f,'triangle',0.28,0.05);
+            if(idx%4===0) this.playTone(f*2,'sine',0.2,0.04);
+        },420);
+    },
+    stopBGM(){ if(this.bgmTimer){ clearInterval(this.bgmTimer); this.bgmTimer=null; } }
+};
+
+// 画布
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const CONFIG = { viewW: 960, viewH: 640, tile: 32 };
+function resize() {
+    let scale = Math.min(window.innerWidth / CONFIG.viewW, window.innerHeight / CONFIG.viewH);
+    canvas.width = CONFIG.viewW; canvas.height = CONFIG.viewH;
+    canvas.style.width = CONFIG.viewW * scale + 'px';
+    canvas.style.height = CONFIG.viewH * scale + 'px';
+    ctx.imageSmoothingEnabled = false;
+}
+window.addEventListener('resize', resize); resize();
+
+// 工具与配置
+const TOOLS = [
+    { id:'sword', name:'钻石剑', icon:'🗡️', key:'1', desc:'近战核心，魔法科技加成，清理贴脸怪物。' },
+    { id:'pick', name:'神镐', icon:'⛏️', key:'2', desc:'挖树/石/煤/钻，靠近会有高亮提示。' },
+    { id:'bow', name:'弓箭', icon:'🏹', key:'3', desc:'远程点杀，魔法科技可附加灼烧。' },
+    { id:'wall', name:'墙壁', icon:'🧱', key:'4', cost:{wood:5}, desc:'基础防线，升级后更硬，挡爆炸/射击。' },
+    { id:'snow', name:'雪傀儡', icon:'⛄', key:'5', cost:{stone:10}, desc:'远程减速“寒冰”炮台，夜晚拖延尸潮。' },
+    { id:'golem', name:'铁傀儡', icon:'🤖', key:'6', cost:{stone:20}, desc:'高血肉盾，挥拳击退，像村庄守卫一样站桩。' },
+    { id:'healer', name:'牧师', icon:'👨‍⚕️', key:'7', cost:{gold:5}, desc:'像村民神职，周期为你回血，科技后范围更大。' },
+    { id:'tnt', name:'TNT', icon:'🧨', key:'8', cost:{wood:10}, desc:'经典爆炸，延时后炸出一片矿坑。' },
+    { id:'torch', name:'火把', icon:'🔥', key:'9', cost:{coal:3, wood:3}, desc:'夜视与减速光环，MC洞穴必备。' },
+    { id:'firetower', name:'火焰塔', icon:'🏰', key:'0', cost:{stone:15, coal:5, diamond:1}, desc:'喷火单点高伤，能灼烧敌人。' }
+];
+const STORE_ITEMS = [
+    {name:'木材 ×10', cost:{gold:4}, gain:{wood:10}, note:'砍树嫌麻烦？商人给你一捆圆木。'},
+    {name:'石头 ×10', cost:{gold:5}, gain:{stone:10}, note:'建墙好石头。'},
+    {name:'煤炭 ×6', cost:{gold:6}, gain:{coal:6}, note:'点火把，烧怪味。'},
+    {name:'急救药水', cost:{gold:8}, action:'heal', note:'立刻恢复 40 HP。'},
+    {name:'幸运之钻', cost:{gold:12}, gain:{diamond:1}, note:'像 MC 掉落的稀有钻石。'}
+];
+
+const DIFFICULTY = {
+    normal: { spawnBase: 110, spawnAccel: 5, eliteChance: 0.05, hpScale: 0.15 },
+    hard: { spawnBase: 90, spawnAccel: 7, eliteChance: 0.1, hpScale: 0.2 }
+};
+
+const GOALS = [
+    { day:1, desc:'采集 30 木材并建造一道墙', check:g=>g.inv.woodSpent>=30 && g.stats.builtWalls>0 },
+    { day:3, desc:'建造 1 个铁傀儡', check:g=>g.buildings.some(b=>b.type==='golem') },
+    { day:5, desc:'击败夜晚的精英怪/Boss', check:g=>g.flags.bossSlain },
+    { day:7, desc:'拥有 10 座防御建筑', check:g=>g.buildings.length>=10 },
+    { day:10, desc:'存活并解锁两条科技达到 Lv2', check:g=>g.tech.defense>=2 && g.tech.magic>=2 }
+];
+
+const TECH_TREE = {
+    defense: [
+        { name:'坚固工事', desc:'+30% 建筑生命', cost:{stone:10, wood:10} },
+        { name:'矢石强化', desc:'傀儡/塔伤害 +20%', cost:{stone:18, coal:6} },
+        { name:'致命箭矢', desc:'塔暴击机率 15%', cost:{gold:10, diamond:1} },
+        { name:'圣域屏障', desc:'牧师范围 +50% & 减伤10%', cost:{gold:15, diamond:2} }
+    ],
+    gather: [
+        { name:'锋利镐头', desc:'采集效率 +30%', cost:{wood:8, stone:8} },
+        { name:'煤炭冶炼', desc:'获得燃料概率提升', cost:{coal:6, gold:5} },
+        { name:'深层挖掘', desc:'稀有钻石掉率 +5%', cost:{stone:20, gold:8} },
+        { name:'自动收集', desc:'采集范围更宽', cost:{diamond:2, gold:12} }
+    ],
+    magic: [
+        { name:'符文剑舞', desc:'近战伤害 +25%', cost:{gold:6} },
+        { name:'灵巧身法', desc:'移动速度 +15%', cost:{coal:4, gold:6} },
+        { name:'炎爆术', desc:'弓箭附带灼烧', cost:{coal:8, diamond:1} },
+        { name:'光明祝福', desc:'夜晚视距提升，火把光半径 +25%', cost:{gold:12, diamond:2} }
+    ]
+};
+
+// 工具函数
+const rnd = (min,max)=>Math.random()*(max-min)+min;
+const clamp = (v,mi,ma)=>Math.max(mi, Math.min(ma, v));
+const dist = (a,b)=>Math.hypot((a.x+a.w/2)-(b.x+b.w/2),(a.y+a.h/2)-(b.y+b.h/2));
+const checkCol = (a,b)=>a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;
+
+// 成就
+const Achievements = {
+    list: [
+        { id: 'kill1', name: '第一滴血', desc:'消灭 1 个敌人', check:g=>g.stats.kills>=1 },
+        { id: 'kill50', name: '怪物猎人', desc:'消灭 50 个敌人', check:g=>g.stats.kills>=50 },
+        { id: 'day3', name: '生存者', desc:'存活到第 3 天', check:g=>g.day>=3 },
+        { id: 'rich', name: '土豪', desc:'持有 50 黄金', check:g=>g.inv.gold>=50 },
+        { id: 'builder', name: '建筑师', desc:'拥有 10 个建筑', check:g=>g.buildings.length>=10 },
+        { id: 'golem', name: '守护者', desc:'建造一个铁傀儡', check:g=>g.buildings.some(b=>b.type==='golem') },
+        { id: 'nohurt', name: '无伤之夜', desc:'夜间未受伤', check:g=>g.flags.nightNoDamage },
+        { id: 'pentakill', name: '五连斩', desc:'一次性击杀 5 个怪', check:g=>g.flags.multiKill },
+        { id: 'torch', name: '光明使者', desc:'铺设 5 个火把', check:g=>g.stats.torches>=5 },
+        { id: 'diamond', name: '璀璨之心', desc:'获得第一颗钻石', check:g=>g.flags.gotDiamond }
+    ],
+    unlocked: new Set(),
+    update(game) {
+        this.list.forEach(ach=>{
+            if(!this.unlocked.has(ach.id) && ach.check(game)) {
+                this.unlocked.add(ach.id);
+                this.showToast(ach.name);
+                SoundManager.sfx.achieve();
+                renderAchList();
+            }
+        });
+    },
+    showToast(name) {
+        const el=document.getElementById('achievement-toast');
+        document.getElementById('ach-text').innerText=name;
+        el.classList.add('show');
+        setTimeout(()=>el.classList.remove('show'),3200);
+    }
+};
+
+// 实体
+class Entity {
+    constructor(x,y,w,h,color) { this.x=x; this.y=y; this.w=w; this.h=h; this.color=color; this.dead=false; this.vx=0; this.vy=0; }
+    center(){ return {x:this.x+this.w/2,y:this.y+this.h/2}; }
+}
+
+class Player extends Entity {
+    constructor() {
+        super(CONFIG.viewW/2, CONFIG.viewH/2, 24, 24, '#00AAAA');
+        this.hp=100; this.maxHp=100;
+        this.speed=3.5;
+        this.facing=0; this.swingCd=0; this.iframes=0;
+        this.nightDamage=false;
+    }
+    update(input) {
+        let dx=input.x, dy=input.y;
+        if(dx||dy){
+            let mag=Math.hypot(dx,dy); dx/=mag; dy/=mag;
+            this.x=clamp(this.x+dx*this.speed,0,CONFIG.viewW-this.w);
+            this.y=clamp(this.y+dy*this.speed,0,CONFIG.viewH-this.h);
+        }
+        let c=this.center();
+        this.facing=Math.atan2(mouse.y-c.y, mouse.x-c.x);
+        if(this.swingCd>0) this.swingCd--; if(this.iframes>0) this.iframes--;
+    }
+    draw(){
+        ctx.save();
+        ctx.globalAlpha=1;
+        ctx.fillStyle='#00AAAA'; // Reset fill
+        ctx.translate(this.x+this.w/2,this.y+this.h/2); ctx.rotate(this.facing);
+        ctx.font='26px "VT323", sans-serif';
+        ctx.fillText('🧝', -12, 8);
+        if(this.swingCd>5) ctx.rotate(-0.5+(20-this.swingCd)*0.1);
+        let t=game.curTool;
+        const emoMap={0:'🗡️',1:'⛏️',2:'🏹'};
+        if(emoMap[t]) ctx.fillText(emoMap[t], 10, 10);
+        ctx.restore();
+    }
+    hit(dmg){
+        if(this.iframes>0 || dmg<=0) return;
+        if(game.tech.defense>=4) dmg*=0.9;
+        this.hp-=dmg; this.iframes=25; game.shake=5; this.nightDamage=true;
+        SoundManager.sfx.hit(); document.getElementById('hit-flash').style.opacity=0.6;
+        setTimeout(()=>document.getElementById('hit-flash').style.opacity=0,120);
+        spawnFloatingText(this.x,this.y,`-${Math.floor(dmg)}`,'#FF0000'); updateUI();
+        if(this.hp<=0) game.over("你耗尽了生命力");
+    }
+}
+
+class Enemy extends Entity {
+    constructor(type,x,y){
+        super(x,y,26,26,'#55AA55');
+        this.type=type; this.timer=0; this.special=0;
+        let diff=1+(game.day*game.diff.hpScale);
+        const base = {zombie: {hp:32, dmg:11, spd:1.4},
+                      creeper:{hp:22, dmg:22, spd:1.6},
+                      enderman:{hp:60, dmg:16, spd:2.4},
+                      slime:{hp:20, dmg:8, spd:1.1},
+                      skeleton:{hp:28, dmg:10, spd:1.5},
+                      spider:{hp:18, dmg:9, spd:2.8},
+                      boss:{hp:320, dmg:35, spd:1.8}};
+        const cfg=base[type];
+        this.maxHp=cfg.hp*diff; this.hp=this.maxHp;
+        this.damage=cfg.dmg*diff; this.speed=cfg.spd;
+        if(type==='creeper'){ this.color='#55FF55'; }
+        if(type==='enderman'){ this.color='#111'; this.h=38; this.speed*=1.2; this.teleportCd=0; }
+        if(type==='slime'){ this.color='#88FF88'; this.w=20; this.h=20; this.speed*=0.9; }
+        if(type==='skeleton'){ this.color='#EEE'; }
+        if(type==='spider'){ this.color='#b33'; this.w=22; this.h=18; }
+        if(type==='boss'){ this.color='#8f42ff'; this.w=50; this.h=50; this.speed*=1.1; }
+    }
+    update(){
+        if(this.dead) return;
+        let target=game.player;
+        let nearestBuild=null,minBDist=220;
+        for(let b of game.buildings){ let d=dist(this,b); if(d<minBDist){ minBDist=d; nearestBuild=b; } }
+        if(nearestBuild && nearestBuild.type!=='torch') target=nearestBuild;
+        let d=dist(this,target);
+        let slow=1;
+        for(let b of game.buildings){ if(b.type==='torch' && dist(this,b)<140) slow=0.75; }
+        if(this.type==='enderman'){ if(this.teleportCd>0) this.teleportCd--; if(d>200 && this.teleportCd===0 && Math.random()<0.02) this.teleportNear(target); }
+        if(this.type==='creeper' && d<55){ this.timer++; this.color=(Math.floor(game.frame/5)%2===0)?'#FFF':'#55FF55'; if(this.timer>45) this.explode(); return; } else { this.timer=0; if(this.type==='creeper') this.color='#55FF55'; }
+        if(this.type==='boss') { if(game.frame%120===0) this.spawnMinions(); if(game.frame%90===0) this.specialBlast(); }
+        let dx=target.x-this.x, dy=target.y-this.y, mag=Math.hypot(dx,dy) || 1;
+        this.vx=(dx/mag)*this.speed*slow; this.vy=(dy/mag)*this.speed*slow;
+        let nextX=this.x+this.vx, nextY=this.y+this.vy, hitWall=false;
+        for(let b of game.buildings){
+            if(b===target) continue;
+            if(checkCol({x:nextX,y:nextY,w:this.w,h:this.h}, b)){
+                hitWall=true;
+                if(game.frame%30===0) b.hit(this.damage);
+                break;
+            }
+        }
+        if(!hitWall){ this.x=nextX; this.y=nextY; }
+        if(this.type==='skeleton' && game.frame%80===0 && d<260) this.shootArrow(target);
+        if(this.type==='spider' && game.frame%55===0) this.speed*=1.05;
+        if(checkCol(this,target) && game.frame%28===0){
+            if(target instanceof Player) target.hit(Math.floor(this.damage));
+            else if(target instanceof Building) target.hit(this.damage);
+        }
+    }
+    draw(){
+        ctx.save();
+        ctx.globalAlpha = 1; // Ensure opacity
+        ctx.fillStyle = '#FFFFFF'; // Reset color
+        ctx.font='26px "VT323", sans-serif';
+        let emo='🧟', dy=26;
+        if(this.type==='creeper') emo='💥';
+        if(this.type==='enderman') emo='😈';
+        if(this.type==='slime') emo='🟩';
+        if(this.type==='skeleton') emo='💀';
+        if(this.type==='spider') emo='🕷️';
+        if(this.type==='boss') emo='👑';
+        ctx.fillText(emo, this.x, this.y+dy);
+        if(this.hp<this.maxHp){ ctx.fillStyle='red'; ctx.fillRect(this.x,this.y-6,this.w,4); ctx.fillStyle='#0F0'; ctx.fillRect(this.x,this.y-6,this.w*(this.hp/this.maxHp),4); }
+        ctx.restore();
+    }
+    takeDamage(amt, dir){
+        this.hp-=amt; spawnFloatingText(this.x,this.y,Math.floor(amt),'#fff'); SoundManager.sfx.hit();
+        if(dir!==undefined){ this.x+=Math.cos(dir)*12; this.y+=Math.sin(dir)*12; }
+        if(this.type==='enderman' && Math.random()<0.25) this.teleportNear(game.player);
+        if(this.type==='boss' && Math.random()<0.2) this.damage*=1.02;
+        if(this.hp<=0){ this.dead=true; game.stats.kills++; Achievements.update(game); if(Math.random()<0.32){ game.inv.gold++; spawnFloatingText(this.x,this.y,"+1 金","#FFD700"); } if(this.type==='boss') game.flags.bossSlain=true; }
+    }
+    explode(){
+        this.dead=true; SoundManager.sfx.explode(); game.shake=20; spawnParticles(this.center().x,this.center().y,'#FFF',32);
+        let range=110; if(dist(this,game.player)<range) game.player.hit(55);
+        game.buildings.forEach(b=>{ if(dist(this,b)<range) b.hit(220); });
+        game.enemies.forEach(e=>{ if(e!==this && dist(this,e)<range) e.takeDamage(60); });
+    }
+    teleportNear(target){
+        spawnParticles(this.x,this.y,'#F0F',10); let angle=Math.random()*Math.PI*2;
+        this.x=target.x+Math.cos(angle)*70; this.y=target.y+Math.sin(angle)*70; this.teleportCd=70;
+    }
+    shootArrow(target){
+        let ang=Math.atan2(target.center().y-this.center().y, target.center().x-this.center().x);
+        game.projectiles.push(new Projectile(this.center().x,this.center().y,ang,'enemy_arrow',this.damage));
+    }
+    spawnMinions(){
+        for(let i=0;i<2;i++){ let ang=Math.random()*Math.PI*2; let sx=this.x+Math.cos(ang)*80; let sy=this.y+Math.sin(ang)*80; game.enemies.push(new Enemy('spider', sx, sy)); }
+    }
+    specialBlast(){
+        spawnParticles(this.center().x,this.center().y,'#f6f',25);
+        game.buildings.forEach(b=>{ if(dist(this,b)<140) b.hit(35); });
+        if(dist(this,game.player)<140) game.player.hit(25);
+    }
+}
+
+class Resource extends Entity {
+    constructor(type,x,y){
+        super(x,y,40,40, '#777'); this.type=type;
+        const hpMap={tree:3, stone:6, coal:5, diamond:8}; this.hp=hpMap[type]||4;
+    }
+    draw(){
+        // 关键修复：强制重置样式，防止继承背景装饰的透明度
+        ctx.save();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font='28px "VT323", sans-serif';
+        let g='🌳', dx=4, dy=28;
+        if(this.type==='stone') g='⛰️';
+        if(this.type==='coal') g='🪨';
+        if(this.type==='diamond') g='💎';
+        ctx.fillText(g, this.x+dx, this.y+dy);
+        ctx.restore();
+    }
+    hit(){
+        this.hp--; game.shake=2; SoundManager.sfx.build(); spawnParticles(this.center().x,this.center().y,this.color,4);
+        if(this.hp<=0){
+            this.dead=true; let bonus=0;
+            if(game.tech.gather>=1) bonus+=1; if(game.tech.gather>=3) bonus+=1;
+            const add=(key,base)=>{ game.inv[key]+=base+bonus; spawnFloatingText(this.x,this.y,`+${base+bonus}${key==='wood'?'木':key==='stone'?'石':key==='coal'?'煤':key==='diamond'?'钻':'? '}`, "#D2691E"); };
+            if(this.type==='tree') add('wood',3+Math.floor(Math.random()*2));
+            if(this.type==='stone') add('stone',3+Math.floor(Math.random()*2));
+            if(this.type==='coal'){ add('coal',2+Math.floor(Math.random()*2)); }
+            if(this.type==='diamond'){ add('diamond',1); game.flags.gotDiamond=true; }
+            if(Math.random()<0.2+game.tech.gather*0.04){ game.inv.gold++; spawnFloatingText(this.x,this.y,"+1金","#FFD700"); }
+            updateUI();
+        }
+    }
+}
+
+class Building extends Entity {
+    constructor(type,x,y){
+        super(x,y,32,32,'#000'); this.type=type; this.timer=0;
+        this.hp=110*(1+game.tech.defense*0.3); this.maxHp=this.hp;
+        if(type==='golem'){ this.hp*=3.2; this.maxHp=this.hp; }
+        if(type==='tnt'){ this.hp=25; this.timer=120; }
+        if(type==='torch'){ this.hp=40; game.stats.torches++; }
+        if(type==='firetower'){ this.hp*=1.4; }
+    }
+    update(){
+        this.timer++;
+        if(this.type==='turret' && this.timer%55===0){
+            let t=this.findNearestEnemy(260);
+            if(t) game.projectiles.push(new Projectile(this.x+16,this.y+16,Math.atan2(t.y-this.y,t.x-this.x),'snowball'));
+        } else if(this.type==='golem' && this.timer%45===0){
+            let t=this.findNearestEnemy(55);
+            if(t){ t.takeDamage(20*(1+game.tech.defense*0.2), Math.atan2(t.y-this.y,t.x-this.x)); game.shake=2; }
+        } else if(this.type==='healer' && this.timer%110===0){
+            if(dist(this,game.player)<120*(1+game.tech.defense*0.5) && game.player.hp<game.player.maxHp){
+                game.player.hp=Math.min(game.player.maxHp, game.player.hp+12+game.tech.magic*3);
+                spawnFloatingText(game.player.x, game.player.y, "+HP", "#0F0"); spawnParticles(this.x+16,this.y+16,'#F0F',10); SoundManager.sfx.heal(); updateUI();
+            }
+        } else if(this.type==='tnt'){
+            if(this.timer%10<5) this.color='#FFF'; else this.color='#F00';
+            if(this.timer>=120) this.explode();
+        } else if(this.type==='firetower' && this.timer%45===0){
+            let t=this.findNearestEnemy(220);
+            if(t) game.projectiles.push(new Projectile(this.x+16,this.y+16,Math.atan2(t.y-this.y,t.x-this.x),'fireball'));
+        }
+    }
+    findNearestEnemy(range){
+        let n=null, md=range;
+        for(let e of game.enemies){ let d=dist(this,e); if(d<md){ md=d; n=e; } }
+        return n;
+    }
+    draw(){
+        ctx.save();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font='26px "VT323", sans-serif';
+        if(this.type==='wall'){ ctx.fillText('🧱', this.x+2, this.y+26); }
+        else if(this.type==='turret'){ ctx.fillText('⛄', this.x+2, this.y+26); }
+        else if(this.type==='firetower'){ ctx.fillText('🔥', this.x+2, this.y+26); }
+        else if(this.type==='golem'){ ctx.fillText('🗿', this.x+2, this.y+26); }
+        else if(this.type==='healer'){ ctx.fillText('🙏', this.x+2, this.y+26); }
+        else if(this.type==='tnt'){ ctx.fillText('💣', this.x+2, this.y+26); }
+        else if(this.type==='torch'){ ctx.fillText('🕯️', this.x+2, this.y+26); }
+        if(this.hp<this.maxHp && this.type!=='tnt'){ ctx.fillStyle='red'; ctx.fillRect(this.x,this.y-5,32,3); ctx.fillStyle=this.hp/this.maxHp<0.3?'#fffd55':'#0F0'; ctx.fillRect(this.x,this.y-5,32*(this.hp/this.maxHp),3); if(this.hp/this.maxHp<0.25 && game.frame%20<10) ctx.strokeStyle='#ff0'; }
+        ctx.restore();
+    }
+    hit(dmg){ if(this.type==='tnt'){ this.timer=115; return; } this.hp-=dmg; if(this.hp<=0) this.dead=true; }
+    explode(){
+        this.dead=true; SoundManager.sfx.explode(); game.shake=15; spawnParticles(this.x,this.y,'#F00',20);
+        let range=120; game.enemies.forEach(e=>{ if(dist(this,e)<range) e.takeDamage(220, Math.atan2(e.y-this.y,e.x-this.x)); });
+    }
+}
+
+class Projectile extends Entity {
+    constructor(x,y,angle,type='arrow',dmg=25){
+        super(x,y,6,6,'#FFF'); this.vx=Math.cos(angle)*10; this.vy=Math.sin(angle)*10; this.life=70; this.type=type; this.dmg=dmg;
+        if(type==='fireball'){ this.vx*=0.9; this.vy*=0.9; this.dmg=35*(1+game.tech.magic*0.2); }
+    }
+    update(){
+        this.x+=this.vx; this.y+=this.vy; this.life--; if(this.life<=0) this.dead=true;
+        if(this.type==='enemy_arrow'){
+            if(checkCol(this, game.player)) { game.player.hit(this.dmg); this.dead=true; }
+            game.buildings.forEach(b=>{ if(!this.dead && checkCol(this,b)){ b.hit(this.dmg); this.dead=true; } });
+            return;
+        }
+        for(let e of game.enemies){
+            if(checkCol(this,e)){
+                this.dead=true;
+                let dmg=this.type==='snowball'?6:this.dmg;
+                if(game.tech.defense>=2 && (this.type==='fireball' || this.type==='snowball')) dmg*=1.2;
+                if(game.tech.defense>=3 && (this.type==='arrow'||this.type==='snowball'||this.type==='fireball') && Math.random()<0.15) dmg*=1.8;
+                e.takeDamage(dmg, Math.atan2(this.vy,this.vx));
+                if(this.type==='snowball') e.speed*=0.5;
+                if(this.type==='fireball'){ e.takeDamage(8); if(Math.random()<0.25) e.speed*=0.7; }
+                if(this.type==='arrow' && game.tech.magic>=3 && Math.random()<0.25){ e.takeDamage(10); }
+                spawnParticles(this.x,this.y,'#FFF',2);
+                break;
+            }
+        }
+    }
+    draw(){ ctx.fillStyle=this.type==='snowball'?'#EFF':this.type==='fireball'?'#f80':'#FFF'; ctx.beginPath(); ctx.arc(this.x+3,this.y+3,3,0,Math.PI*2); ctx.fill(); }
+}
+
+// 游戏状态
+const mouse={x:CONFIG.viewW/2,y:CONFIG.viewH/2,down:false};
+const keys={};
+const mobileInput={active:false,dx:0,dy:0};
+const game={
+    state:'MENU', frame:0, day:1, time:0, dayLength:12000, shake:0, mode:'normal',
+    player:null, enemies:[], projectiles:[], buildings:[], resources:[], particles:[], texts:[],
+    inv:{wood:0,stone:0,gold:0,coal:0,diamond:0, woodSpent:0, stoneSpent:0},
+    stats:{kills:0,built:0,builtWalls:0, torches:0},
+    flags:{bossSlain:false, nightNoDamage:false, multiKill:false, gotDiamond:false, goals:{}},
+    curTool:0, tech:{defense:0,gather:0,magic:0}, diff:DIFFICULTY.normal,
+    holdNext:0,
+    worldDecor:[],
+    start(mode){
+        SoundManager.init(); SoundManager.startBGM();
+        document.querySelectorAll('.screen-overlay').forEach(el=>{el.classList.add('hidden'); el.classList.add('gone');});
+        this.mode=mode; this.diff=DIFFICULTY[mode]; this.state='PLAY'; this.day=1; this.time=2000; this.shake=0;
+        this.inv={wood:0,stone:0,gold:0,coal:0,diamond:0, woodSpent:0, stoneSpent:0};
+        this.stats={kills:0,built:0,builtWalls:0, torches:0}; this.flags={bossSlain:false, nightNoDamage:false, multiKill:false, gotDiamond:false, goals:{}};
+        this.tech={defense:0,gather:0,magic:0}; this.holdNext=0; Achievements.unlocked.clear(); renderAchList();
+        this.player=new Player(); this.enemies=[]; this.projectiles=[]; this.buildings=[]; this.particles=[]; this.texts=[]; this.resources=[]; this.worldDecor=[];
+        for(let i=0;i<140;i++){ this.worldDecor.push({x:rnd(20,CONFIG.viewW-20), y:rnd(20,CONFIG.viewH-20), emoji: Math.random()>0.7?'🌼':(Math.random()>0.5?'🌿':'🍃')}); }
+        for(let i=0;i<45;i++) spawnResource(); // 增加初始资源
+        buildToolbar(); updateUI(); loop();
+    },
+    over(reason){
+        this.state='GAMEOVER'; document.getElementById('game-over-screen').classList.remove('hidden'); document.getElementById('game-over-screen').classList.remove('gone');
+        document.getElementById('final-day').innerText=this.day; document.getElementById('death-reason').innerText=reason;
+        document.getElementById('ach-summary').innerText=`解锁成就: ${Achievements.unlocked.size} / ${Achievements.list.length}`;
+        SoundManager.stopBGM();
+    }
+};
+
+// 资源与地形
+function spawnResource(){
+    let x=rnd(40, CONFIG.viewW-40), y=rnd(40, CONFIG.viewH-40);
+    let centerDist=Math.hypot(x-CONFIG.viewW/2, y-CONFIG.viewH/2);
+    let probTree=0.6, probStone=0.3, probCoal=0.08, probDiamond=0.02;
+    if(centerDist>260){ probTree-=0.2; probStone+=0.15; probCoal+=0.05; }
+    if(centerDist>360){ probTree-=0.1; probStone+=0.1; probDiamond+=0.05; }
+    let r=Math.random(); let type='tree';
+    if(r<probTree) type='tree'; else if(r<probTree+probStone) type='stone'; else if(r<probTree+probStone+probCoal) type='coal'; else type='diamond';
+    game.resources.push(new Resource(type,x,y));
+}
+
+// 输入
+window.onkeydown=e=>{ keys[e.key.toLowerCase()]=true; if(game.state==='PLAY'){ if(e.key>='0' && e.key<='9'){ selectTool((parseInt(e.key)||10)%10); } if(e.key.toLowerCase()==='u') toggleUpgradeMenu(); if(e.key.toLowerCase()==='m') toggleStore(); if(e.key===' '){ mouse.down=true; game.holdNext=game.frame+4; useTool(); e.preventDefault(); } }};
+window.onkeyup=e=>{ keys[e.key.toLowerCase()]=false; if(e.key===' '){ mouse.down=false; game.holdNext=0; } };
+window.onmousemove=e=>{ const rect=canvas.getBoundingClientRect(); let sx=CONFIG.viewW/rect.width; let sy=CONFIG.viewH/rect.height; mouse.x=(e.clientX-rect.left)*sx; mouse.y=(e.clientY-rect.top)*sy; };
+window.onmousedown=()=>{ if(game.state==='PLAY'){ mouse.down=true; game.holdNext=game.frame+4; useTool(); } };
+window.onmouseup=()=>{ mouse.down=false; game.holdNext=0; };
+window.onwheel=e=>{ if(game.state!=='PLAY' || isTouchDevice) return; let dir=e.deltaY>0?1:-1; selectTool((game.curTool+dir+TOOLS.length)%TOOLS.length); };
+// 触摸瞄准
+function handleTouchPos(e){
+    const rect=canvas.getBoundingClientRect(); let sx=CONFIG.viewW/rect.width; let sy=CONFIG.viewH/rect.height;
+    const t=e.touches[0]; mouse.x=(t.clientX-rect.left)*sx; mouse.y=(t.clientY-rect.top)*sy;
+}
+canvas.addEventListener('touchstart',e=>{ handleTouchPos(e); });
+canvas.addEventListener('touchmove',e=>{ handleTouchPos(e); });
+
+// 移动端触控
+const isTouchDevice='ontouchstart' in window || navigator.maxTouchPoints>0;
+if(isTouchDevice){ document.getElementById('mobile-controls').style.display='block'; document.getElementById('hint-scroll').style.display='none'; }
+const joy=document.getElementById('joystick'); const stick=joy.querySelector('.stick');
+let joyActive=false, joyCenter={x:0,y:0};
+joy.addEventListener('touchstart',e=>{ joyActive=true; const t=e.touches[0]; joyCenter={x:t.clientX,y:t.clientY}; stick.style.left='40px'; stick.style.top='40px'; mobileInput.active=true; });
+joy.addEventListener('touchmove',e=>{ if(!joyActive) return; const t=e.touches[0]; let dx=t.clientX-joyCenter.x, dy=t.clientY-joyCenter.y; let dist=Math.hypot(dx,dy); const max=50; if(dist>max){ dx=dx/dist*max; dy=dy/dist*max; } stick.style.left=40+dx+'px'; stick.style.top=40+dy+'px'; mobileInput.dx=dx/max; mobileInput.dy=dy/max; });
+joy.addEventListener('touchend',()=>{ joyActive=false; stick.style.left='40px'; stick.style.top='40px'; mobileInput.dx=0; mobileInput.dy=0; });
+document.getElementById('btn-attack').addEventListener('touchstart',()=>{ mouse.down=true; game.holdNext=game.frame+4; useTool(); });
+document.getElementById('btn-attack').addEventListener('touchend',()=>{ mouse.down=false; game.holdNext=0; });
+document.getElementById('btn-switch').addEventListener('touchstart',()=>{ selectTool((game.curTool+1)%TOOLS.length); });
+
+// UI helpers
+function buildToolbar(){
+    const bar=document.getElementById('toolbar'); bar.innerHTML='';
+    TOOLS.forEach((t,i)=>{
+        const div=document.createElement('div'); div.className='tool-slot'+(i===game.curTool?' active':''); div.dataset.idx=i;
+        div.onclick=()=>selectTool(i);
+        div.innerHTML=`<span class="tool-key">${t.key}</span><div class="tool-icon">${t.icon}</div><div class="tool-name">${t.name}</div>${t.cost?`<div class="cost-tag">${costText(t.cost)}</div>`:''}`;
+        bar.appendChild(div);
+    });
+    updateToolInfo();
+}
+function costText(c){ return Object.entries(c).map(([k,v])=>`${v}${k==='wood'?'木':k==='stone'?'石':k==='gold'?'金':k==='coal'?'煤':'钻'}`).join('/'); }
+function selectTool(idx){
+    game.curTool=idx;
+    document.querySelectorAll('.tool-slot').forEach(el=>el.classList.remove('active'));
+    const slot=document.querySelector(`.tool-slot[data-idx="${idx}"]`);
+    if(slot) slot.classList.add('active');
+    updateToolInfo();
+}
+function updateToolInfo(){ const t=TOOLS[game.curTool]; const info=document.getElementById('tool-info'); info.innerText=`${t.icon} ${t.name}：${t.desc || '自由发挥'}`; }
+function toggleUpgradeMenu(){
+    if(game.state==='GAMEOVER') return;
+    const el=document.getElementById('upgrade-menu');
+    el.classList.toggle('active');
+    renderUpgradeList();
+    document.getElementById('ach-panel').style.opacity=el.classList.contains('active')?0.2:1;
+}
+function toggleStore(){ if(game.state!=='PLAY') return; const el=document.getElementById('store-menu'); const hidden=el.classList.contains('gone'); el.classList.toggle('hidden'); el.classList.toggle('gone'); renderStore(); }
+function renderUpgradeList(){
+    document.getElementById('shop-res').innerText=`${game.inv.wood}/${game.inv.stone}/${game.inv.gold}/${game.inv.coal}/${game.inv.diamond}`;
+    const box=document.getElementById('upgrade-list'); box.innerHTML='';
+    Object.entries(TECH_TREE).forEach(([branch,upgrades])=>{
+        const div=document.createElement('div'); div.className='branch'; div.innerHTML=`<h3>${branch==='defense'?'防御科技':branch==='gather'?'采集科技':'魔法科技'} (Lv.${game.tech[branch]}/${upgrades.length})</h3>`;
+        upgrades.forEach((u,idx)=>{
+            const level=idx+1; if(level<=game.tech[branch]) return;
+            const row=document.createElement('div'); row.className='upgrade-item'; row.innerHTML=`<div><div style="font-size:20px">${u.name}</div><div style="color:#aaa">${u.desc}</div><div style="color:#aaa">${costText(u.cost)}</div></div>`;
+            const btn=document.createElement('button'); btn.className='upgrade-btn'; btn.innerText='升级'; btn.disabled=!canAfford(u.cost); btn.onclick=()=>buyTech(branch, u.cost);
+            row.appendChild(btn); div.appendChild(row);
+            box.appendChild(div);
+            return;
+        });
+    });
+}
+function renderStore(){
+    const list=document.getElementById('store-list'); list.innerHTML='';
+    STORE_ITEMS.forEach((it,idx)=>{
+        const row=document.createElement('div'); row.style.margin='6px 0'; row.innerHTML=`${it.name} - 花费 ${costText(it.cost)} <span style="color:#888">${it.note}</span>`;
+        const btn=document.createElement('button'); btn.className='upgrade-btn'; btn.innerText='购买'; btn.disabled=!canAfford(it.cost);
+        btn.onclick=()=>buyStore(idx);
+        row.appendChild(btn); list.appendChild(row);
+    });
+}
+function buyStore(i){
+    const it=STORE_ITEMS[i]; if(!canAfford(it.cost)) return; spend(it.cost);
+    if(it.gain) Object.entries(it.gain).forEach(([k,v])=>game.inv[k]+=v);
+    if(it.action==='heal') game.player.hp=Math.min(game.player.maxHp, game.player.hp+40);
+    spawnFloatingText(CONFIG.viewW/2, CONFIG.viewH/2, "交易成功", "#0f0");
+    updateUI(); renderStore();
+}
+function canAfford(cost){ return Object.entries(cost).every(([k,v])=>game.inv[k]>=v); }
+function spend(cost){ Object.entries(cost).forEach(([k,v])=>{ game.inv[k]-=v; if(k==='wood') game.inv.woodSpent+=v; if(k==='stone') game.inv.stoneSpent+=v; }); }
+function buyTech(branch,cost){ if(!canAfford(cost)) return; spend(cost); game.tech[branch]++; SoundManager.sfx.upgrade(); updateUI(); renderUpgradeList(); spawnFloatingText(CONFIG.viewW/2, CONFIG.viewH/2, "科技提升!", "#FFD700"); }
+
+function renderAchList(){
+    const list=document.getElementById('ach-list'); list.innerHTML='';
+    Achievements.list.forEach(a=>{
+        const div=document.createElement('div'); const unlocked=Achievements.unlocked.has(a.id);
+        div.className='ach-item'+(unlocked?'':' locked'); div.innerHTML=`<span>${unlocked?'✅':'⬜'} ${a.name}</span><span class="ach-badge">${a.desc}</span>`; list.appendChild(div);
+    });
+}
+
+// 反馈
+function spawnParticles(x,y,color,count){ if(game.particles.length>240) return; for(let i=0;i<count;i++){ game.particles.push({x,y,vx:(Math.random()-0.5)*5,vy:(Math.random()-0.5)*5,life:30+Math.random()*20,color,size:Math.random()*3+2}); } }
+function spawnFloatingText(x,y,text,color){ game.texts.push({x,y,text,color,life:42,vy:-1}); }
+
+// 工具使用
+function useTool(){
+    const p=game.player; if(!p || p.swingCd>0) return;
+    const tool=TOOLS[game.curTool];
+    if(tool.id==='sword'){ p.swingCd=18; SoundManager.sfx.swing(); let hits=0; let dmg=16*(1+game.tech.magic*0.25); game.enemies.forEach(e=>{ if(dist(p,e)<82){ let ang=Math.atan2(e.center().y-p.center().y, e.center().x-p.center().x); let diff=Math.abs(ang-p.facing); if(diff>Math.PI) diff=Math.PI*2-diff; if(diff<1.1){ e.takeDamage(dmg, p.facing); hits++; } }}); if(hits>=5) game.flags.multiKill=true; if(hits) game.shake=3; }
+    else if(tool.id==='pick'){ p.swingCd=Math.max(5,14-game.tech.gather*2); SoundManager.sfx.swing(); let target=null,minDist=60*(1+game.tech.gather*0.2); game.resources.forEach(r=>{ let d=dist(p,r); if(d<minDist && checkCol({x:mouse.x,y:mouse.y,w:1,h:1}, r)) target=r; }); if(target) target.hit(); }
+    else if(tool.id==='bow'){ p.swingCd=26; game.projectiles.push(new Projectile(p.center().x,p.center().y,p.facing,'arrow', 25*(1+game.tech.magic*0.2))); SoundManager.sfx.shoot(); }
+    else { // 建造
+        if(!tool.cost) return;
+        if(!canAfford(tool.cost)) return;
+        let bx=Math.floor(mouse.x/32)*32, by=Math.floor(mouse.y/32)*32;
+        if(game.buildings.some(b=>b.x===bx && b.y===by)) return;
+        spend(tool.cost);
+        let typeMap={wall:'wall',snow:'turret',golem:'golem',healer:'healer',tnt:'tnt',torch:'torch',firetower:'firetower'};
+        let type=typeMap[tool.id];
+        game.buildings.push(new Building(type,bx,by));
+        if(type==='wall') game.stats.builtWalls++; game.stats.built++; Achievements.update(game);
+        SoundManager.sfx.build(); updateUI(); spawnParticles(bx+16, by+16, '#AAA', 5);
+    }
+}
+
+// UI 更新
+function updateUI(){
+    const inv=game.inv;
+    document.getElementById('res-wood').innerText=inv.wood;
+    document.getElementById('res-stone').innerText=inv.stone;
+    document.getElementById('res-gold').innerText=inv.gold;
+    document.getElementById('res-coal').innerText=inv.coal;
+    document.getElementById('res-diamond').innerText=inv.diamond;
+    document.getElementById('hp-val').innerText=Math.floor(game.player.hp);
+    document.getElementById('hp-max').innerText=game.player.maxHp;
+    document.getElementById('hp-fill').style.width=(game.player.hp/game.player.maxHp*100)+'%';
+    let isNight=game.time>game.dayLength*0.6;
+    const nightStart = game.dayLength*0.6;
+    const timeLeft = Math.max(0, Math.floor((nightStart - game.time)/60)); // assuming 60fps roughly
+
+    if(isNight) {
+        document.getElementById('wave-text').innerText=`尸潮 Lv.${game.day}`;
+        document.getElementById('wave-text').style.color=varDanger();
+    } else {
+        document.getElementById('wave-text').innerText=`距离入夜: ${timeLeft}s`;
+        document.getElementById('wave-text').style.color="#7ddcfb";
+    }
+    document.getElementById('day-text').innerText=`DAY ${game.day}`;
+}
+function varDanger(){ return '#ff5555'; }
+
+// 目标
+function updateGoalUI(){
+    const goal=GOALS.find(g=>game.day<=g.day) || GOALS[GOALS.length-1];
+    document.getElementById('goal-desc').innerText=goal.desc;
+    if(goal.check(game) && !game.flags.goals[goal.day]){
+        game.flags.goals[goal.day]=true;
+        spawnFloatingText(CONFIG.viewW/2,30,"目标完成!","#0f0");
+        SoundManager.sfx.achieve();
+    }
+}
+
+// 主循环
+function loop(){
+    if(game.state!=='PLAY') return;
+    requestAnimationFrame(loop); game.frame++;
+    // 震动
+    if(game.shake>0){ let sx=(Math.random()-0.5)*game.shake, sy=(Math.random()-0.5)*game.shake; canvas.style.transform=`translate(${sx}px,${sy}px)`; game.shake*=0.9; if(game.shake<0.4) game.shake=0; } else canvas.style.transform='none';
+    // 时间
+    game.time++;
+    if(game.time>game.dayLength){
+        if(game.player.nightDamage===false) game.flags.nightNoDamage=true; else game.flags.nightNoDamage=false;
+        game.player.nightDamage=false; game.time=0; game.day++;
+        SoundManager.playTone(400,'triangle',1.0);
+        for(let i=0;i<25;i++) spawnResource(); // 增加每日资源刷新
+        Achievements.update(game);
+    }
+    let isNight=game.time>game.dayLength*0.6;
+    const nightProgress=Math.max(0, Math.min(1, (game.time-game.dayLength*0.6)/(game.dayLength*0.4))); document.getElementById('night-fill').style.width=(nightProgress*100)+'%';
+    // 刷怪
+    if(isNight){
+        let rate=Math.max(12, game.diff.spawnBase - game.day*game.diff.spawnAccel);
+        if(game.frame%rate===0) spawnEnemy();
+        if(game.day%5===0 && !game.flags.bossSlain && game.frame%300===0) spawnEnemy('boss');
+    }
+    // 输入
+    let inputVec={x:0,y:0};
+    if(!isTouchDevice){ inputVec.x = (keys['d']?1:0) - (keys['a']?1:0); inputVec.y=(keys['s']?1:0)-(keys['w']?1:0); }
+    else { inputVec.x=mobileInput.dx; inputVec.y=mobileInput.dy; }
+    // 更新
+    game.player.update(inputVec);
+    if(mouse.down && game.frame>=game.holdNext){ const tool=TOOLS[game.curTool]; useTool(); game.holdNext=game.frame+ (tool.id==='wall'||tool.id==='snow'||tool.id==='golem'||tool.id==='healer'||tool.id==='tnt'||tool.id==='torch'||tool.id==='firetower'?12:4); }
+    game.enemies.forEach(e=>e.update()); game.enemies=game.enemies.filter(e=>!e.dead);
+    game.buildings.forEach(b=>b.update()); game.buildings=game.buildings.filter(b=>!b.dead);
+    game.projectiles.forEach(p=>p.update()); game.projectiles=game.projectiles.filter(p=>p.dead);
+    game.resources=game.resources.filter(r=>!r.dead);
+    game.particles.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.life--; }); game.particles=game.particles.filter(p=>p.life>0);
+    game.texts.forEach(t=>{ t.y+=t.vy; t.life--; }); game.texts=game.texts.filter(t=>t.life>0);
+    // 绘制
+    draw(); Achievements.update(game); updateGoalUI(); if(game.frame%30===0) updateUI();
+}
+
+function spawnEnemy(forceType){
+    let ex,ey; if(Math.random()>0.5){ ex=Math.random()>0.5?-50:CONFIG.viewW+50; ey=Math.random()*CONFIG.viewH; } else { ex=Math.random()*CONFIG.viewW; ey=Math.random()>0.5?-50:CONFIG.viewH+50; }
+    let type=forceType||'zombie'; if(!forceType){ let r=Math.random(); let dayFactor=Math.min(0.5, game.day*0.05); if(r<0.08+dayFactor) type='creeper'; if(game.day>2 && r<0.06+dayFactor) type='enderman'; if(game.day>3 && r<0.04+dayFactor) type='slime'; if(game.day>2 && r<0.2) type='skeleton'; if(game.day>1 && r<0.25) type='spider'; if(Math.random()<game.diff.eliteChance) type='skeleton'; }
+    game.enemies.push(new Enemy(type,ex,ey));
+}
+
+// 绘制
+function draw(){
+    // 背景分区
+    const g=ctx;
+    g.fillStyle='#1d7225'; g.fillRect(0,0,CONFIG.viewW,CONFIG.viewH);
+    g.font='22px "VT323", sans-serif';
+    g.save(); g.globalAlpha=0.6;
+    g.fillStyle='#fff'; // 显式设置装饰颜色
+    game.worldDecor.forEach(d=>{ g.fillText(d.emoji, d.x, d.y); });
+    g.restore();
+    g.globalAlpha=1;
+    // 区块色
+    g.fillStyle='rgba(80,80,80,0.05)'; g.fillRect(CONFIG.viewW/2-180, CONFIG.viewH/2-180, 360,360);
+    g.fillStyle='rgba(30,30,30,0.08)'; g.fillRect(20,20,CONFIG.viewW-40,CONFIG.viewH-40);
+
+    // 资源高亮逻辑
+    if(game.curTool === 1) { // 1 是镐子
+        const p = game.player;
+        const range = 60 * (1 + game.tech.gather * 0.2);
+        let hovered = null;
+        game.resources.forEach(r => {
+            if (dist(p, r) < range && checkCol({x:mouse.x, y:mouse.y, w:1, h:1}, r)) {
+                hovered = r;
+            }
+        });
+        if(hovered) {
+            g.save();
+            g.strokeStyle = '#ffff00';
+            g.lineWidth = 3;
+            g.strokeRect(hovered.x - 2, hovered.y - 2, hovered.w + 4, hovered.h + 4);
+            g.fillStyle = '#ffff00';
+            g.font = '16px "VT323", sans-serif';
+            g.fillText("可采集", hovered.x, hovered.y - 5);
+            g.restore();
+        }
+    }
+
+    game.resources.forEach(r=>r.draw());
+    game.buildings.forEach(b=>b.draw());
+    game.enemies.forEach(e=>e.draw());
+    game.player.draw();
+    game.projectiles.forEach(p=>p.draw());
+    game.particles.forEach(p=>{ g.fillStyle=p.color; g.fillRect(p.x,p.y,p.size,p.size); });
+    game.texts.forEach(t=>{ g.fillStyle=t.color; g.font='20px "VT323", sans-serif'; g.fillText(t.text, t.x, t.y); });
+    // 预览
+    if(game.curTool>=3){ let bx=Math.floor(mouse.x/32)*32, by=Math.floor(mouse.y/32)*32; g.strokeStyle='rgba(255,255,255,0.5)'; g.lineWidth=2; g.strokeRect(bx,by,32,32); if(game.curTool===4||game.curTool===8||game.curTool===9){ g.beginPath(); g.arc(bx+16, by+16, game.curTool===4?250:game.curTool===8?140:220, 0, Math.PI*2); g.strokeStyle='rgba(255,255,255,0.2)'; g.stroke(); } }
+
+    // 光照遮罩优化
+    let isNight=game.time>game.dayLength*0.6; let darkness=0;
+    if(isNight){
+        darkness=0.93; // 稍微加深一点，对比更强
+        if(game.time<game.dayLength*0.65) darkness=(game.time-game.dayLength*0.6)/(game.dayLength*0.05)*0.93;
+    } else {
+        if(game.time<game.dayLength*0.05) darkness=0.93*(1-(game.time/(game.dayLength*0.05)));
+    }
+    if(darkness>0){
+        g.save();
+        g.fillStyle=`rgba(5, 5, 25,${darkness})`; // 使用深蓝黑，更有夜晚感觉
+        g.fillRect(0,0,CONFIG.viewW,CONFIG.viewH);
+        g.globalCompositeOperation='destination-out';
+        const lights=[{x:game.player.center().x,y:game.player.center().y,r:220*(1+game.tech.magic*0.15)}];
+        game.buildings.filter(b=>b.type==='torch').forEach(t=>lights.push({x:t.x+16,y:t.y+16,r:160*(1+game.tech.magic*0.25)}));
+        lights.forEach(l=>{
+            let grd=g.createRadialGradient(l.x,l.y,10,l.x,l.y,l.r);
+            grd.addColorStop(0, 'rgba(0,0,0,1)');
+            grd.addColorStop(0.7, 'rgba(0,0,0,0.8)'); // 增加层次
+            grd.addColorStop(1,'rgba(0,0,0,0)');
+            g.fillStyle=grd; g.beginPath(); g.arc(l.x,l.y,l.r,0,Math.PI*2); g.fill();
+        });
+        g.restore();
+        // 星星层
+        g.save(); g.globalAlpha=0.4; g.fillStyle='#fff'; for(let i=0;i<80;i++){ g.fillRect((i*73)%CONFIG.viewW, (i*41)%CONFIG.viewH, 2,2);} g.restore();
+    }
+}
+
+// 工具栏建造预览时夜间动态 spawnResource if low? not necessary
+
+// 碰撞与状态
+function updateShopUI(){ renderUpgradeList(); }
+
+// 初始渲染
+buildToolbar(); renderAchList(); updateGoalUI();
+</script>
+</body>
+</html>
