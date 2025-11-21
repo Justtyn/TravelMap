@@ -103,7 +103,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tilPassword" />
 
-    <!-- 微信登录按钮（实际拉起微信 SDK 登录，暂时占位） -->
+    <!-- 微信登录按钮（拉起微信 SDK 登录） -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnWeChatLogin"
         style="@style/Widget.Material3.Button"
