@@ -2,11 +2,13 @@
   <a href="https://github.com/Justtyn/TravelMap">
     <img alt="TravelMap Logo" width="215" src="https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/logo.png">
   </a>
-  <br>
-  <br>
 
-[![license](https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/mit.svg)](LICENSE)
+  <br><br>
 
+  <a href="LICENSE">
+    <img src="https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/mit.svg" alt="license">
+  </a>
+</div>
 # TravelMap APP
 
 面向课程设计与展示的智慧文旅解决方案，涵盖 Material Design Android 客户端、Flask/SQLite REST 后端、可在线访问的文档中心与静态官网。线上体验环境部署在 <https://canulove.me>，可直接安装 APK 或调试 API。
