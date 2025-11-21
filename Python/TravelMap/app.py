@@ -43,6 +43,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # 修改数据库文件名后缀为 .db（真实 SQLite 文件），避免把建表脚本 .sql 当数据库用
 DB_PATH = os.path.join(BASE_DIR, 'db', 'TravelMap.db')  # 已存在的 SQLite 数据库
 DOC_DIR = os.path.join(BASE_DIR, 'doc')
+GAME_DIR = os.path.join(BASE_DIR, 'templates', 'game')
 GITHUB_URL = 'https://github.com/Justtyn/TravelMap'
 APK_FILENAME = 'TravelMap.apk'
 ANDROID_VERSION = '0.9.2-beta'
@@ -606,6 +607,69 @@ def cyber_style_page():
 @app.route('/docs')
 def docs_page():
     return render_template('docs.html', github_url=GITHUB_URL, active='docs', title='TravelMap · 文档中心')
+
+
+def list_markdown_files():
+    files = []
+    for root, _, filenames in os.walk(DOC_DIR):
+        for filename in filenames:
+            if not filename.lower().endswith('.md'):
+                continue
+            full_path = os.path.join(root, filename)
+            rel_path = os.path.relpath(full_path, DOC_DIR).replace('\\', '/')
+            files.append({
+                'name': filename,
+                'path': rel_path
+            })
+    files.sort(key=lambda x: x['path'].lower())
+    return files
+
+
+@app.route('/api/docs/list')
+def list_docs():
+    return json_response(data={'files': list_markdown_files()})
+
+
+@app.route('/doc-library')
+def doc_library_page():
+    return render_template('doc_library.html')
+
+
+def list_game_files():
+    games = []
+    for root, _, filenames in os.walk(GAME_DIR):
+        for filename in filenames:
+            if not filename.lower().endswith(('.html', '.htm')):
+                continue
+            full_path = os.path.join(root, filename)
+            rel_path = os.path.relpath(full_path, GAME_DIR).replace('\\', '/')
+            games.append({
+                'name': filename,
+                'path': rel_path
+            })
+    games.sort(key=lambda x: x['path'].lower())
+    return games
+
+
+@app.route('/api/games/list')
+def list_games():
+    return json_response(data={'games': list_game_files()})
+
+
+@app.route('/games/file/<path:filename>')
+def serve_game_file(filename):
+    game_path = os.path.join(GAME_DIR, filename)
+    if not os.path.isfile(game_path):
+        abort(404)
+    # 允许 iframe 加载
+    response = send_from_directory(GAME_DIR, filename)
+    response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+    return response
+
+
+@app.route('/game-library')
+def game_library_page():
+    return render_template('game_library.html')
 
 
 @app.route('/features')

@@ -88,7 +88,8 @@
         }
     </style>
 </head>
-<body class="antialiased selection:bg-purple-500 selection:text-white">
+<!-- 修改 body 为 flex column 布局，确保 footer 沉底 -->
+<body class="antialiased selection:bg-purple-500 selection:text-white flex flex-col min-h-screen">
 
     <!-- 顶部导航 -->
     <nav class="fixed w-full z-40 top-0 glass-card border-b border-white/10 !bg-slate-900/80 !backdrop-blur-md">
@@ -99,34 +100,43 @@
                     <span class="text-2xl font-bold tracking-wider neon-text">ARCADE HUB</span>
                 </div>
                 <div class="flex items-center gap-4">
+                    <a href="/" class="flex items-center gap-2 text-sm text-slate-300 hover:text-white px-3 py-2 rounded-lg border border-slate-800 hover:border-purple-500/50 bg-slate-900/50">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        返回首页
+                    </a>
+                    <button id="load-default-btn" class="group relative inline-flex items-center justify-center px-6 py-2 overflow-hidden font-bold text-white rounded-lg bg-gradient-to-br from-purple-600 to-blue-500 hover:from-purple-500 hover:to-blue-400 transition-all duration-300 shadow-lg hover:shadow-purple-500/30">
+                        <span class="absolute w-0 h-0 transition-all duration-500 ease-out bg-white rounded-full group-hover:w-56 group-hover:h-56 opacity-10"></span>
+                        <span class="relative flex items-center gap-2">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i>
+                            加载全部游戏
+                        </span>
+                    </button>
                     <div id="file-count" class="hidden text-sm text-gray-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
                         已加载 0 个游戏
                     </div>
-                    <label class="cursor-pointer group relative inline-flex items-center justify-center px-6 py-2 overflow-hidden font-bold text-white rounded-lg bg-gradient-to-br from-purple-600 to-blue-500 hover:from-purple-500 hover:to-blue-400 transition-all duration-300 shadow-lg hover:shadow-purple-500/30">
-                        <span class="absolute w-0 h-0 transition-all duration-500 ease-out bg-white rounded-full group-hover:w-56 group-hover:h-56 opacity-10"></span>
-                        <span class="relative flex items-center gap-2">
-                            <i data-lucide="folder-open" class="w-4 h-4"></i>
-                            加载游戏文件夹
-                        </span>
-                        <!-- 关键属性：webkitdirectory 允许选择文件夹 -->
-                        <input type="file" id="folder-input" class="hidden" webkitdirectory directory multiple />
-                    </label>
+                    <button id="custom-upload-btn" class="flex items-center gap-2 text-sm text-slate-400 hover:text-white px-3 py-2 rounded-lg border border-slate-800 hover:border-purple-500/50 bg-slate-900/50">
+                        <i data-lucide="folder-open" class="w-4 h-4"></i>
+                        自定义上传
+                    </button>
+                    <!-- 关键属性：webkitdirectory 允许选择文件夹 -->
+                    <input type="file" id="folder-input" class="hidden" webkitdirectory directory multiple />
                 </div>
             </div>
         </div>
     </nav>
 
     <!-- 主内容区 -->
-    <main class="pt-28 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto min-h-screen">
+    <!-- 修改 main: flex-grow 让它占据剩余空间，去掉 min-h-screen 避免双重滚动条 -->
+    <main class="pt-28 pb-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full flex-grow">
 
         <!-- 初始空状态 -->
-        <div id="empty-state" class="flex flex-col items-center justify-center h-[60vh] text-center animate-fade-in">
+        <div id="empty-state" class="flex flex-col items-center justify-center h-[50vh] text-center animate-fade-in mt-10">
             <div class="bg-slate-800/50 p-8 rounded-full mb-6 ring-4 ring-purple-500/20">
                 <i data-lucide="joystick" class="w-24 h-24 text-purple-400/80"></i>
             </div>
             <h2 class="text-4xl font-bold text-white mb-4">准备好开始了吗？</h2>
             <p class="text-slate-400 text-lg max-w-md mx-auto mb-8">
-                点击右上角的按钮上传包含 HTML 游戏的文件夹。<br>我们将自动为您构建游戏库。
+                点击右上角的「加载全部游戏」即可读取内置游戏库。<br>如果有自定义 HTML 游戏，也可以选择上传文件夹自动构建游戏库。
             </p>
             <div class="text-xs text-slate-600 bg-slate-900/50 px-4 py-2 rounded border border-slate-800">
                 提示：最适合单文件 HTML 游戏。复杂依赖可能会因浏览器安全策略受限。
@@ -139,6 +149,19 @@
         </div>
 
     </main>
+
+    <!-- 新增：底部声明 Footer -->
+    <footer class="w-full py-6 mt-auto border-t border-white/5 bg-slate-900/50 backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col items-center justify-center gap-2">
+            <div class="flex items-center gap-2 text-slate-400 bg-slate-800/40 px-4 py-2 rounded-full border border-purple-500/10 hover:border-purple-500/30 transition-colors duration-300">
+                <i data-lucide="sparkles" class="w-4 h-4 text-purple-400 animate-pulse"></i>
+                <span class="text-sm font-medium tracking-wide">
+                    以下全部游戏及本网页全部由 <span class="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent font-bold">Gemini 3 Canvas</span> 能力生成
+                </span>
+            </div>
+            <p class="text-xs text-slate-600 mt-1">Powered by Google DeepMind</p>
+        </div>
+    </footer>
 
     <!-- 游戏全屏播放器 -->
     <div id="game-player" class="game-overlay">
@@ -172,6 +195,8 @@
         const gameGrid = document.getElementById('game-grid');
         const emptyState = document.getElementById('empty-state');
         const fileCountBadge = document.getElementById('file-count');
+        const loadDefaultBtn = document.getElementById('load-default-btn');
+        const customUploadBtn = document.getElementById('custom-upload-btn');
 
         const gamePlayer = document.getElementById('game-player');
         const gameIframe = document.getElementById('game-iframe');
@@ -180,6 +205,31 @@
         const loaderContainer = document.getElementById('loader-container');
 
         let activeObjectUrl = null;
+
+        const encodeGamePath = (path) => path.split('/').map(encodeURIComponent).join('/');
+
+        // 加载内置游戏
+        async function loadDefaultGames() {
+            try {
+                loadDefaultBtn.classList.add('opacity-70');
+                const res = await fetch('/api/games/list');
+                const payload = await res.json();
+                if (!res.ok || payload.code !== 200) {
+                    throw new Error(payload.msg || '加载失败');
+                }
+                const games = (payload.data?.games || []).map((item) => ({
+                    title: item.name.replace(/\.html?$/i, '').replace(/[-_]/g, ' '),
+                    path: item.path,
+                    source: 'remote'
+                }));
+                renderGameList(games);
+            } catch (err) {
+                console.error(err);
+                alert('加载内置游戏失败，请稍后重试');
+            } finally {
+                loadDefaultBtn.classList.remove('opacity-70');
+            }
+        }
 
         // 监听文件夹上传
         folderInput.addEventListener('change', async (event) => {
@@ -196,10 +246,26 @@
                 return;
             }
 
-            renderGameList(htmlFiles);
+            const games = htmlFiles.map((file) => ({
+                title: file.name.replace(/\.html?$/i, '').replace(/[-_]/g, ' '),
+                path: file.webkitRelativePath || file.name,
+                source: 'upload',
+                handle: file
+            }));
+
+            renderGameList(games);
         });
 
+        loadDefaultBtn.addEventListener('click', loadDefaultGames);
+        customUploadBtn.addEventListener('click', () => folderInput.click());
+
         function renderGameList(files) {
+            if (!files || files.length === 0) {
+                gameGrid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                fileCountBadge.classList.add('hidden');
+                return;
+            }
             // 更新 UI 状态
             emptyState.classList.add('hidden');
             gameGrid.classList.remove('hidden');
@@ -221,7 +287,7 @@
                 const randomGradient = gradients[index % gradients.length];
 
                 // 清理文件名作为标题
-                const cleanName = file.name.replace(/\.html?$/i, '').replace(/[-_]/g, ' ');
+                const cleanName = file.title || '未命名游戏';
 
                 const card = document.createElement('div');
                 card.className = 'glass-card rounded-xl overflow-hidden flex flex-col group cursor-pointer';
@@ -235,7 +301,7 @@
                     </div>
                     <div class="p-5 flex-1 flex flex-col">
                         <h3 class="text-lg font-bold text-white mb-1 truncate" title="${cleanName}">${cleanName}</h3>
-                        <p class="text-xs text-slate-400 mb-4 truncate">${file.webkitRelativePath || file.name}</p>
+                        <p class="text-xs text-slate-400 mb-4 truncate">${file.path}</p>
                         <div class="mt-auto">
                             <button class="w-full py-2 bg-slate-700/50 hover:bg-purple-600 text-slate-300 hover:text-white rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 group-hover:shadow-lg group-hover:shadow-purple-500/20 border border-slate-600 hover:border-purple-500">
                                 <i data-lucide="play" class="w-4 h-4 fill-current"></i>
@@ -251,6 +317,26 @@
                 gameGrid.appendChild(card);
             });
 
+            // 添加 "更多游戏开发中" 占位卡片
+            const comingSoonCard = document.createElement('div');
+            comingSoonCard.className = 'glass-card rounded-xl overflow-hidden flex flex-col opacity-70 hover:opacity-100 transition-opacity duration-300 border-dashed border-2 border-slate-700 hover:border-purple-500/50';
+            comingSoonCard.innerHTML = `
+                <div class="h-32 bg-slate-800/30 relative flex items-center justify-center overflow-hidden">
+                    <i data-lucide="hammer" class="text-slate-500 w-12 h-12"></i>
+                </div>
+                <div class="p-5 flex-1 flex flex-col items-center justify-center text-center">
+                    <h3 class="text-lg font-bold text-slate-400 mb-2">更多游戏开发中</h3>
+                    <p class="text-xs text-slate-500 mb-4">我们正在夜以继日地开发新内容</p>
+                    <div class="mt-auto">
+                        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800/50 text-slate-500 text-xs font-medium border border-slate-700 cursor-not-allowed">
+                            <i data-lucide="clock" class="w-3 h-3"></i>
+                            敬请期待
+                        </span>
+                    </div>
+                </div>
+            `;
+            gameGrid.appendChild(comingSoonCard);
+
             // 重新渲染新添加的图标
             lucide.createIcons();
         }
@@ -259,17 +345,24 @@
             // 1. 设置标题
             currentGameTitle.innerText = title;
 
-            // 2. 创建 Blob URL
+            // 2. 设置资源地址
             if (activeObjectUrl) {
                 URL.revokeObjectURL(activeObjectUrl); // 清理旧内存
+                activeObjectUrl = null;
             }
-            activeObjectUrl = URL.createObjectURL(file);
+
+            if (file.source === 'remote') {
+                gameIframe.src = `/games/file/${encodeGamePath(file.path)}?t=${Date.now()}`;
+            } else if (file.handle) {
+                activeObjectUrl = URL.createObjectURL(file.handle);
+                gameIframe.src = activeObjectUrl;
+            } else {
+                alert('无法加载该游戏');
+                return;
+            }
 
             // 3. 显示加载动画
             loaderContainer.style.display = 'flex';
-
-            // 4. 设置 iframe
-            gameIframe.src = activeObjectUrl;
 
             // 5. 显示播放器界面
             gamePlayer.classList.add('active');
@@ -304,6 +397,9 @@
                 closeGame();
             }
         });
+
+        // 默认加载内置游戏
+        loadDefaultGames();
 
     </script>
 </body>

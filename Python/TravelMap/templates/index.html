@@ -134,6 +134,8 @@
                 <a href="#concept" class="hover:text-primary dark:hover:text-sky-400 transition-colors">演示</a>
                 <a href="#features" class="hover:text-primary dark:hover:text-sky-400 transition-colors">功能</a>
                 <a href="#timeline" class="hover:text-primary dark:hover:text-sky-400 transition-colors">历程</a>
+                <a href="{{ url_for('doc_library_page') }}" class="hover:text-primary dark:hover:text-sky-400 transition-colors">文档库</a>
+                <a href="{{ url_for('game_library_page') }}" class="hover:text-primary dark:hover:text-sky-400 transition-colors">游戏库</a>
 
                 <button id="theme-toggle"
                         class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none">
@@ -197,6 +199,10 @@
                class="block px-3 py-3 rounded-md font-medium hover:bg-slate-50 dark:hover:bg-slate-800">功能亮点</a>
             <a href="#timeline"
                class="block px-3 py-3 rounded-md font-medium hover:bg-slate-50 dark:hover:bg-slate-800">开发历程</a>
+            <a href="{{ url_for('doc_library_page') }}"
+               class="block px-3 py-3 rounded-md font-medium hover:bg-slate-50 dark:hover:bg-slate-800">文档库</a>
+            <a href="{{ url_for('game_library_page') }}"
+               class="block px-3 py-3 rounded-md font-medium hover:bg-slate-50 dark:hover:bg-slate-800">游戏库</a>
             <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <p class="text-xs uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">风格切换</p>
                 <a href="{{ url_for('home_page') }}"

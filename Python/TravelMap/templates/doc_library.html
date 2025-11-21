@@ -169,13 +169,25 @@
     <div id="root"></div>
 
     <script type="text/babel">
+        {% raw %}
         const { useState, useEffect, useRef, useMemo } = React;
 
         const Icon = ({ name, size = 20, className = "" }) => {
+            const iconRef = useRef(null);
+
             useEffect(() => {
-                lucide.createIcons();
-            }, [name]);
-            return <i data-lucide={name} className={className} style={{ width: size, height: size }}></i>;
+                const holder = iconRef.current;
+                if (!holder) return;
+                holder.innerHTML = '';
+                const iconFactory = lucide?.icons?.[name];
+                if (iconFactory) {
+                    holder.insertAdjacentHTML('afterbegin', iconFactory.toSvg({ width: size, height: size }));
+                } else {
+                    holder.textContent = '•';
+                }
+            }, [name, size]);
+
+            return <span ref={iconRef} className={`inline-block ${className}`} aria-hidden="true"></span>;
         };
 
         // Fixed: Using template literals (backticks) for multiline content to avoid syntax errors
@@ -245,17 +257,50 @@ if __name__ == '__main__':
         ];
 
         const App = () => {
-            const [files, setFiles] = useState(DEMO_FILES);
-            const [selectedFile, setSelectedFile] = useState(DEMO_FILES[0]);
+            const [files, setFiles] = useState([]);
+            const [selectedFile, setSelectedFile] = useState(null);
             const [searchQuery, setSearchQuery] = useState("");
             const [isSidebarOpen, setIsSidebarOpen] = useState(true);
             const [isLoading, setIsLoading] = useState(false);
             const [showSettings, setShowSettings] = useState(false);
             const [isDarkMode, setIsDarkMode] = useState(false);
             const [fontSize, setFontSize] = useState('base');
+            const [isUsingDefault, setIsUsingDefault] = useState(true);
 
             const fileInputRef = useRef(null);
             const settingsRef = useRef(null);
+
+            const encodeDocPath = (path) => path.split('/').map(encodeURIComponent).join('/');
+
+            const loadDefaultDocs = async () => {
+                setIsLoading(true);
+                try {
+                    const res = await fetch('/api/docs/list');
+                    const payload = await res.json();
+                    if (!res.ok || payload.code !== 200) {
+                        throw new Error(payload.msg || '加载失败');
+                    }
+                    const mappedFiles = (payload.data?.files || []).map(item => ({
+                        name: item.name,
+                        path: item.path,
+                        isRemote: true,
+                        content: null
+                    }));
+                    setFiles(mappedFiles);
+                    setSearchQuery("");
+                    setIsUsingDefault(true);
+                    if (mappedFiles.length > 0) {
+                        loadFileContent(mappedFiles[0]);
+                    } else {
+                        setSelectedFile(null);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('加载默认文档失败，请稍后再试');
+                } finally {
+                    setIsLoading(false);
+                }
+            };
 
             useEffect(() => {
                 if (isDarkMode) {
@@ -284,6 +329,10 @@ if __name__ == '__main__':
                     }, 0);
                 }
             }, [selectedFile]);
+
+            useEffect(() => {
+                loadDefaultDocs();
+            }, []);
 
             const filteredFiles = useMemo(() => {
                 if (!searchQuery) return files;
@@ -318,8 +367,13 @@ if __name__ == '__main__':
                 }));
 
                 setFiles(mappedFiles);
+                setIsUsingDefault(false);
                 setSearchQuery("");
-                if (mappedFiles.length > 0) loadFileContent(mappedFiles[0]);
+                if (mappedFiles.length > 0) {
+                    loadFileContent(mappedFiles[0]);
+                } else {
+                    setSelectedFile(null);
+                }
                 setIsLoading(false);
             };
 
@@ -330,7 +384,23 @@ if __name__ == '__main__':
                     return;
                 }
 
-                if (fileWrapper.handle) {
+                if (fileWrapper.isRemote) {
+                    const requestUrl = `/docs/file/${encodeDocPath(fileWrapper.path)}?t=${Date.now()}`;
+                    fetch(requestUrl, { cache: 'no-store' })
+                        .then(res => {
+                            if (!res.ok) {
+                                throw new Error('加载文档失败');
+                            }
+                            return res.text();
+                        })
+                        .then(text => {
+                            const updatedFile = { ...fileWrapper, content: text };
+                            setFiles(prev => prev.map(f => f.path === fileWrapper.path ? updatedFile : f));
+                            setSelectedFile(updatedFile);
+                            if (window.innerWidth < 768) setIsSidebarOpen(false);
+                        })
+                        .catch(() => alert('无法加载该文档'));
+                } else if (fileWrapper.handle) {
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         const updatedFile = { ...fileWrapper, content: e.target.result };
@@ -359,7 +429,6 @@ if __name__ == '__main__':
                         <div className={`p-5 border-b border-slate-200 dark:border-slate-800 ${!isSidebarOpen && 'hidden'}`}>
                             <h2 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4 text-lg">
                                 <div className="bg-blue-600 text-white p-1.5 rounded-lg">
-                                    <Icon name="book-open" size={18} />
                                 </div>
                                 文档库
                             </h2>
@@ -413,13 +482,24 @@ if __name__ == '__main__':
 
                         <div className={`p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 ${!isSidebarOpen && 'hidden'}`}>
                             <input type="file" webkitdirectory="true" directory="true" multiple className="hidden" ref={fileInputRef} onChange={handleFolderSelect} />
-                            <button
-                                onClick={() => fileInputRef.current.click()}
-                                disabled={isLoading}
-                                className="w-full bg-slate-800 hover:bg-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-sm font-medium py-2.5 px-4 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-300/50 dark:shadow-none active:scale-95"
-                            >
-                                {isLoading ? <div className="spinner"></div> : <><Icon name="folder-plus" size={18} /> 导入文件夹</>}
-                            </button>
+                            <div className="space-y-2">
+                                <button
+                                    onClick={() => fileInputRef.current.click()}
+                                    disabled={isLoading}
+                                    className="w-full bg-slate-800 hover:bg-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-sm font-medium py-2.5 px-4 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-300/50 dark:shadow-none active:scale-95"
+                                >
+                                    {isLoading ? <div className="spinner"></div> : <><Icon name="folder-plus" size={18} /> 导入文件夹</>}
+                                </button>
+                                {!isUsingDefault && (
+                                    <button
+                                        onClick={loadDefaultDocs}
+                                        disabled={isLoading}
+                                        className="w-full bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium py-2.5 px-4 rounded-lg transition-all flex items-center justify-center gap-2 active:scale-95"
+                                    >
+                                        <Icon name="rotate-ccw" size={18} /> 恢复默认文档
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -439,56 +519,65 @@ if __name__ == '__main__':
                                 </span>
                             </div>
 
-                            <div className="relative" ref={settingsRef}>
-                                <button
-                                    onClick={() => setShowSettings(!showSettings)}
-                                    className={`p-2 rounded-lg transition-colors ${showSettings ? 'bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                            <div className="flex items-center gap-2">
+                                <a
+                                    href="/"
+                                    className="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
                                 >
-                                    <Icon name="settings-2" size={20} />
-                                </button>
+                                    <Icon name="home" size={18} /> 返回首页
+                                </a>
 
-                                {showSettings && (
-                                    <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-100 dark:border-slate-700 p-4 animate-fade-in z-50">
-                                        <h3 className="text-xs font-bold text-slate-400 uppercase mb-3 tracking-wider">显示设置</h3>
+                                <div className="relative" ref={settingsRef}>
+                                    <button
+                                        onClick={() => setShowSettings(!showSettings)}
+                                        className={`p-2 rounded-lg transition-colors ${showSettings ? 'bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                    >
+                                        <Icon name="settings-2" size={20} />
+                                    </button>
 
-                                        <div className="flex items-center justify-between mb-4">
-                                            <span className="text-sm text-slate-600 dark:text-slate-300 flex items-center gap-2">
-                                                <Icon name={isDarkMode ? "moon" : "sun"} size={16} />
-                                                {isDarkMode ? '暗黑模式' : '明亮模式'}
-                                            </span>
-                                            <button
-                                                onClick={() => setIsDarkMode(!isDarkMode)}
-                                                className={`w-11 h-6 rounded-full transition-colors relative ${isDarkMode ? 'bg-blue-600' : 'bg-slate-200'}`}
-                                            >
-                                                <div className={`w-4 h-4 bg-white rounded-full shadow-sm absolute top-1 transition-transform ${isDarkMode ? 'left-6' : 'left-1'}`}></div>
-                                            </button>
-                                        </div>
+                                    {showSettings && (
+                                        <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-100 dark:border-slate-700 p-4 animate-fade-in z-50">
+                                            <h3 className="text-xs font-bold text-slate-400 uppercase mb-3 tracking-wider">显示设置</h3>
 
-                                        <div className="h-px bg-slate-100 dark:bg-slate-700 my-3"></div>
-
-                                        <div>
-                                            <div className="flex justify-between text-sm text-slate-600 dark:text-slate-300 mb-2">
-                                                <span className="flex items-center gap-2"><Icon name="type" size={16} /> 字体大小</span>
-                                                <span className="text-xs text-slate-400">{fontSize === 'base' ? '标准' : fontSize === 'sm' ? '小' : '大'}</span>
+                                            <div className="flex items-center justify-between mb-4">
+                                                <span className="text-sm text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                                                    <Icon name={isDarkMode ? "moon" : "sun"} size={16} />
+                                                    {isDarkMode ? '暗黑模式' : '明亮模式'}
+                                                </span>
+                                                <button
+                                                    onClick={() => setIsDarkMode(!isDarkMode)}
+                                                    className={`w-11 h-6 rounded-full transition-colors relative ${isDarkMode ? 'bg-blue-600' : 'bg-slate-200'}`}
+                                                >
+                                                    <div className={`w-4 h-4 bg-white rounded-full shadow-sm absolute top-1 transition-transform ${isDarkMode ? 'left-6' : 'left-1'}`}></div>
+                                                </button>
                                             </div>
-                                            <div className="flex gap-2 bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg">
-                                                {['sm', 'base', 'lg', 'xl'].map((size) => (
-                                                    <button
-                                                        key={size}
-                                                        onClick={() => setFontSize(size)}
-                                                        className={`flex-1 py-1 text-xs rounded-md transition-all ${
-                                                            fontSize === size
-                                                            ? 'bg-white dark:bg-slate-600 shadow-sm text-blue-600 dark:text-white font-medium'
-                                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
-                                                        }`}
-                                                    >
-                                                        {size === 'sm' ? 'A' : size === 'base' ? 'A+' : size === 'lg' ? 'A++' : 'A+++'}
-                                                    </button>
-                                                ))}
+
+                                            <div className="h-px bg-slate-100 dark:bg-slate-700 my-3"></div>
+
+                                            <div>
+                                                <div className="flex justify-between text-sm text-slate-600 dark:text-slate-300 mb-2">
+                                                    <span className="flex items-center gap-2"><Icon name="type" size={16} /> 字体大小</span>
+                                                    <span className="text-xs text-slate-400">{fontSize === 'base' ? '标准' : fontSize === 'sm' ? '小' : '大'}</span>
+                                                </div>
+                                                <div className="flex gap-2 bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg">
+                                                    {['sm', 'base', 'lg', 'xl'].map((size) => (
+                                                        <button
+                                                            key={size}
+                                                            onClick={() => setFontSize(size)}
+                                                            className={`flex-1 py-1 text-xs rounded-md transition-all ${
+                                                                fontSize === size
+                                                                ? 'bg-white dark:bg-slate-600 shadow-sm text-blue-600 dark:text-white font-medium'
+                                                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+                                                            }`}
+                                                        >
+                                                            {size === 'sm' ? 'A' : size === 'base' ? 'A+' : size === 'lg' ? 'A++' : 'A+++'}
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         </div>
 
@@ -522,6 +611,7 @@ if __name__ == '__main__':
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
+        {% endraw %}
     </script>
 </body>
 </html>
