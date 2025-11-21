@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>方块幸存者：无尽黑夜 - 修复版</title>
+    <title>方块幸存者：离屏光照修复版</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
         :root {
@@ -133,6 +133,25 @@
         @keyframes blink { from { filter: brightness(1); } to { filter: brightness(1.4); } }
         /* Tool tip box */
         #tool-info { background: rgba(0,0,0,0.7); border: 1px solid #555; padding: 6px 10px; border-radius: 6px; color: #cfe; font-size: 16px; max-width: 280px; margin-top: 4px; }
+        /* 调试台 */
+        #debug-panel {
+            position: absolute;
+            right: 12px;
+            top: 180px;
+            background: rgba(0,0,0,0.82);
+            border: 2px dashed #6cf4a0;
+            padding: 8px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            pointer-events: auto;
+            z-index: 18;
+            width: 200px;
+        }
+        #debug-panel h4 { margin: 0; font-size: 18px; color: #6cf4a0; }
+        .debug-btn { background: #1f1f1f; color: #eaffea; border: 1px solid #6cf4a0; padding: 6px 8px; font-family: 'VT323', monospace; font-size: 16px; cursor: pointer; text-align: left; }
+        .debug-btn:hover { background: #2c2c2c; }
     </style>
 </head>
 <body>
@@ -226,17 +245,25 @@
         </div>
     </div>
 
+    <div id="debug-panel">
+        <h4>调试台 (完美修复)</h4>
+        <button class="debug-btn" onclick="debugAddGold()">一键加钱</button>
+        <button class="debug-btn" onclick="debugHeal()">一键满血</button>
+        <button class="debug-btn" onclick="debugMaxSkills()">技能全开</button>
+        <button class="debug-btn" onclick="debugToNight()">一键黑天</button>
+        <button class="debug-btn" onclick="debugToDay()">一键白天</button>
+    </div>
+
     <!-- 开始菜单 -->
     <div id="start-screen" class="screen-overlay">
         <div class="menu-card">
             <h1>方块幸存者</h1>
-            <div class="subtitle">无尽黑夜：透明度修复版</div>
+            <div class="subtitle">光照离屏渲染修复版</div>
             <p style="font-size: 22px; color: #ccc; line-height: 1.4;">
-                修复了树木和矿石“隐形”的问题！<br>现在资源清晰可见，祝你采集愉快。
+                黑夜系统重构完成！<br>现在可以完美显示光照区域下的游戏画面了。
             </p>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;text-align:left;font-size:18px;color:#cce;">
-                <div><b>修复内容</b><br>✅ 修复资源透明度：现在所有资源 100% 不透明。<br>✅ 字体增强：增加后备字体防止 Emoji
-                    不显示。<br>✨ 依然包含：资源高亮、长白天、优化的黑夜。
+                <div><b>技术细节</b><br>🖥️ <b>离屏渲染</b>：使用独立图层绘制遮罩，不再破坏游戏主画面。<br>💡 <b>无损光照</b>：重叠光照只会更亮，绝不黑屏。
                 </div>
             </div>
             <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top: 10px;">
@@ -327,9 +354,12 @@
         stopBGM(){ if(this.bgmTimer){ clearInterval(this.bgmTimer); this.bgmTimer=null; } }
     };
 
-    // 画布
+    // 画布 & 离屏画布（关键修复）
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
+    const maskCanvas = document.createElement('canvas'); // 离屏画布，用于绘制遮罩
+    const maskCtx = maskCanvas.getContext('2d');
+
     const CONFIG = { viewW: 960, viewH: 640, tile: 32 };
     function resize() {
         let scale = Math.min(window.innerWidth / CONFIG.viewW, window.innerHeight / CONFIG.viewH);
@@ -337,6 +367,10 @@
         canvas.style.width = CONFIG.viewW * scale + 'px';
         canvas.style.height = CONFIG.viewH * scale + 'px';
         ctx.imageSmoothingEnabled = false;
+
+        // 确保离屏画布大小同步
+        maskCanvas.width = CONFIG.viewW;
+        maskCanvas.height = CONFIG.viewH;
     }
     window.addEventListener('resize', resize); resize();
 
@@ -788,6 +822,17 @@
         return num-1;
     }
 
+    // 调试功能
+    function debugAddGold(){ game.inv.gold+=500; game.inv.wood+=50; game.inv.stone+=50; game.inv.coal+=30; game.inv.diamond+=5; updateUI(); spawnFloatingText(CONFIG.viewW/2,40,"💰 资源已加",""+'#6cf4a0'); }
+    function debugHeal(){ if(!game.player) return; game.player.hp=game.player.maxHp; updateUI(); spawnFloatingText(game.player.x, game.player.y-10, "满血!", "#6cf4a0"); }
+    function debugMaxSkills(){
+        if(!game.player) return;
+        Object.keys(game.tech).forEach(k=>{ game.tech[k]=TECH_TREE[k].length; });
+        updateUI(); renderUpgradeList(); spawnFloatingText(CONFIG.viewW/2,60,"技能全开","#FFD700");
+    }
+    function debugToNight(){ game.time=Math.floor(game.dayLength*0.7); updateUI(); }
+    function debugToDay(){ game.time=0; updateUI(); }
+
     window.onkeydown=e=>{
         keys[e.key.toLowerCase()]=true;
         if(game.state==='PLAY'){
@@ -1049,34 +1094,81 @@
         // 预览
         if(game.curTool>=3){ let bx=Math.floor(mouse.x/32)*32, by=Math.floor(mouse.y/32)*32; g.strokeStyle='rgba(255,255,255,0.5)'; g.lineWidth=2; g.strokeRect(bx,by,32,32); if(game.curTool===4||game.curTool===8||game.curTool===9){ g.beginPath(); g.arc(bx+16, by+16, game.curTool===4?250:game.curTool===8?140:220, 0, Math.PI*2); g.strokeStyle='rgba(255,255,255,0.2)'; g.stroke(); } }
 
-// 夜视遮罩：只保留角色附近的可视圈
-const isNight = game.time > game.dayLength * 0.6;
-if (isNight) {
-    g.save();
-    g.fillStyle = 'rgba(0,0,0,1)';
-    g.fillRect(0, 0, CONFIG.viewW, CONFIG.viewH);
+        // 夜视遮罩：离屏渲染修复版
+        // 1. 先在离屏 maskCanvas 上画满黑色
+        // 2. 然后在 maskCanvas 上“擦除”光照区域
+        // 3. 最后把 maskCanvas 盖到主画布上
+        const isNight = game.time > game.dayLength * 0.6;
+        if (isNight) {
+             // 1. 准备遮罩层
+             maskCtx.clearRect(0, 0, CONFIG.viewW, CONFIG.viewH);
 
-    // 抠出角色周围的可视范围，其余保持纯黑
-    g.globalCompositeOperation = 'destination-out';
-    const center = game.player.center();
-    const visionRadius = 240 * (1 + game.tech.magic * 0.1);
-    const grd = g.createRadialGradient(center.x, center.y, visionRadius * 0.25, center.x, center.y, visionRadius);
-    grd.addColorStop(0, 'rgba(0,0,0,1)');
-    grd.addColorStop(0.6, 'rgba(0,0,0,0.7)');
-    grd.addColorStop(1, 'rgba(0,0,0,0)');
-    g.fillStyle = grd;
-    g.beginPath();
-    g.arc(center.x, center.y, visionRadius, 0, Math.PI * 2);
-    g.fill();
+             maskCtx.globalCompositeOperation = 'source-over';
+             maskCtx.fillStyle = 'rgba(5, 5, 12, 0.95)'; // 夜晚颜色
+             maskCtx.fillRect(0, 0, CONFIG.viewW, CONFIG.viewH);
 
-    g.restore();
-}
+             // 2. 擦除光照（挖洞）
+             // 使用 destination-out，把遮罩层上的黑色擦掉，变成透明
+             maskCtx.globalCompositeOperation = 'destination-out';
+
+             const center = game.player.center();
+             const magicLevel = (game.tech && game.tech.magic) ? game.tech.magic : 0;
+
+             // 玩家基础视野
+             const baseRadius = 150;
+             const visionRadius = baseRadius * (1 + magicLevel * 0.15);
+
+             // 绘制渐变光圈的函数（画在遮罩层上）
+             const cutHole = (ctxToDraw, x, y, radius) => {
+                 const grd = ctxToDraw.createRadialGradient(x, y, radius * 0.2, x, y, radius);
+                 // 核心：颜色不重要，重要的是 Alpha 通道
+                 // destination-out 模式下，Alpha=1 (不透明) 意味着完全擦除(变成透明)
+                 grd.addColorStop(0, 'rgba(0, 0, 0, 1)');
+                 grd.addColorStop(0.5, 'rgba(0, 0, 0, 0.8)');
+                 grd.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                 ctxToDraw.fillStyle = grd;
+                 ctxToDraw.beginPath();
+                 ctxToDraw.arc(x, y, radius, 0, Math.PI * 2);
+                 ctxToDraw.fill();
+             };
+
+             // 擦除玩家视野
+             cutHole(maskCtx, center.x, center.y, visionRadius);
+
+             // 擦除建筑（火把/火焰塔）视野
+             game.buildings.forEach(b => {
+                 if (b.type === 'torch') cutHole(maskCtx, b.x + 16, b.y + 16, 160 * (1 + magicLevel * 0.2));
+                 else if (b.type === 'firetower') cutHole(maskCtx, b.x + 16, b.y + 16, 190);
+             });
+
+             // 3. 将处理好的遮罩层绘制到主画布
+             // 此时遮罩层已经是“黑色背景+透明洞”了
+             g.save();
+             g.globalCompositeOperation = 'source-over';
+             g.drawImage(maskCanvas, 0, 0);
+
+             // 4. (可选) 绘制柔和辉光 (补光) - 直接画在主画布上
+             g.globalCompositeOperation = 'lighter';
+
+             const drawGlow = (x, y, radius) => {
+                 const grd = g.createRadialGradient(x, y, 0, x, y, radius);
+                 grd.addColorStop(0, 'rgba(255, 200, 100, 0.15)');
+                 grd.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                 g.fillStyle = grd;
+                 g.beginPath();
+                 g.arc(x, y, radius, 0, Math.PI * 2);
+                 g.fill();
+             };
+
+             drawGlow(center.x, center.y, visionRadius * 0.9);
+             game.buildings.forEach(b => {
+                 if (b.type === 'torch') drawGlow(b.x + 16, b.y + 16, 160 * (1 + magicLevel * 0.2));
+                 else if (b.type === 'firetower') drawGlow(b.x + 16, b.y + 16, 190);
+             });
+
+             g.restore();
+        }
     }
-
-    // 工具栏建造预览时夜间动态 spawnResource if low? not necessary
-
-    // 碰撞与状态
-    function updateShopUI(){ renderUpgradeList(); }
 
     // 初始渲染
     buildToolbar(); renderAchList(); updateGoalUI();
