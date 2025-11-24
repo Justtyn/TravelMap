@@ -106,7 +106,7 @@
 
         // Destructure icons from our shim object
         const {
-            Cpu, Cloud, Wind, Activity, Zap, Moon, Sun, Server,
+            Cpu, Cloud, Wind, Zap, Moon, Sun, Server,
             Smartphone, Database, Terminal, ArrowRight, Wifi,
             Radio, Layers, Brain, ArrowUp, ArrowDown, Monitor,
             Lock, Clock
@@ -172,7 +172,7 @@
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         <div className="flex items-center space-x-2">
-                        <Activity className={darkMode ? 'text-cyan-400' : 'text-blue-600'} />
+                        <img src="https://znhj.iepose.cn/resource/logo.png" alt="Logo" className="h-8 w-auto" />
                         <span className="font-bold text-xl tracking-tighter">STM32<span className={darkMode ? 'text-cyan-400' : 'text-blue-600'}>IoT</span>Cloud</span>
                         </div>
                         <div className="hidden md:block">
@@ -443,17 +443,29 @@
                         {/* 这里的占位符对应 README 中的截图位置 */}
                         <div className="col-span-1 md:col-span-2">
                         <h3 className={`text-lg font-medium mb-4 ml-1 ${darkMode ? 'text-cyan-400' : 'text-blue-600'}`}>设备总览与控制中心</h3>
-                        <ImagePlaceholder label="Web 端主页 / 仪表盘总览" height="h-96" />
+                        <img
+                            src="https://znhj.iepose.cn/resource/picturebed/show_index.png"
+                            alt="Web 端主页 / 仪表盘总览"
+                            className="w-full object-contain max-h-[32rem] rounded-xl border shadow-lg"
+                        />
                         </div>
 
                         <div>
                         <h3 className={`text-lg font-medium mb-4 ml-1 ${darkMode ? 'text-cyan-400' : 'text-blue-600'}`}>实时数据与暗色模式</h3>
-                        <ImagePlaceholder label="实时数据卡片 (暗色模式)" />
+                        <img
+                            src="https://znhj.iepose.cn/resource/picturebed/show_data.png"
+                            alt="实时数据卡片 (暗色模式)"
+                            className="w-full rounded-xl border shadow-lg"
+                        />
                         </div>
 
                         <div>
                         <h3 className={`text-lg font-medium mb-4 ml-1 ${darkMode ? 'text-cyan-400' : 'text-blue-600'}`}>历史数据分析</h3>
-                        <ImagePlaceholder label="历史趋势图表 & AI 对话" />
+                        <img
+                            src="https://znhj.iepose.cn/resource/picturebed/show_ai.png"
+                            alt="历史趋势图表 & AI 对话"
+                            className="w-full rounded-xl border shadow-lg"
+                        />
                         </div>
                     </div>
                     </div>
