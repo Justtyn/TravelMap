@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STM32 IoT Cloud Landing Page</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Load Vanilla Lucide (Stable, no React dependency issues) -->
+    <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        html { scroll-behavior: smooth; }
+        body { margin: 0; padding: 0; }
+    </style>
+
+    <!-- Lucide React Shim: Converts vanilla icons to React components -->
+    <script>
+        window.initLucideReact = function() {
+            if (typeof lucide === 'undefined') {
+                console.error("Lucide library failed to load");
+                return {};
+            }
+
+            const { createElement } = React;
+            const icons = {};
+
+            // Helper to convert abstract node tree to React Elements
+            const renderNode = ([tag, attrs, children]) => {
+                const props = { ...attrs, key: attrs.key || Math.random() };
+                // Convert class to className for React
+                if (props.class) {
+                    props.className = props.class;
+                    delete props.class;
+                }
+                // Recursively render children
+                const childElements = children ? children.map(renderNode) : [];
+                return createElement(tag, props, ...childElements);
+            };
+
+            // Generate React components for each icon
+            Object.keys(lucide.icons).forEach(name => {
+                const iconData = lucide.icons[name];
+                icons[name] = ({ color = "currentColor", size = 24, strokeWidth = 2, className, ...props }) => {
+                    const [tag, attrs, children] = iconData;
+
+                    const svgProps = {
+                        ...attrs,
+                        width: size,
+                        height: size,
+                        stroke: color,
+                        strokeWidth: strokeWidth,
+                        className: `lucide lucide-${name} ${className || ''}`,
+                        ...props
+                    };
+
+                    if (svgProps.class) {
+                        svgProps.className = `${svgProps.className} ${svgProps.class}`.trim();
+                        delete svgProps.class;
+                    }
+
+                    return createElement(
+                        tag,
+                        svgProps,
+                        children ? children.map(renderNode) : []
+                    );
+                };
+            });
+
+            return icons;
+        };
+    </script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Initialize the icons manually using our shim
+        const lucideReact = window.initLucideReact();
+
+        // Destructure icons from our shim object
+        const {
+            Cpu, Cloud, Wind, Activity, Zap, Moon, Sun, Server,
+            Smartphone, Database, Terminal, ArrowRight, Wifi,
+            Radio, Layers, Brain, ArrowUp, ArrowDown, Monitor,
+            Lock, Clock
+        } = lucideReact;
+
+        // --- ORIGINAL COMPONENT CODE STARTS HERE ---
+
+        const LandingPage = () => {
+            const [darkMode, setDarkMode] = useState(true);
+            const [scrolled, setScrolled] = useState(false);
+
+            useEffect(() => {
+                const handleScroll = () => {
+                    setScrolled(window.scrollY > 50);
+                };
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            // Theme Toggler
+            const toggleTheme = () => {
+                setDarkMode(!darkMode);
+            };
+
+            // Common Wrapper for Light/Dark mode classes
+            const themeClass = darkMode ? 'dark bg-slate-950 text-white' : 'bg-gray-50 text-gray-900';
+            const navClass = scrolled
+                ? (darkMode ? 'bg-slate-950/80 border-b border-cyan-500/20 backdrop-blur-md' : 'bg-white/80 border-b border-gray-200 backdrop-blur-md')
+                : 'bg-transparent';
+
+            // Placeholder Component for Images
+            const ImagePlaceholder = ({ label, height = "h-64" }) => (
+                <div className={`relative group overflow-hidden rounded-xl border-2 border-dashed transition-all duration-300 ${darkMode ? 'border-cyan-500/30 hover:border-cyan-400 bg-slate-900/50' : 'border-blue-300 hover:border-blue-500 bg-gray-100'} ${height} flex flex-col items-center justify-center p-4`}>
+                <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 ${darkMode ? 'bg-cyan-400' : 'bg-blue-600'}`}></div>
+                <div className="z-10 text-center">
+                    <div className={`mb-3 mx-auto p-3 rounded-full w-fit ${darkMode ? 'bg-slate-800 text-cyan-400' : 'bg-white text-blue-600 shadow-sm'}`}>
+                    <Layers size={24} />
+                    </div>
+                    <p className={`font-mono text-sm ${darkMode ? 'text-cyan-200' : 'text-blue-800'}`}>[ IMAGE: {label} ]</p>
+                    <p className={`text-xs mt-2 opacity-60 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>1920 x 1080px (推荐)</p>
+                </div>
+
+                {/* Tech decoration corners */}
+                <div className={`absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 ${darkMode ? 'border-cyan-500' : 'border-blue-600'}`}></div>
+                <div className={`absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 ${darkMode ? 'border-cyan-500' : 'border-blue-600'}`}></div>
+                <div className={`absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 ${darkMode ? 'border-cyan-500' : 'border-blue-600'}`}></div>
+                <div className={`absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 ${darkMode ? 'border-cyan-500' : 'border-blue-600'}`}></div>
+                </div>
+            );
+
+            return (
+                <div className={`min-h-screen transition-colors duration-300 font-sans ${themeClass}`}>
+                {/* Background Grid Pattern */}
+                <div className="fixed inset-0 z-0 pointer-events-none opacity-20"
+                    style={{
+                        backgroundImage: `radial-gradient(${darkMode ? '#22d3ee' : '#2563eb'} 1px, transparent 1px)`,
+                        backgroundSize: '30px 30px'
+                    }}>
+                </div>
+
+                {/* Navigation */}
+                <nav className={`fixed w-full z-50 transition-all duration-300 ${navClass}`}>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between h-16">
+                        <div className="flex items-center space-x-2">
+                        <Activity className={darkMode ? 'text-cyan-400' : 'text-blue-600'} />
+                        <span className="font-bold text-xl tracking-tighter">STM32<span className={darkMode ? 'text-cyan-400' : 'text-blue-600'}>IoT</span>Cloud</span>
+                        </div>
+                        <div className="hidden md:block">
+                        <div className="ml-10 flex items-baseline space-x-8 text-sm font-medium">
+                            <a href="#features" className="hover:text-cyan-500 transition-colors">核心功能</a>
+                            <a href="#architecture" className="hover:text-cyan-500 transition-colors">系统架构</a>
+                            <a href="#hardware" className="hover:text-cyan-500 transition-colors">硬件规格</a>
+                            <a href="#gallery" className="hover:text-cyan-500 transition-colors">界面展示</a>
+                        </div>
+                        </div>
+                        <button
+                        onClick={toggleTheme}
+                        className={`p-2 rounded-full transition-all ${darkMode ? 'bg-slate-800 text-yellow-400 hover:bg-slate-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                        >
+                        {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+                        </button>
+                    </div>
+                    </div>
+                </nav>
+
+                {/* Hero Section */}
+                <section className="relative z-10 pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mb-6 border ${darkMode ? 'bg-cyan-900/20 text-cyan-300 border-cyan-500/30' : 'bg-blue-100 text-blue-800 border-blue-200'}`}>
+                        <span className="flex h-2 w-2 rounded-full bg-green-400 mr-2 animate-pulse"></span>
+                        Version 1.0.0 正式版发布
+                    </div>
+                    <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-6">
+                        <span className="block">端云一体化</span>
+                        <span className={`block mt-2 bg-clip-text text-transparent bg-gradient-to-r ${darkMode ? 'from-cyan-400 via-blue-500 to-purple-600' : 'from-blue-600 via-indigo-600 to-purple-600'}`}>
+                        智能环境监测系统
+                        </span>
+                    </h1>
+                    <p className={`mt-4 max-w-2xl mx-auto text-lg sm:text-xl ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        基于 STM32 + 4G/蓝牙 + FastAPI + AI 分析。
+                        <br className="hidden sm:block"/>
+                        不仅仅是采集，更是多设备协同、深度分析与双向交互的完整生态。
+                    </p>
+                    <div className="mt-10 flex justify-center gap-4">
+                        <a href="https://znhj.iepose.cn" target="_blank" rel="noreferrer" className={`px-8 py-3 rounded-lg font-bold flex items-center transition-all transform hover:scale-105 ${darkMode ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-900' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}>
+                        在线体验 Demo <ArrowRight className="ml-2" size={18} />
+                        </a>
+                        <a href="#gallery" className={`px-8 py-3 rounded-lg font-bold border transition-all ${darkMode ? 'border-gray-600 hover:border-gray-400 text-white hover:bg-white/5' : 'border-gray-300 hover:border-gray-400 text-gray-700 hover:bg-gray-50'}`}>
+                        查看图库
+                        </a>
+                    </div>
+                    </div>
+                </section>
+
+                {/* Stats/Highlight Strip */}
+                <div className={`relative z-10 border-y ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-white/80 border-gray-200'}`}>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="grid grid-cols-2 gap-8 md:grid-cols-4 text-center">
+                        {[
+                        { label: '双向通信', sub: 'MCU ↔ 云端', icon: Wifi },
+                        { label: '多设备协同', sub: '集中管理/控制', icon: Server },
+                        { label: 'AI 深度分析', sub: 'DeepSeek 模型', icon: Brain },
+                        { label: 'PWA 支持', sub: '跨平台应用', icon: Smartphone },
+                        ].map((stat, index) => (
+                        <div key={index} className="flex flex-col items-center justify-center group">
+                            <div className={`mb-3 p-3 rounded-xl transition-colors ${darkMode ? 'bg-slate-800 group-hover:bg-slate-700 text-cyan-400' : 'bg-blue-50 group-hover:bg-blue-100 text-blue-600'}`}>
+                            <stat.icon size={24} />
+                            </div>
+                            <div className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{stat.label}</div>
+                            <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{stat.sub}</div>
+                        </div>
+                        ))}
+                    </div>
+                    </div>
+                </div>
+
+                {/* Features Grid */}
+                <section id="features" className={`py-20 relative z-10 ${darkMode ? 'bg-slate-950' : 'bg-gray-50'}`}>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-16">
+                        <h2 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>全栈技术亮点</h2>
+                        <p className={`mt-4 max-w-2xl mx-auto ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        从底层 PCB 硬件设计到云端 FastAPI 服务，再到前端 Web 可视化与 AI 交互，每一层都精心打磨。
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {[
+                        {
+                            icon: Cpu,
+                            title: "硬核底层 (STM32)",
+                            desc: "基于 STM32F103C8T6，集成 AHT20、BH1750、MQ2 等多传感器。支持多级滤波算法、范围限幅与异常检测，确保数据精准可靠。",
+                            color: "text-purple-500"
+                        },
+                        {
+                            icon: Zap,
+                            title: "智能省电调度",
+                            desc: "支持多达 5 台设备的独立省电控制。通过 MOSFET 硬件级切断传感器供电，支持省电、平衡、安全等多模式远程切换。",
+                            color: "text-yellow-500"
+                        },
+                        {
+                            icon: Radio,
+                            title: "双模上行链路",
+                            desc: "同时支持 Air780e (4G) 与 BT27 (蓝牙) 通信。依据环境自动切换，并在 OLED 状态栏滚动展示云端时间与在线人数。",
+                            color: "text-blue-500"
+                        },
+                        {
+                            icon: Database,
+                            title: "健壮后端架构",
+                            desc: "Python/FastAPI 驱动，集成 MQTT Broker 与 MySQL。实现告警闭环、自动异常检测与 WebSocket 实时流式推送。",
+                            color: "text-green-500"
+                        },
+                        {
+                            icon: Layers,
+                            title: "Web 可视化",
+                            desc: "响应式 PWA 仪表盘。提供实时数据卡片、历史趋势图表（Chart.js）、高德地图定位及暗色模式支持。",
+                            color: "text-cyan-500"
+                        },
+                        {
+                            icon: Terminal,
+                            title: "AI 助手闭环",
+                            desc: "集成 DeepSeek 模型，提供异常数据分析与对话助手。支持按设备过滤数据，辅助判断环境趋势。",
+                            color: "text-pink-500"
+                        }
+                        ].map((feature, idx) => (
+                        <div key={idx} className={`p-6 rounded-2xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${darkMode ? 'bg-slate-900/50 border-slate-800 hover:border-cyan-500/50' : 'bg-white border-gray-100 hover:border-blue-200'}`}>
+                            <div className={`mb-4 ${feature.color}`}>
+                            <feature.icon size={32} />
+                            </div>
+                            <h3 className={`text-xl font-bold mb-2 ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>{feature.title}</h3>
+                            <p className={`text-sm leading-relaxed ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{feature.desc}</p>
+                        </div>
+                        ))}
+                    </div>
+                    </div>
+                </section>
+
+                {/* Architecture & Hardware Split */}
+                <section id="architecture" className={`py-20 relative z-10 ${darkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-16 items-start">
+
+                        {/* Architecture Diagram */}
+                        <div>
+                        <h2 className="text-3xl font-bold mb-6">端云架构设计</h2>
+                        <p className={`mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            真正的双向交互系统：不仅是数据上报，云端更可反向控制 MCU，实现时间同步与智能省电调度。
+                        </p>
+
+                        <div className={`relative p-8 rounded-xl border border-dashed ${darkMode ? 'bg-slate-950/50 border-slate-700' : 'bg-gray-50 border-gray-300'}`}>
+
+                            {/* Cloud Layer */}
+                            <div className={`flex flex-col items-center p-4 rounded-lg border-2 ${darkMode ? 'bg-slate-900 border-indigo-500/30' : 'bg-white border-indigo-100'}`}>
+                            <div className="flex items-center space-x-2 mb-2">
+                                <Cloud className="text-indigo-500" />
+                                <span className="font-bold text-lg">Python 云端服务</span>
+                            </div>
+                            <div className={`text-xs flex gap-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                <span className="bg-indigo-500/10 px-2 py-1 rounded">FastAPI</span>
+                                <span className="bg-indigo-500/10 px-2 py-1 rounded">MQTT Broker</span>
+                                <span className="bg-indigo-500/10 px-2 py-1 rounded">AI DeepSeek</span>
+                            </div>
+                            </div>
+
+                            {/* Connection Lines & Arrows */}
+                            <div className="grid grid-cols-2 gap-8 my-6 relative">
+                            {/* Upstream Path */}
+                            <div className="flex flex-col items-center group">
+                                <div className="h-16 w-0.5 bg-gradient-to-t from-transparent via-cyan-500 to-transparent absolute left-1/4 top-0 animate-pulse"></div>
+                                <div className={`z-10 px-3 py-1 rounded-full text-xs font-mono mb-2 border ${darkMode ? 'bg-slate-800 border-cyan-500/50 text-cyan-400' : 'bg-blue-50 border-blue-200 text-blue-600'}`}>
+                                    <ArrowUp className="inline w-3 h-3 mr-1" />
+                                    数据上报
+                                </div>
+                                <div className={`text-xs text-center leading-relaxed ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                传感器数据<br/>异常告警<br/>设备状态
+                                </div>
+                            </div>
+
+                            {/* Downstream Path */}
+                            <div className="flex flex-col items-center group">
+                                <div className="h-16 w-0.5 bg-gradient-to-b from-transparent via-green-500 to-transparent absolute right-1/4 top-0 animate-pulse delay-700"></div>
+                                <div className={`z-10 px-3 py-1 rounded-full text-xs font-mono mb-2 border ${darkMode ? 'bg-slate-800 border-green-500/50 text-green-400' : 'bg-green-50 border-green-200 text-green-600'}`}>
+                                    <ArrowDown className="inline w-3 h-3 mr-1" />
+                                    反向控制
+                                </div>
+                                <div className={`text-xs text-center leading-relaxed ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                时间同步<br/>在线人数<br/>省电指令
+                                </div>
+                            </div>
+                            </div>
+
+                            {/* Device Layer */}
+                            <div className={`flex flex-col items-center p-4 rounded-lg border-2 ${darkMode ? 'bg-slate-900 border-cyan-500/30' : 'bg-white border-cyan-100'}`}>
+                            <div className="flex items-center space-x-2 mb-3">
+                                <Cpu className="text-cyan-500" />
+                                <span className="font-bold text-lg">STM32 智能终端</span>
+                            </div>
+
+                            {/* Internal MCU Logic Visualization */}
+                            <div className="grid grid-cols-2 gap-4 w-full">
+                                <div className={`p-2 rounded text-xs border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-gray-50 border-gray-200'}`}>
+                                <div className="flex items-center mb-1 text-cyan-500 font-bold">
+                                    <Monitor size={12} className="mr-1"/> OLED 状态栏
+                                </div>
+                                <span className="opacity-70">滚动显示:<br/>"在线: 3人 12:30"</span>
+                                </div>
+                                <div className={`p-2 rounded text-xs border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-gray-50 border-gray-200'}`}>
+                                <div className="flex items-center mb-1 text-green-500 font-bold">
+                                    <Lock size={12} className="mr-1"/> MOSFET 控制
+                                </div>
+                                <span className="opacity-70">远程切断传感器<br/>硬件级省电</span>
+                                </div>
+                            </div>
+                            </div>
+
+                            {/* Connectivity Badges */}
+                            <div className="absolute top-1/2 left-0 w-full flex justify-center -mt-3 pointer-events-none">
+                            <div className={`flex gap-2 px-4 py-1 rounded-full text-xs font-bold border shadow-lg backdrop-blur-sm ${darkMode ? 'bg-slate-900/90 border-slate-600 text-white' : 'bg-white/90 border-gray-300 text-gray-800'}`}>
+                                <span className="flex items-center"><Wifi size={12} className="mr-1"/> 4G Cat.1</span>
+                                <span className="w-px h-4 bg-gray-500 mx-1"></span>
+                                <span className="flex items-center"><Radio size={12} className="mr-1"/> Bluetooth</span>
+                            </div>
+                            </div>
+
+                        </div>
+                        </div>
+
+                        {/* Hardware List */}
+                        <div id="hardware">
+                        <h2 className="text-3xl font-bold mb-6">硬件全家桶</h2>
+                        <div className="space-y-4">
+                            {[
+                            { name: 'STM32F103C8T6', desc: '主控核心，72MHz Cortex-M3', tag: 'MCU' },
+                            { name: 'AHT20 + BH1750', desc: '工业级温湿度与光照强度采集', tag: 'Sensor' },
+                            { name: 'MQ2 + BMP180', desc: '烟雾/可燃气体与气压海拔监测', tag: 'Sensor' },
+                            { name: 'Air780e + BT27', desc: '4G Cat.1 与 蓝牙 5.0 双模通信', tag: 'Comm' },
+                            { name: '0.96" OLED', desc: 'I2C 接口，支持多级菜单与状态栏', tag: 'Display' },
+                            { name: 'MOSFET 组', desc: '硬件级电源控制，支持独立断电', tag: 'Power' },
+                            ].map((item, i) => (
+                            <div key={i} className={`flex items-center justify-between p-4 rounded-lg border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-gray-50 border-gray-200'}`}>
+                                <div>
+                                <h4 className={`font-bold ${darkMode ? 'text-cyan-300' : 'text-blue-700'}`}>{item.name}</h4>
+                                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{item.desc}</p>
+                                </div>
+                                <span className={`px-2 py-1 text-xs rounded font-mono ${darkMode ? 'bg-slate-700 text-gray-300' : 'bg-white border border-gray-200 text-gray-500'}`}>
+                                {item.tag}
+                                </span>
+                            </div>
+                            ))}
+                        </div>
+                        </div>
+                    </div>
+                    </div>
+                </section>
+
+                {/* Gallery Section with Placeholders */}
+                <section id="gallery" className={`py-20 relative z-10 ${darkMode ? 'bg-slate-950' : 'bg-gray-50'}`}>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex flex-col md:flex-row justify-between items-end mb-12">
+                        <div>
+                        <h2 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>项目界面展示</h2>
+                        <p className={`mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            Web 端仪表盘、历史分析与 STM32 OLED 实拍
+                        </p>
+                        </div>
+                        <div className={`mt-4 md:mt-0 px-4 py-2 rounded-lg text-sm font-mono border ${darkMode ? 'bg-slate-900 border-slate-700 text-cyan-500' : 'bg-white border-gray-300 text-blue-600'}`}>
+                        <span className="w-2 h-2 rounded-full bg-green-500 inline-block mr-2"></span>
+                        Live Preview Available
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* 这里的占位符对应 README 中的截图位置 */}
+                        <div className="col-span-1 md:col-span-2">
+                        <h3 className={`text-lg font-medium mb-4 ml-1 ${darkMode ? 'text-cyan-400' : 'text-blue-600'}`}>设备总览与控制中心</h3>
+                        <ImagePlaceholder label="Web 端主页 / 仪表盘总览" height="h-96" />
+                        </div>
+
+                        <div>
+                        <h3 className={`text-lg font-medium mb-4 ml-1 ${darkMode ? 'text-cyan-400' : 'text-blue-600'}`}>实时数据与暗色模式</h3>
+                        <ImagePlaceholder label="实时数据卡片 (暗色模式)" />
+                        </div>
+
+                        <div>
+                        <h3 className={`text-lg font-medium mb-4 ml-1 ${darkMode ? 'text-cyan-400' : 'text-blue-600'}`}>历史数据分析</h3>
+                        <ImagePlaceholder label="历史趋势图表 & AI 对话" />
+                        </div>
+                    </div>
+                    </div>
+                </section>
+
+                {/* Footer */}
+                <footer className={`py-12 border-t relative z-10 ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-gray-200'}`}>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center">
+                    <div className="mb-4 md:mb-0">
+                        <span className="font-bold text-xl tracking-tighter">STM32<span className={darkMode ? 'text-cyan-400' : 'text-blue-600'}>IoT</span>Cloud</span>
+                        <p className={`text-sm mt-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                        Based on Version 1.0.0 (Official Release)
+                        </p>
+                    </div>
+                    <div className="flex space-x-6">
+                        <a href="#" className={`transition-colors ${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`}>GitHub</a>
+                        <a href="#" className={`transition-colors ${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`}>Gitee</a>
+                        <a href="#" className={`transition-colors ${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`}>About Author</a>
+                    </div>
+                    </div>
+                </footer>
+                </div>
+            );
+        };
+
+        // Render the component
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<LandingPage />);
+    </script>
+</body>
+</html>
