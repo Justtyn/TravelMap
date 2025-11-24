@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="TravelMap - 灵感·决策·到店，集高德 3D 导航、电商闭环与本地游灵感推荐于一体的安卓课程设计作品。">
+    <meta name="keywords" content="TravelMap, 旅行地图, 安卓 Demo, 高德地图, 本地游, 购物车, 订单">
+    <title>TravelMap - 旅图 · Vanguard</title>
+
+    <!-- 字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <!-- 图标库 -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #050507;
+            --primary: #4FD1C5;
+            --secondary: #FFB356;
+            --accent: #9F7AEA;
+            --glass-surface: rgba(20, 20, 25, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-highlight: rgba(255, 255, 255, 0.05);
+            --muted: #9ca3af;
+            --surface: rgba(255,255,255,0.04);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #fff;
+            font-family: "Inter", sans-serif;
+            overflow-x: hidden;
+            overscroll-behavior: none;
+        }
+
+        /* 顶部 HUD */
+        .hud {
+            position: fixed;
+            top: 18px; left: 50%;
+            transform: translateX(-50%);
+            width: min(1200px, 96vw);
+            z-index: 200;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 18px;
+            border-radius: 18px;
+            border: 1px solid var(--glass-border);
+            background: linear-gradient(120deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+            box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+            backdrop-filter: blur(14px);
+        }
+        .brand {
+            display: flex; align-items: center; gap: 12px;
+            font-weight: 800; letter-spacing: -0.02em; font-size: 18px;
+        }
+        .brand img {
+            width: 36px; height: 36px; border-radius: 12px; object-fit: cover;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+        }
+        .hud-sub { color: var(--muted); font-size: 12px; }
+        .hud-links { display: flex; gap: 10px; align-items: center; }
+        .hud-link {
+            padding: 8px 14px; border-radius: 12px; color: #fff; text-decoration: none;
+            border: 1px solid var(--glass-border); background: var(--surface);
+            font-weight: 600; font-size: 13px; letter-spacing: 0.01em;
+            transition: 0.25s ease;
+        }
+        .hud-link:hover { border-color: rgba(255,255,255,0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.4); transform: translateY(-2px); }
+
+        /* --- 核心容器 --- */
+        .scroll-container { height: 600vh; width: 100%; position: relative; }
+        .pin-wrap {
+            height: 100vh; width: 100%; position: fixed; top: 0; left: 0;
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden; perspective: 1200px;
+        }
+
+        /* 中段信息板 (滚动呈现) */
+        .info-block {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            pointer-events: none; opacity: 0;
+        }
+        .info-card {
+            pointer-events: auto;
+            width: min(1000px, 90vw);
+            background: rgba(20,20,25,0.65);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 22px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.55), inset 0 0 0 1px var(--glass-highlight);
+            backdrop-filter: blur(18px);
+        }
+        .info-top {
+            display: flex; flex-wrap: wrap; gap: 10px;
+            align-items: center; margin-bottom: 16px;
+        }
+        .pill {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 12px 16px; border-radius: 14px;
+            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+            backdrop-filter: blur(14px); font-weight: 700; letter-spacing: 0.02em;
+        }
+        .pill i { color: var(--primary); }
+        .stat-box {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px; padding: 12px 14px;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+        }
+        .stat {
+            display: flex; flex-direction: column; gap: 6px;
+            padding: 10px; border-radius: 12px;
+            background: rgba(255,255,255,0.02);
+        }
+        .stat-label { color: var(--muted); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+        .stat-value { font-weight: 800; letter-spacing: -0.02em; }
+        .stat .desc { color: var(--muted); font-size: 12px; line-height: 1.4; }
+
+        .timeline-row {
+            margin-top: 16px; display: grid; gap: 10px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .mini-node {
+            padding: 12px 14px;
+            border-radius: 12px; border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.04); backdrop-filter: blur(12px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+        }
+        .mini-node .date { color: var(--primary); font-weight: 800; font-size: 12px; letter-spacing: 0.08em; }
+        .mini-node .title { font-weight: 700; margin: 6px 0 4px; }
+        .mini-node .desc { color: var(--muted); font-size: 12px; line-height: 1.4; }
+
+        .shot-grid {
+            margin-top: 16px;
+            display: grid; gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        }
+        .shot-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+        }
+        .shot-img {
+            width: 100%; aspect-ratio: 9/16; object-fit: cover;
+            background: #0b0f1a;
+        }
+        .shot-meta {
+            padding: 10px 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            color: #e2e8f0; font-size: 12px; font-weight: 600;
+        }
+
+        @media (max-width: 920px) {
+            .hud { flex-direction: column; gap: 8px; align-items: flex-start; }
+            .hud-links { width: 100%; flex-wrap: wrap; }
+            .stat-box { grid-template-columns: repeat(2, 1fr); }
+            .timeline-row { grid-template-columns: 1fr; }
+            .scroll-container { height: 700vh; }
+        }
+
+        /* --- 视觉背景 --- */
+        .background-layer {
+            position: absolute; inset: 0; z-index: -2;
+            background: radial-gradient(circle at 50% -20%, #1a202c 0%, #000 100%);
+        }
+
+        .noise-overlay {
+            position: absolute; inset: 0; z-index: -1; opacity: 0.07;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            pointer-events: none;
+        }
+
+        /* 线框地球 */
+        .wireframe-globe {
+            position: absolute;
+            width: 80vw; height: 80vw;
+            max-width: 800px; max-height: 800px;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 50%;
+            top: 60%; left: 50%;
+            transform: translate(-50%, -50%) rotateX(60deg);
+            background:
+                radial-gradient(circle at 50% 50%, rgba(79, 209, 197, 0.1), transparent 60%),
+                repeating-linear-gradient(0deg, transparent 0, transparent 49px, rgba(255,255,255,0.03) 50px),
+                repeating-linear-gradient(90deg, transparent 0, transparent 49px, rgba(255,255,255,0.03) 50px);
+            box-shadow: 0 0 100px rgba(79, 209, 197, 0.1);
+        }
+
+        /* 粒子星空 */
+        .particles { position: absolute; inset: 0; pointer-events: none; }
+        .particle {
+            position: absolute; background: #fff; border-radius: 50%;
+            box-shadow: 0 0 4px #fff;
+        }
+
+        /* --- 舞台 & 文字 --- */
+        .stage {
+            position: relative; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            transform-style: preserve-3d;
+        }
+
+        /* 超大背景字 */
+        .feature-text-bg {
+            position: absolute;
+            font-size: clamp(4rem, 15vw, 12rem);
+            font-weight: 800;
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(255,255,255,0.05);
+            z-index: -1;
+            white-space: nowrap;
+            letter-spacing: -0.02em;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        /* --- Hero Section --- */
+        .hero-content {
+            text-align: center; z-index: 10;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .hero-logo-box {
+            width: 90px; height: 90px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.01));
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 24px;
+            display: flex; justify-content: center; align-items: center;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .hero-title {
+            font-size: clamp(3.5rem, 8vw, 6rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: linear-gradient(to bottom, #fff 30%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.04em;
+        }
+
+        .hero-tags {
+            display: flex; gap: 10px; margin-bottom: 20px;
+        }
+        .hero-tag {
+            padding: 6px 14px; border-radius: 100px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 13px; color: var(--primary);
+            backdrop-filter: blur(5px);
+        }
+
+        .chip {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 6px 12px; border-radius: 999px;
+            background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border);
+            color: #fff; font-weight: 600; font-size: 12px;
+            text-decoration: none; letter-spacing: 0.01em;
+        }
+        .chip span { color: var(--muted); font-weight: 500; }
+
+        /* --- 玻璃拟态卡片通用 --- */
+        .glass-card {
+            position: absolute;
+            background: var(--glass-surface);
+            border: 1px solid var(--glass-border);
+            box-shadow:
+                0 40px 80px -20px rgba(0,0,0,0.5),
+                inset 0 0 0 1px var(--glass-highlight);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border-radius: 24px;
+            padding: 24px;
+            display: flex; flex-direction: column;
+            opacity: 0; /* 初始隐藏 */
+        }
+
+        /* 图片骨架屏动画 */
+        .shimmer-box {
+            position: relative; overflow: hidden; background: #2d3748;
+            border-radius: 12px; width: 100%;
+        }
+        .shimmer-box::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: skewX(-20deg) translateX(-150%);
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer { 100% { transform: skewX(-20deg) translateX(150%); } }
+
+        /* 特定卡片样式 */
+        .card-feed { width: 280px; }
+        .card-feed-img { height: 160px; margin-bottom: 16px; }
+        .card-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+
+        /* 地图雷达 */
+        .card-map { width: 320px; padding: 0; overflow: hidden; border-radius: 28px; }
+        .map-view {
+            height: 200px; background: #1a202c; position: relative;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .radar-circle {
+            position: absolute; width: 100px; height: 100px; border-radius: 50%;
+            border: 1px solid var(--primary); opacity: 0;
+            animation: radar 2s infinite ease-out;
+        }
+        .radar-dot {
+            width: 12px; height: 12px; background: var(--primary);
+            border-radius: 50%; box-shadow: 0 0 15px var(--primary);
+            z-index: 2;
+        }
+        @keyframes radar {
+            0% { transform: scale(0.1); opacity: 1; border-width: 2px; }
+            100% { transform: scale(2.5); opacity: 0; border-width: 0; }
+        }
+        .map-info { padding: 20px; background: rgba(20,20,25,0.9); }
+
+        /* 订单票据 */
+        .card-ticket {
+            width: 300px; background: #fff; color: #000;
+            border-radius: 20px; padding: 0; overflow: hidden;
+            mask-image: radial-gradient(circle at 10px 70%, transparent 0, transparent 10px, black 11px);
+            mask-position: -10px 0; mask-size: 100% 100%; mask-repeat: repeat-y;
+            /* 简单的锯齿模拟 */
+        }
+        .ticket-header { background: var(--secondary); padding: 20px; position: relative; overflow: hidden; }
+        .ticket-body { padding: 24px; }
+        .dashed-line { border-bottom: 2px dashed #ddd; margin: 16px 0; }
+        .qr-code {
+            width: 48px; height: 48px; background: #000; opacity: 0.8;
+            background-image: repeating-linear-gradient(45deg, transparent 0, transparent 2px, #fff 2px, #fff 4px);
+        }
+
+        /* 3D 浮动图标 */
+        .float-icon {
+            position: absolute; font-size: 40px;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+            opacity: 0;
+        }
+
+        /* 下载按钮 - 流光效果 */
+        .dl-btn-container {
+            position: absolute; z-index: 100; opacity: 0;
+            display: flex; flex-direction: column; align-items: center; gap: 16px;
+        }
+        .glowing-btn {
+            position: relative; padding: 18px 48px;
+            background: #fff; color: #000;
+            border-radius: 100px; font-weight: 700; font-size: 18px;
+            border: none; cursor: pointer; overflow: hidden;
+            transition: transform 0.2s;
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .glowing-btn:hover { transform: scale(1.05); }
+        .glowing-btn::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+            transition: 0.5s;
+        }
+        .glowing-btn:hover::before { left: 100%; }
+        .glowing-btn.secondary {
+            background: rgba(255,255,255,0.05);
+            color: #fff; border: 1px solid var(--glass-border);
+            box-shadow: none;
+        }
+        .glowing-btn.secondary::before { display: none; }
+        .glowing-btn.secondary:hover { border-color: rgba(255,255,255,0.4); }
+        .dl-meta { font-size: 12px; opacity: 0.6; text-align: center; }
+
+    </style>
+</head>
+<body>
+
+    <!-- 顶部 HUD -->
+    <div class="hud">
+        <div>
+            <div class="brand">
+                <img src="https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/logo.png" alt="TravelMap Logo">
+                <span>TravelMap · Vanguard</span>
+                <span class="chip"><i class="ph-duotone ph-sparkle"></i><span>灵感 · 决策 · 到店</span></span>
+            </div>
+            <div class="hud-sub">厦门大学嘉庚学院 · 软件工程 · 焦梓豪 · 安卓开发课程期末设计</div>
+        </div>
+        <div class="hud-links">
+            <a class="hud-link" href="{{ url_for('doc_library_page') }}">文档库</a>
+            <a class="hud-link" href="{{ url_for('game_library_page') }}">游戏库</a>
+            <a class="hud-link" href="https://github.com/Justtyn/TravelMap" target="_blank">GitHub</a>
+            <a class="hud-link" href="https://github.com/Justtyn/TravelMap/releases" target="_blank">Release</a>
+        </div>
+    </div>
+
+    <div class="scroll-container">
+        <div class="pin-wrap">
+
+            <!-- 背景层 -->
+            <div class="background-layer">
+                <div class="noise-overlay"></div>
+                <div class="wireframe-globe"></div>
+                <div class="particles" id="particles"></div>
+            </div>
+
+            <!-- 舞台内容 -->
+            <div class="stage">
+
+                <!-- 背景巨型文字 -->
+                <div class="feature-text-bg js-bg-text">TRAVELMAP</div>
+
+                <!-- 1. Hero 区域 -->
+                <div class="hero-content js-hero">
+                <div class="hero-logo-box">
+                    <i class="ph ph-paper-plane-tilt" style="font-size: 40px; color: var(--primary);"></i>
+                </div>
+                <div class="hero-tags">
+                    <span class="hero-tag">v1.0.0 Release</span>
+                    <span class="hero-tag">安卓课程设计</span>
+                    <span class="hero-tag">高德 3D 地图</span>
+                </div>
+                <h1 class="hero-title">
+                    灵感 · 决策 · 到店<br>
+                    本地游的全流程伴侣
+                </h1>
+                <p style="color: #cbd5e1; font-size: 1.05rem; max-width: 520px; line-height: 1.7;">
+                    TravelMap 是由 Justyn 独立完成的本地游 App。集成高德地图 3D 视图、目的地种草、行程规划与电商预订，完整覆盖“灵感 → 导航 → 下单”链路。
+                    <span style="display:block; margin-top:10px; font-size: 0.9rem; color: #94a3b8;">厦门大学嘉庚学院 · 软件工程 · 2025 秋季安卓开发课程期末设计</span>
+                </p>
+                <div style="display:flex; gap:10px; flex-wrap: wrap; margin-top: 12px;">
+                    <span class="chip"><i class="ph-duotone ph-map-trifold"></i><span>20+ 真实界面巡览</span></span>
+                    <span class="chip"><i class="ph-duotone ph-shopping-cart-simple"></i><span>购物车 / 订单闭环</span></span>
+                    <span class="chip"><i class="ph-duotone ph-moon-stars"></i><span>全局深色模式</span></span>
+                </div>
+            </div>
+
+                <!-- 1.5 信息板 -->
+                <div class="info-block js-info-block">
+                    <div class="info-card">
+                        <div class="info-top">
+                            <div class="pill">
+                                <i class="ph-duotone ph-compass-tool"></i>
+                                安卓开发课程期末设计 · 20+ 真实界面巡览
+                            </div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat">
+                                <div class="stat-label">Screens</div>
+                                <div class="stat-value">20+ 页面</div>
+                                <div class="desc">包含商城、地图、订单与个人中心全流程。</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">LBS</div>
+                                <div class="stat-value">高德 3D</div>
+                                <div class="desc">POI 检索、路径规划、实时定位与雷达动效。</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Commerce</div>
+                                <div class="stat-value">购物车 → 订单</div>
+                                <div class="desc">收藏、加入购物车、下单、订单状态跟踪一条龙。</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">体验</div>
+                                <div class="stat-value">深色模式</div>
+                                <div class="desc">全局暗色适配，语音导览与智能卡片弹出。</div>
+                            </div>
+                        </div>
+                        <div class="timeline-row">
+                            <div class="mini-node">
+                                <div class="date">2025.11.10</div>
+                                <div class="title">项目启动 & 基础架构</div>
+                                <div class="desc">确定 MVP 需求、搭建 Android 工程，Activity + Fragment 框架就绪。</div>
+                            </div>
+                            <div class="mini-node">
+                                <div class="date">2025.11.12</div>
+                                <div class="title">用户认证体系</div>
+                                <div class="desc">登陆 / 注册页完成，封装 AuthRepository，本地加密存储 Token。</div>
+                            </div>
+                            <div class="mini-node">
+                                <div class="date">2025.11.15</div>
+                                <div class="title">核心功能 & UI</div>
+                                <div class="desc">高德地图 3D、深色模式、购物车与订单闭环联调完毕。</div>
+                            </div>
+                        </div>
+                        <div class="shot-grid">
+                            <div class="shot-card">
+                                <img class="shot-img" src="https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/index-image/Tab-%E5%95%86%E5%9F%8E.jpg" alt="商城 Tab">
+                                <div class="shot-meta"><span>商城 Tab</span><span>电商闭环</span></div>
+                            </div>
+                            <div class="shot-card">
+                                <img class="shot-img" src="https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/index-image/Tab-%E5%9C%B0%E5%9B%BE.jpg" alt="地图 Tab">
+                                <div class="shot-meta"><span>地图 Tab</span><span>高德 3D</span></div>
+                            </div>
+                            <div class="shot-card">
+                                <img class="shot-img" src="https://travel-map-1307490573.cos.ap-guangzhou.myqcloud.com/index-image/Tab-%E6%88%91%E7%9A%84.jpg" alt="我的 Tab">
+                                <div class="shot-meta"><span>我的 Tab</span><span>个人中心</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. UI 元素层 (所有卡片) -->
+                <div class="ui-layer" style="position: absolute; inset: 0; pointer-events: none;">
+
+                    <!-- [DISCOVER] Feed Cards -->
+                    <div class="glass-card card-feed js-card-feed" style="top: 30%; left: 20%;">
+                        <div class="shimmer-box card-feed-img"></div>
+                        <div class="card-row">
+                            <span style="font-weight: 700; font-size: 18px;">鼓浪屿日光岩</span>
+                            <i class="ph-fill ph-heart" style="color: #ff4757;"></i>
+                        </div>
+                        <div style="font-size: 13px; color: #aaa; margin-top: 4px;">厦门 · 5A 景区</div>
+                        <div class="card-row" style="margin-top: 12px;">
+                            <span style="color: var(--secondary); display: flex; align-items: center; gap: 4px;">
+                                <i class="ph-fill ph-star"></i> 4.9
+                            </span>
+                            <span style="font-size: 12px; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px;">距你 2km</span>
+                        </div>
+                    </div>
+
+                    <div class="glass-card card-feed js-card-feed" style="top: 45%; right: 20%; width: 260px;">
+                        <div class="shimmer-box card-feed-img" style="height: 120px;"></div>
+                        <div style="font-weight: 700; margin-top: 8px;">八市阿吉仔饼铺</div>
+                        <div style="font-size: 12px; color: var(--primary); margin-top: 4px;">#老字号 #排队王</div>
+                    </div>
+
+                    <div class="glass-card card-feed js-card-feed" style="bottom: 12%; left: 12%; width: 280px;">
+                        <div class="card-row" style="margin-bottom: 10px;">
+                            <span style="font-weight: 800;">核心功能速览</span>
+                            <span style="font-size: 12px; color: var(--muted);">from index.html</span>
+                        </div>
+                        <div style="display:flex; gap:10px; flex-direction: column;">
+                            <div class="chip" style="width: fit-content;"><i class="ph-duotone ph-map-pin-line"></i><span>高德 LBS：3D 建筑、POI 检索、路径规划</span></div>
+                            <div class="chip" style="width: fit-content;"><i class="ph-duotone ph-shopping-bag-open"></i><span>电商闭环：购物车、收藏夹、订单状态</span></div>
+                            <div class="chip" style="width: fit-content;"><i class="ph-duotone ph-moon-stars"></i><span>深色模式 & 智能卡片弹窗</span></div>
+                        </div>
+                    </div>
+
+                    <!-- 浮动装饰 -->
+                    <div class="float-icon js-float-icon" style="top: 20%; right: 30%; color: var(--secondary);">
+                        <i class="ph-duotone ph-camera"></i>
+                    </div>
+                    <div class="float-icon js-float-icon" style="bottom: 25%; left: 25%; color: var(--primary);">
+                        <i class="ph-duotone ph-map-trifold"></i>
+                    </div>
+
+                    <!-- [NAVIGATE] Map Card -->
+                    <div class="glass-card card-map js-card-map" style="top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20;">
+                        <div class="map-view">
+                            <div class="radar-dot"></div>
+                            <div class="radar-circle" style="animation-delay: 0s;"></div>
+                            <div class="radar-circle" style="animation-delay: 1s;"></div>
+
+                            <!-- 虚拟路径点 -->
+                            <div style="position: absolute; top: 30%; left: 30%; width: 8px; height: 8px; background: #555; border-radius: 50%;"></div>
+                            <div style="position: absolute; bottom: 40%; right: 30%; width: 8px; height: 8px; background: #555; border-radius: 50%;"></div>
+                            <!-- SVG 路径线 -->
+                            <svg style="position: absolute; width: 100%; height: 100%; top:0; left:0;">
+                                <path d="M96,60 Q160,60 160,100 T224,120" fill="none" stroke="var(--primary)" stroke-width="2" stroke-dasharray="5,5" stroke-opacity="0.5" />
+                            </svg>
+                        </div>
+                        <div class="map-info">
+                            <div style="display: flex; gap: 12px; align-items: center;">
+                                <div style="width: 40px; height: 40px; background: rgba(79, 209, 197, 0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                    <i class="ph-fill ph-navigation-arrow" style="font-size: 20px;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700;">正在前往目的地</div>
+                                    <div style="font-size: 12px; color: #aaa;">剩余 1.2km · 预计 15 分钟</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 浮动定位标 -->
+                    <div class="float-icon js-map-pin" style="top: 30%; left: 35%; color: #FF6B6B; font-size: 48px;">
+                        <i class="ph-fill ph-map-pin"></i>
+                    </div>
+
+                    <!-- [EXPERIENCE] Order Ticket -->
+                    <div class="glass-card card-ticket js-card-ticket" style="top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 30;">
+                        <div class="ticket-header">
+                            <div style="color: rgba(0,0,0,0.6); font-size: 12px; font-weight: 600;">ORDER #892010</div>
+                            <div style="font-size: 24px; font-weight: 800; margin-top: 4px;">¥ 180.00</div>
+                            <i class="ph-duotone ph-ticket" style="position: absolute; right: -10px; bottom: -10px; font-size: 80px; opacity: 0.1;"></i>
+                        </div>
+                        <div class="ticket-body">
+                            <div style="font-weight: 700; font-size: 16px;">厦门海底世界门票</div>
+                            <div style="font-size: 13px; color: #666; margin-top: 4px;">成人票 x 2 · 周末通用</div>
+                            <div class="dashed-line"></div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-size: 12px; color: #888;">
+                                    使用日期<br>
+                                    <span style="color: #000; font-weight: 600;">2025-11-24</span>
+                                </div>
+                                <div class="qr-code"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 3. 下载按钮 -->
+                <div class="dl-btn-container js-download">
+                    <a class="glowing-btn" href="{{ url_for('static', filename='TravelMap.apk') }}" target="_blank">
+                        <i class="ph-fill ph-download-simple"></i>
+                        下载 APK Demo
+                    </a>
+                    <a class="glowing-btn secondary" href="https://github.com/Justtyn/TravelMap/releases" target="_blank">
+                        <i class="ph-fill ph-github-logo"></i>
+                        从 GitHub Release 获取
+                    </a>
+                    <div class="dl-meta">建议 Android 8.0+ 设备安装体验 · 课程作业演示版</div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        gsap.registerPlugin(ScrollTrigger, TextPlugin);
+
+        // --- 0. 粒子生成 ---
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 50; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            const size = Math.random() * 3;
+            gsap.set(p, {
+                width: size, height: size,
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                opacity: Math.random() * 0.5 + 0.1
+            });
+            particlesContainer.appendChild(p);
+
+            // 粒子呼吸动效
+            gsap.to(p, {
+                y: `+=${Math.random() * 100 - 50}`,
+                opacity: 0,
+                duration: Math.random() * 3 + 2,
+                repeat: -1,
+                yoyo: true,
+                ease: "sine.inOut"
+            });
+        }
+
+        // --- 1. 全局变量 & 元素 ---
+        const tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: '.scroll-container',
+                start: 'top top',
+                end: 'bottom bottom',
+                scrub: 0.5,
+                pin: '.pin-wrap'
+            }
+        });
+
+        const bgText = document.querySelector('.js-bg-text');
+        const globe = document.querySelector('.wireframe-globe');
+        const infoBlock = document.querySelector('.js-info-block');
+
+        // --- 2. 动画序列 ---
+
+        // >>> STAGE 1: Hero Exit & Globe Up
+        tl.to('.js-hero', { scale: 0.8, opacity: 0, blur: 10, duration: 1 })
+          .to(globe, {
+              top: '50%', scale: 1.2, opacity: 0.8, rotateX: 20,
+              duration: 2, ease: "power2.inOut"
+          }, "<")
+          .to(bgText, { scale: 1.5, opacity: 0.1, duration: 2 }, "<");
+
+        // >>> STAGE 2: Discover (Cards Flow)
+        tl.call(() => { bgText.innerText = "DISCOVER"; }) // Change Text
+          .to(bgText, { opacity: 0.1, scale: 1, duration: 0.5 }, "<");
+
+        const feedCards = gsap.utils.toArray('.js-card-feed');
+        const floatIcons = gsap.utils.toArray('.js-float-icon');
+
+        tl.fromTo(feedCards,
+            { y: 500, rotation: 10, opacity: 0, z: -100 },
+            { y: 0, rotation: (i) => i%2 ? 5 : -5, opacity: 1, z: 0, duration: 2, stagger: 0.2, ease: "back.out(1.2)" }
+        );
+
+        tl.fromTo(floatIcons,
+            { scale: 0, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 1, stagger: 0.2, ease: "elastic.out(1, 0.5)" }, "<0.5"
+        );
+
+        // Hold
+        tl.to({}, { duration: 1 });
+
+        // Exit Discover
+        tl.to([...feedCards, ...floatIcons], { y: -800, opacity: 0, rotation: -20, duration: 2 });
+
+        // >>> STAGE 2.5: Highlights Panel
+        tl.call(() => { bgText.innerText = "HIGHLIGHTS"; })
+          .fromTo(infoBlock, { opacity: 0, scale: 0.9, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.2, ease: "power3.out" })
+          .to({}, { duration: 1 })
+          .to(infoBlock, { y: -200, opacity: 0, duration: 1, ease: "power2.in" });
+
+        // >>> STAGE 3: Navigate (Map & Radar)
+        tl.call(() => { bgText.innerText = "NAVIGATE"; })
+          .to(bgText, { letterSpacing: "20px", duration: 1 }, "<");
+
+        // Globe turns into a flat map feeling (optional, or just keeps spinning)
+        tl.to(globe, { scale: 2, opacity: 0.05, duration: 2 }, "<");
+
+        const mapCard = document.querySelector('.js-card-map');
+        const mapPin = document.querySelector('.js-map-pin');
+
+        tl.fromTo(mapCard,
+            { scale: 0, rotateX: 45, opacity: 0 },
+            { scale: 1, rotateX: 0, opacity: 1, duration: 1.5, ease: "power3.out" }
+        );
+
+        tl.fromTo(mapPin,
+            { y: -200, opacity: 0 },
+            { y: 0, opacity: 1, duration: 1, ease: "bounce.out" }, "<0.5"
+        );
+
+        // Hold
+        tl.to({}, { duration: 1.5 });
+
+        // Exit Navigate
+        tl.to([mapCard, mapPin], { scale: 0.5, opacity: 0, blur: 20, duration: 1 });
+
+        // >>> STAGE 4: Experience (Ticket)
+        tl.call(() => { bgText.innerText = "START NOW"; })
+          .to(bgText, { letterSpacing: "0px", scale: 0.8, opacity: 0.05, duration: 1 }, "<");
+
+        const ticket = document.querySelector('.js-card-ticket');
+
+        // 3D Flip enter
+        tl.fromTo(ticket,
+            { rotationY: 90, opacity: 0 },
+            { rotationY: 0, opacity: 1, duration: 1.5, ease: "power2.out" }
+        );
+
+        // Ticket "Printing" effect move
+        tl.to(ticket, { y: -30, duration: 1, ease: "steps(5)" });
+
+        // >>> STAGE 5: Download
+        tl.to(ticket, { x: 500, opacity: 0, rotate: 20, duration: 1.5, ease: "power2.in" });
+
+        const downloadBtn = document.querySelector('.js-download');
+        tl.fromTo(downloadBtn,
+            { y: 100, opacity: 0 },
+            { y: 0, opacity: 1, duration: 1.5, ease: "elastic.out(1, 0.6)" }
+        );
+
+        // Final Globe Spin
+        tl.to(globe, { opacity: 0.3, scale: 1, top: '50%', duration: 2 }, "<");
+
+    </script>
+</body>
+</html>
