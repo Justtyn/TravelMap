@@ -24,9 +24,9 @@
 | APK（本地） | `Python/TravelMap/static/TravelMap.apk` |
 
 ## 核心亮点
-- **一体化业务链路**：覆盖登录、景点导览、旅游商品、订单、收藏、去过打卡、行程规划，客户端 (`Android/app/src/main/java/com/justyn/travelmap/...`) 与后端 (`Python/TravelMap/app.py`) 对应接口完全打通。
-- **Material3 + 体验细节**：`BaseFeedFragment` 统一搜索、骨架屏、双击回顶；`MapFragment` 集成高德 3D 地图、定位、Marker 动态加载封面图；`MyFragment` 及二级页面提供 Skeleton、空态、SwipeRefresh。
-- **跨端账号体验**：`LoginActivity` 支持本地注册、用户名密码登录、微信授权（`com.justyn.travelmap.wechat.WeChatLoginManager` + `WXEntryActivity`），后端 `/api/auth/wechat` 同步维护 openid。
+- **一体化业务链路**：覆盖登录、景点、商品、订单、收藏、去过，客户端 (`Android/app/src/main/java/com/justyn/travelmap/...`) 与后端 (`Python/TravelMap/app.py`) 对应接口打通。
+- **Material3 组件**：`BaseFeedFragment` 统一搜索、骨架屏、双击回顶；`MapFragment` 集成高德 3D 地图、定位、Marker 动态加载封面图；`MyFragment` 及页面提供 Skeleton（骨架屏）、SwipeRefresh（下拉刷新）。
+- **跨端账号登录**：`LoginActivity` 支持本地注册、用户名密码登录、微信授权（`com.justyn.travelmap.wechat.WeChatLoginManager` + `WXEntryActivity`），后端 `/api/auth/wechat` 同步维护 openid。
 - **自托管官网 & 文档**：`templates/index.html` + `/docs` + `/features` + `/api-explorer` 展示产品定位、FAQ、接口示例，可在线下载 APK、查看 Markdown 文档（`/docs/view/<file>`）。
 - **富静态资源仓库**：`Python/TravelMap/static/` 包含 logo、封面、截图、音频讲解、`TravelMap.apk`；`util/` 下脚本如 `generate_scenic_audio.py`、`update_scenic_covers.py` 可自动化生成素材。
 
@@ -91,7 +91,7 @@ TravelMap
 - **首页 / 商城 / 预订**：`HomeFragment`、`MallFragment`、`BookingFragment` 继承 `BaseFeedFragment`，实现关键字搜索、下拉刷新、Skeleton、Banner、点击跳转至 `ScenicDetailActivity` / `ProductDetailActivity`。
 - **地图与行程**：`MapFragment` 结合 `AMap` 定位、`MapMarkerRenderer` 异步加载景点封面、点击 Marker 进入详情；后端 `/api/scenics/map` 提供坐标。
 - **个人中心**：`MyFragment` 展示头像、邮箱、快捷入口；`UserInfoActivity` 编辑联系方式；`FavoritesActivity` 切换景点/商品收藏；`VisitedActivity` 打卡列表 + 评分；`CartActivity`、`OrdersActivity`、`OrderDetailActivity`、`OrderSuccessActivity` 完成订单链路。
-- **商城闭环**：`UserCenterRepository` 与 `/api/cart`、`/api/orders`、`/api/favorites`、`/api/visited` 等接口交互，按钮附带 `CircularProgressIndicator`，支持收藏/去过幂等操作。
+- **商城业务**：`UserCenterRepository` 与 `/api/cart`、`/api/orders`、`/api/favorites`、`/api/visited` 等接口交互，按钮附带 `CircularProgressIndicator`，支持收藏/去过幂等操作。
 - **Onboarding & Share**：`OnboardingActivity` + `IntroPreferences` 控制首登引导；`Share` 字段在 `res/values/strings.xml` 指向官网 <https://canulove.me>。
 
 ### Flask 后端 (`Python/TravelMap/app.py`)
