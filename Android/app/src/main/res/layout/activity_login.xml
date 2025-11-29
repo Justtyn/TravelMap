@@ -9,6 +9,7 @@
     android:padding="24dp"
     tools:context=".LoginActivity">
 
+    <!--  顶部LOGO  -->
     <ImageView
         android:id="@+id/ivLogo"
         android:layout_width="72dp"
@@ -20,7 +21,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- 应用名称标题 -->
+    <!-- APP名称标题 -->
     <TextView
         android:id="@+id/tvAppName"
         android:layout_width="0dp"
